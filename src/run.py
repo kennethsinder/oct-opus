@@ -1,10 +1,11 @@
 import os
 import glob
 import tensorflow as tf
+from src.train import train
 from src.utils import get_images
 from src.generator import generator
 from src.discriminator import discriminator
-from src.train import train
+from src.parameters import BUFFER_SIZE, TRAIN_DATA_DIR, TEST_DATA_DIR, OUTPUT_CHANNELS, EPOCHS
 
 
 # Build a tf.data.Dataset of input B-scan and output OMAG images in the given directory.
@@ -28,22 +29,10 @@ if __name__ == '__main__':
     # https://github.com/tensorflow/tensorflow/issues/1578#issuecomment-200544189
     os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
-    # Set these to be the directories containing the data subdirectories
-    # (so xzIntensity and OMAG BScans are 2 levels down from this dir).
-    TRAIN_DATA_DIR = './train'
-    TEST_DATA_DIR = './test'
-
-    # Shuffle buffer size (>= dataset size for perfect shuffling)
-    BUFFER_SIZE = 400
-
-    # This should actually be much more but also that will blow up the RAM
-    EPOCHS = 100
-
     train_dataset = get_dataset(TRAIN_DATA_DIR)
     test_dataset = get_dataset(TEST_DATA_DIR)
 
     # get generator
-    OUTPUT_CHANNELS = 1
     generator = generator(OUTPUT_CHANNELS)
     # gen_output = generator(input_img[tf.newaxis, ...], training=False)
 
