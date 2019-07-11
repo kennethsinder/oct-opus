@@ -1,6 +1,7 @@
 train
 test
 predicted
+results
 training_checkpoints
 
 # Byte-compiled / optimized / DLL files
