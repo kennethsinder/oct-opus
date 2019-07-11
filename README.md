@@ -41,7 +41,6 @@ Image processing for OCT retina and cornea cross-sections.
 ## Other General Recommendations and Links
 
 * Adding the following to your local machine's `~/.ssh/config` file will automatically do the port forwarding stuff every time you run the command `ssh workstation` (coupling together the SSHing in and also forwarding your 8888 port to the server's):
-
 ```
 Host workstation
     HostName eceUbuntu4.uwaterloo.ca
@@ -49,7 +48,6 @@ Host workstation
     LocalForward 8888 localhost:8888
     LocalForward 6006 localhost:6006
 ```
-
 There are other things you can do, like setting up a `ProxyJump` via another campus server that happens to be accessible from outside, so that you don't have to launch a VPN or be physically present on campus to directly connect to `eceUbuntu4.uwaterloo.ca`.
 
 * Use `gpustat` to keep an eye on GPU stats like temperature as you run training.
