@@ -1,20 +1,19 @@
-%% INITIATE THE CODE
+% clean environment
 clear
 clc
 
-%% Give the Directory
-Dir='./2015-09-07Images46/';
-mkdir './2015-09-07Images46/En-Face';
-% mkdir 'G:\2018-05-26\Images39\Aligned'
-%% save 3D complex data matrix with all B-scans
+%% source and destination
+src = '/private/fydp1/oct-opus-data/2015-09-07-Images-46/';
+dst = '/private/fydp1/enface-images/2015-09-07-Images-46/';
+mkdir([dst]);
 
-% number of OMAG images
-N = length(dir([Dir, 'OMAG Bscans/', '*.png'])) - length(dir([Dir, 'OMAG Bscans/', '*_*.png']));
+% number of images
+N = length(dir([src, '*.png'])) - length(dir([src, '*_*.png']));
 
-%% number of images in the OMAG
+%% load images into matlab
 for i = 1:N
     disp(i)
-    iMat = im2double(imread([Dir, 'OMAG Bscans/', int2str(i), '.png']));
+    iMat = im2double(imread([src, int2str(i), '.png']));
     Int(:,:,i) = iMat;
 end
 
@@ -22,5 +21,20 @@ end
 for kk = 1:1000
     disp(kk)
     dEnFace = imresize(squeeze(Int(kk,:,:)), [1000 1000]);
-    imwrite(dEnFace, [Dir, 'En-Face/', int2str(kk), '.png']);
+    imwrite(dEnFace, [dst, int2str(kk), '.png']);
 end
+
+count = 1;
+
+% the depth you want to have the Max_Proj image over it
+for i = 680:750
+    Im = im2double(imread([dst, int2str(i), '.png']));
+    Im = Im./max(max(Im)); % this is for normalizing the image
+    Int(:,:,count) = Im;
+    count = count + 1;
+end
+
+S = imresize(sum(Int,3),[1000 1000]);
+m = imresize(max(Int,[],3),[1000 1000]);
+figure,imshow(m./max(max(m)),[])
+figure,imshow(S,[])
