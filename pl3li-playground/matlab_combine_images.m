@@ -43,5 +43,5 @@ disp('Step 3/3 Complete');
 
 S = imresize(sum(Layers, 3), [1000 1000]);
 m = imresize(max(Layers, [], 3), [1000 1000]);
-figure,imshow(m./max(max(m)), [])
-figure,imshow(S, [])
+imshow(m./max(max(m)), [])
+imshow(S, [])  % mat2gray(S)
