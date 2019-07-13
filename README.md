@@ -44,9 +44,11 @@ Image processing for OCT retina and cornea cross-sections.
 
 2. go to your source directory
 
-3. `./enface/enface.sh`, a matlab terminal will pop up
+3. `cd enface`
 
-4. enter the datestamp of the directory as per the prompt (e.g. `2015-09-07-Images-46`). The output should look something like the following.
+4. `./enface.sh`, a matlab terminal will pop up
+
+5. enter the datestamp of the directory as per the prompt (e.g. `2015-09-07-Images-46`). The output should look something like the following.
 
     ```bash
     pl3li@eceubuntu4: /private/fydp1/pl3li-oct-opus/pl3li-playground:$ ./enface.sh
@@ -75,11 +77,11 @@ Image processing for OCT retina and cornea cross-sections.
     Warning: Image is too big to fit on screen; displaying at 67%
     ```
 
-5. two images should pop up once all steps have completed, save these if you wish
+6. two images should pop up once all steps have completed, save these if you wish
 
-6. type `rmdir(dst, 's')` if you want to remove the intermediate cross-section images
+7. type `rmdir(dst, 's')` if you want to remove the intermediate cross-section images
 
-7. `exit`
+8. `exit`
 
 ## Other General Recommendations and Links
 
