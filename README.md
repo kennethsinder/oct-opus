@@ -1,7 +1,6 @@
 # oct-opus
 Image processing for OCT retina and cornea cross-sections.
 
-
 ## Setup Procedure (for ecelinux)
 
 1. Go to eceubuntu4 via ```ssh username@eceubuntu4.uwaterloo.ca``` (may have to use ```username@ecelinux4.uwaterloo.ca``` as proxy).
@@ -38,17 +37,15 @@ Image processing for OCT retina and cornea cross-sections.
 
 7. Use Ctrl-C to close the ssh tunnel and the Jupyter server.
 
-####Enface Procedure (for ecelinux)
+#### Enface Procedure (for ecelinux)
 
 1. ssh to eceubuntu4 using the ```-Y``` flag
 
 2. go to your source directory
 
-3. `cd enface`
+3. `./enface/enface.sh`, a matlab terminal will pop up
 
-4. `./enface.sh`, a matlab terminal will pop up
-
-5. enter the datestamp of the directory as per the prompt (e.g. `2015-09-07-Images-46`). The output should look something like the following.
+4. enter the datestamp of the directory as per the prompt (e.g. `2015-09-07-Images-46`). The output should look something like the following.
 
     ```bash
     pl3li@eceubuntu4: /private/fydp1/pl3li-oct-opus/pl3li-playground:$ ./enface.sh
@@ -77,11 +74,11 @@ Image processing for OCT retina and cornea cross-sections.
     Warning: Image is too big to fit on screen; displaying at 67%
     ```
 
-6. two images should pop up once all steps have completed, save these if you wish
+5. two images should pop up once all steps have completed, save these if you wish
 
-7. type `rmdir(dst, 's')` if you want to remove the intermediate cross-section images
+6. type `rmdir(dst, 's')` if you want to remove the intermediate cross-section images
 
-8. `exit`
+7. `exit`
 
 ## Other General Recommendations and Links
 
@@ -100,4 +97,3 @@ There are other things you can do, like setting up a `ProxyJump` via another cam
 * Use `ls -hal` to keep an eye on groups and permissions for files in `/private/fydp1/oct-opus`, make sure group `fydp2019a` has access (Pei Lin has been using 770 perms so far with success), `chgrp` or `chmod` as necessary to ensure this.
 
 * Once you're SSHed in and wanting to start your Jupyter Notebook server, first spin up `tmux` (`tmux new -s coolcats`). Then you can Ctrl+B, D to detach from that tmux session anytime (or lose your Internet connection and Jupyter will keep running in the background. Then `tmux attach -t coolcats` to re-attach to that tmux session. [More information here](https://towardsdatascience.com/jupyter-and-tensorboard-in-tmux-5e5d202a4fb6).
-
