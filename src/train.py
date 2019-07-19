@@ -85,7 +85,7 @@ def train(generator, discriminator, train_dataset, test_dataset, epochs):
         start = time.time()
 
         for input_image, target in train_dataset:
-            train_step(input_image, target)
+            train_step(generator, discriminator, input_image, target)
 
         for inp, tar in test_dataset.take(1):
             generate_images(generator, inp, tar)

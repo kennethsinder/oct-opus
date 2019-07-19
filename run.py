@@ -11,7 +11,7 @@ from src.parameters import BUFFER_SIZE, TRAIN_DATA_DIR, TEST_DATA_DIR, OUTPUT_CH
 # Build a tf.data.Dataset of input B-scan and output OMAG images in the given directory.
 def get_dataset(data_dir):
     dataset = tf.data.Dataset.from_generator(
-        lambda: map(get_images, glob.glob(os.path.join(data_dir, '*', 'xzIntensity', '*.png'))),
+        lambda: map(get_images, glob.glob(os.path.join(data_dir, 'xzIntensity', '*.png'))),
         output_types=(tf.float32, tf.float32))
     # silently drop data that causes errors (e.g. corresponding OMAG file doesn't exist)
     dataset = dataset.apply(tf.data.experimental.ignore_errors())
