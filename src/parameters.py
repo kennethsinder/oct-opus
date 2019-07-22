@@ -6,7 +6,7 @@ TEST_DATA_DIR = '/private/fydp1/testing-data'
 BUFFER_SIZE = 400
 
 # This should actually be much more but also that will blow up the RAM
-EPOCHS = 100
+EPOCHS = 1
 
 # Used by generator
 OUTPUT_CHANNELS = 1

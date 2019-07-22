@@ -1,8 +1,8 @@
 import os
 import glob
 import tensorflow as tf
-from src.train import train
-from src.utils import get_images
+from src.train import train, generator_optimizer, discriminator_optimizer
+from src.utils import get_images, generate_inferred_images
 from src.generator import generator
 from src.discriminator import discriminator
 from src.parameters import BUFFER_SIZE, TRAIN_DATA_DIR, TEST_DATA_DIR, OUTPUT_CHANNELS, EPOCHS
@@ -35,11 +35,20 @@ if __name__ == '__main__':
 
     # get generator
     generator = generator(OUTPUT_CHANNELS)
-    # gen_output = generator(input_img[tf.newaxis, ...], training=False)
 
     # get discriminator
     discriminator = discriminator()
-    # disc_out = discriminator([inp[tf.newaxis, ...], gen_output], training=False)
 
     # train
     train(generator, discriminator, train_dataset, test_dataset, EPOCHS)
+
+    # load from checkpoint
+    checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
+                                     discriminator_optimizer=discriminator_optimizer,
+                                     generator=generator,
+                                     discriminator=discriminator)
+    checkpoint_dir = './training_checkpoints'
+    checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+
+    # generate results based on prediction
+    generate_inferred_images(generator, TEST_DATA_DIR)

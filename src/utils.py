@@ -10,17 +10,18 @@ def resize(input_image, real_image, height, width):
 
 
 def random_crop(input_image, real_image):
+    IMAGE_DIM = 512
     stacked_image = tf.stack([input_image, real_image], axis=0)
-    cropped_image = tf.image.random_crop(stacked_image, size=[2, 256, 256, 1])
+    cropped_image = tf.image.random_crop(stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
     return cropped_image[0], cropped_image[1]
 
 
 @tf.function()
 def random_jitter(input_image, real_image):
-    # resizing to 286 x 286
-    input_image, real_image = resize(input_image, real_image, 286, 286)
+    # resizing to 572 x 572
+    input_image, real_image = resize(input_image, real_image, 572, 572)
 
-    # randomly cropping to 256 x 256
+    # randomly cropping to 512 x 512
     input_image, real_image = random_crop(input_image, real_image)
 
     if tf.random.uniform(()) > 0.5:
@@ -59,9 +60,28 @@ def get_images(bscan_path):
     bscan_img = tf.cast(bscan_img, tf.float32)
     omag_img = tf.cast(omag_img, tf.float32)
 
-    bscan_img = (bscan_img / 127.5) - 1
-    omag_img = (omag_img / 127.5) - 1
+    bscan_img = (bscan_img / 255.5) - 1
+    omag_img = (omag_img / 255.5) - 1
 
     bscan_img, omag_img = random_jitter(bscan_img, omag_img)
 
     return bscan_img, omag_img
+
+def generate_inferred_images(generator, test_data_dir):
+    # Generate a full set of inferred cross-section PNGs, save them to /predicted/1.png -> /predicted/<N>.png
+    # where N is the number of input B-scans (so 4 times the number of OMAGs we'd have for this test set).
+    for i, fn in enumerate(glob.glob(os.path.join(test_data_dir, '*', 'xzIntensity', '*.png'))):
+        dataset = tf.data.Dataset.from_generator(
+            lambda: map(get_images_no_jitter, [fn]),
+            output_types=(tf.float32, tf.float32))
+        dataset = dataset.apply(tf.data.experimental.ignore_errors())
+        dataset = dataset.batch(1)
+        for inp, _ in dataset.take(1):
+            pass
+
+        prediction = generator(inp, training=True)
+        predicted_img = prediction[0]
+        img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * 255, tf.uint8))
+        write_op = tf.io.write_file('./predicted/{}.png'.format(
+            re.search(r'(\d+)\.png', fn).group(1)
+        ), img_to_save)
