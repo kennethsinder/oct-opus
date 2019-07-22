@@ -40,7 +40,7 @@ if __name__ == '__main__':
     discriminator = discriminator()
 
     # train
-    train(generator, discriminator, train_dataset, test_dataset, EPOCHS)
+    # train(generator, discriminator, train_dataset, test_dataset, EPOCHS)
 
     # load from checkpoint
     checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
