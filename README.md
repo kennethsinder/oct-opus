@@ -38,7 +38,7 @@ Image processing for OCT retina and cornea cross-sections.
 
 7. Use Ctrl-C to close the ssh tunnel and the Jupyter server.
 
-####Enface Procedure (for ecelinux)
+## Enface Procedure (for ecelinux)
 
 1. ssh to eceubuntu4 using the ```-Y``` flag
 

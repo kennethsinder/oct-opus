@@ -12,7 +12,8 @@ from src.parameters import BUFFER_SIZE, TRAIN_DATA_DIR, TEST_DATA_DIR, OUTPUT_CH
 def get_dataset(data_dir):
     dataset = tf.data.Dataset.from_generator(
         lambda: map(get_images, glob.glob(os.path.join(data_dir, '*', 'xzIntensity', '*.png'))),
-        output_types=(tf.float32, tf.float32))
+        output_types=(tf.float32, tf.float32)
+    )
     # silently drop data that causes errors (e.g. corresponding OMAG file doesn't exist)
     dataset = dataset.apply(tf.data.experimental.ignore_errors())
     dataset = dataset.shuffle(BUFFER_SIZE)
