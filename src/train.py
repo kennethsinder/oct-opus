@@ -90,7 +90,7 @@ def train(generator, discriminator, train_dataset, test_dataset, epochs):
         for inp, tar in test_dataset.take(1):
             generate_images(generator, inp, tar)
 
-        if (epoch + 1) % 20 == 0:
+        if (epoch + 1) % 5 == 0:
             checkpoint.save(file_prefix=checkpoint_prefix)
 
         print('Time taken for epoch {} is {} sec\n'.format(epoch + 1, time.time() - start))
