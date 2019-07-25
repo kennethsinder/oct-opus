@@ -3,6 +3,8 @@ import os
 import re
 import tensorflow as tf
 
+IMAGE_DIM = 512
+PIXEL_DEPTH = 256
 
 def resize(input_image, real_image, height, width):
     input_image = tf.image.resize(input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
@@ -11,7 +13,6 @@ def resize(input_image, real_image, height, width):
 
 
 def random_crop(input_image, real_image):
-    IMAGE_DIM = 512
     stacked_image = tf.stack([input_image, real_image], axis=0)
     cropped_image = tf.image.random_crop(stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
     return cropped_image[0], cropped_image[1]
@@ -61,13 +62,14 @@ def get_images(bscan_path, use_random_jitter=True):
     bscan_img = tf.cast(bscan_img, tf.float32)
     omag_img = tf.cast(omag_img, tf.float32)
 
-    bscan_img = (bscan_img / 255.5) - 1
-    omag_img = (omag_img / 255.5) - 1
+    bscan_img = (bscan_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
+    omag_img = (omag_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
 
     if use_random_jitter:
         bscan_img, omag_img = random_jitter(bscan_img, omag_img)
     else:
-        bscan_img, omag_img = resize(bscan_img, omag_img, 512, 512)
+        bscan_img, omag_img = resize(
+                bscan_img, omag_img, IMAGE_DIM, IMAGE_DIM)
 
     return bscan_img, omag_img
 
@@ -91,7 +93,7 @@ def generate_inferred_images(generator, test_data_dir):
 
             prediction = generator(inp, training=True)
             predicted_img = prediction[0]
-            img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * 255, tf.uint8))
+            img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
             write_op = tf.io.write_file('./predicted/{}_{}.png'.format(
                 dataset_name, re.search(r'(\d+)\.png', fn).group(1)
             ), img_to_save)
