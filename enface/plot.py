@@ -19,7 +19,7 @@ def fly_through(eye, slice_indices, nrows=1, ncols=7):
 
 
 def multi_slice_sum(eye, lower, upper):
-    (_, y, z) = eye.shape
+    _, y, z = eye.shape
     layers = np.ndarray(shape=(upper - lower, y, z), dtype=float)
     count = 0
     for level in range(lower, upper):
