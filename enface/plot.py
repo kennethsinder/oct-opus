@@ -12,7 +12,7 @@ def fly_through(eye, slice_indices, nrows=1, ncols=7):
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
     for row in range(nrows):
         for col in range(ncols):
-            eye_slice = resize(eye[slice_indices[row*col], :, :], (512, 512), anti_aliasing=True)
+            eye_slice = resize(eye[slice_indices[row * col], :, :], (512, 512), anti_aliasing=True)
             axes[row][col].imshow(eye_slice, cmap='gray')
             axes[row][col].axis('off')
     plt.show()
