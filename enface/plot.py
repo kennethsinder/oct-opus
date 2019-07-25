@@ -8,7 +8,7 @@ from os import listdir
 
 def fly_through(eye, slice_indices, nrows=1, ncols=7):
     if (nrows * ncols != len(slice_indices)) or (len(slice_indices) == 0):
-        raise Exception("InvalidDimensions")
+        raise ValueError('InvalidDimensions')
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
     for row in range(nrows):
         for col in range(ncols):
