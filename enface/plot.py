@@ -2,19 +2,22 @@ import matplotlib.pyplot as plt
 from matplotlib.image import imread
 import numpy as np
 from os.path import join
+from skimage.transform import resize
 
 
-def fly_through(eye, nrows=1, ncols=7):
+def fly_through(eye, slice_indices, nrows=1, ncols=7):
+    if (nrows * ncols != len(slice_indices)) or (len(slice_indices) == 0):
+        raise Exception("InvalidDimensions")
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
-    slice_indices = range(60, 100, 1)
-    for index in range(len(slice_indices)):
-        eye_slice = eye[:, slice_indices[index], :]
-        axes[index].imshow(eye_slice, cmap='gray')
-        axes[index].axis('off')
+    for row in range(nrows):
+        for col in range(ncols):
+            eye_slice = resize(eye[slice_indices[row*col], :, :], (512, 512), anti_aliasing=True)
+            axes[row][col].imshow(eye_slice, cmap='gray')
+            axes[row][col].axis('off')
     plt.show()
 
 
-def multi_slice(eye, upper, lower):
+def multi_slice_sum(eye, lower, upper):
     (_, y, z) = eye.shape
     layers = np.ndarray(shape=(upper - lower, y, z), dtype=float)
     count = 0
@@ -23,7 +26,22 @@ def multi_slice(eye, upper, lower):
         count += 1
 
     eye_summed = np.sum(layers, 0)
-    plt.imshow(eye_summed, cmap='gray')
+    resized_img = resize(eye_summed, (512, 512), anti_aliasing=True)
+    plt.imshow(resized_img, cmap='gray')
+    plt.show()
+
+
+def multi_slice_min_norm(eye, lower, upper):
+    (_, y, z) = eye.shape
+    layers = np.ndarray(shape=(upper - lower, y, z), dtype=float)
+    count = 0
+    for level in range(lower, upper):
+        layers[count, :, :] = eye[level, :, :]
+        count += 1
+    max_val = np.max(layers)
+    eye_norm = np.min(np.divide(layers, max_val), 0)
+    resized_img = resize(eye_norm, (512, 512), anti_aliasing=True)
+    plt.imshow(resized_img, cmap='gray')
     plt.show()
 
 
@@ -48,9 +66,10 @@ def load_data_set(src_dir, num_images):
 
 
 if __name__ == '__main__':
-    src = "../../training-data/2015-08-11-Images-50/xzIntensity"
+    src = str(input("type the absolute path to the OMAG images you wish to process ... : "))
+    print("loading data from " + src + " ...")
+    # src = "../../training-data/2015-08-11-Images-50/xzIntensity"
     eye = load_data_set(src, 1280)
-    fly_through(eye, 1, )
-
-
-
+    multi_slice_sum(eye, 60, 120)
+    multi_slice_min_norm(eye, 60, 120)
+    fly_through(eye, range(60, 120, 10), 2, 3)
