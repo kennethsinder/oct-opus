@@ -70,7 +70,7 @@ if __name__ == '__main__':
     src = str(input("Enter the absolute path to the (OMAG) images you wish to process ... : "))
     n = len(listdir(src))
     if n == 0:
-        raise Exception("FoundZeroImages")
+        raise ValueError('FoundZeroImages')
     print("loading " + str(n) + " images from `" + src + "` ...")
     eye = load_data_set(src, n)
     print("loading complete")
