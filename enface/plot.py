@@ -3,6 +3,7 @@ from matplotlib.image import imread
 import numpy as np
 from os.path import join
 from skimage.transform import resize
+from os import listdir
 
 
 def fly_through(eye, slice_indices, nrows=1, ncols=7):
@@ -66,10 +67,13 @@ def load_data_set(src_dir, num_images):
 
 
 if __name__ == '__main__':
-    src = str(input("type the absolute path to the OMAG images you wish to process ... : "))
-    print("loading data from " + src + " ...")
-    # src = "../../training-data/2015-08-11-Images-50/xzIntensity"
-    eye = load_data_set(src, 1280)
+    src = str(input("Enter the absolute path to the (OMAG) images you wish to process ... : "))
+    n = len(listdir(src))
+    if n == 0:
+        raise Exception("FoundZeroImages")
+    print("loading " + str(n) + " images from `" + src + "` ...")
+    eye = load_data_set(src, n)
+    print("loading complete")
     multi_slice_sum(eye, 60, 120)
     multi_slice_min_norm(eye, 60, 120)
     fly_through(eye, range(60, 120, 10), 2, 3)
