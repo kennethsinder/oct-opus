@@ -54,7 +54,7 @@ def single_slice(eye, level, orientation):
     elif orientation == "side":
         eye_slice = eye[:, :, level]
     else:
-        return Exception("InvalidOrientation")
+        return ValueError('InvalidOrientation')
     plt.imshow(eye_slice, cmap='gray')
     plt.show()
 
