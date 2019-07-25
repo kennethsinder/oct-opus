@@ -71,7 +71,7 @@ if __name__ == '__main__':
     n = len(listdir(src))
     if n == 0:
         raise ValueError('FoundZeroImages')
-    print("loading " + str(n) + " images from `" + src + "` ...")
+    print('loading {} images from `{}` ...'.format(n, src))
     eye = load_data_set(src, n)
     print("loading complete")
     multi_slice_sum(eye, 60, 120)
