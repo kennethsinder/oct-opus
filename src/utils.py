@@ -93,7 +93,7 @@ def get_images_no_jitter(bscan_path):
     return get_images(bscan_path, False)
 
 
-def generate_inferred_images(generator, test_data_dir):
+def generate_inferred_images(model_state, test_data_dir):
     # Generate full sets of inferred cross-section PNGs,
     # save them to /predicted/<dataset_name>_1.png -> /predicted/<dataset_name>_<N>.png
     # where N is the number of input B-scans
@@ -113,11 +113,11 @@ def generate_inferred_images(generator, test_data_dir):
             for inp, _ in dataset.take(1):
                 pass
 
-            prediction = generator(inp, training=True)
+            prediction = model_state.generator(inp, training=True)
             predicted_img = prediction[0]
             img_to_save = tf.image.encode_png(tf.dtypes.cast(
                 (predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
             os.makedirs('./predicted/{}'.format(dataset_name), exist_ok=True)
             write_op = tf.io.write_file('./predicted/{}/{}.png'.format(
-                dataset_name, i // NUM_ACQUISITIONS,
+                dataset_name, i // NUM_ACQUISITIONS + 1,
             ), img_to_save)

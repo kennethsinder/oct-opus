@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NUM_EPOCHS=10
+NUM_EPOCHS=100
 
 python run.py train 0
 

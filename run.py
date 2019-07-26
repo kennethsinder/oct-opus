@@ -28,4 +28,4 @@ if __name__ == '__main__':
         model_state.restore_from_checkpoint()
 
         # generate results based on prediction
-        generate_inferred_images(generator, TEST_DATA_DIR)
+        generate_inferred_images(model_state, TEST_DATA_DIR)
