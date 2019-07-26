@@ -84,6 +84,10 @@ def generate_inferred_images(generator, test_data_dir):
     for dataset_path in glob.glob(os.path.join(test_data_dir, '*')):
         dataset_name = dataset_path.split('/')[-1]
         for i, fn in enumerate(glob.glob(os.path.join(dataset_path, 'xzIntensity', '*.png'))):
+            if i % 4:
+                # We only want 1 out of every 4 B-scans to gather
+                # a prediction from.
+                continue
             dataset = tf.data.Dataset.from_generator(
                 lambda: map(get_images_no_jitter, [fn]),
                 output_types=(tf.float32, tf.float32))
@@ -94,6 +98,7 @@ def generate_inferred_images(generator, test_data_dir):
             prediction = generator(inp, training=True)
             predicted_img = prediction[0]
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
-            write_op = tf.io.write_file('./predicted/{}_{}.png'.format(
-                dataset_name, re.search(r'(\d+)\.png', fn).group(1)
+            os.makedirs('./predicted/{}'.format(dataset_name), exist_ok=True)
+            write_op = tf.io.write_file('./predicted/{}/{}.png'.format(
+                dataset_name, i + 1,
             ), img_to_save)

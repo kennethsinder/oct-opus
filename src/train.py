@@ -1,3 +1,4 @@
+import gc
 import os
 import time
 import tensorflow as tf
@@ -72,6 +73,17 @@ def generate_images(model, test_input, tar):
         plt.axis('off')
     plt.show()
 
+def train_epoch(train_dataset, generator, discriminator):
+    # This is extremely sad.
+    # See https://github.com/tensorflow/tensorflow/issues/29996
+    iterator = tf.compat.v1.data.make_one_shot_iterator(train_dataset)
+    while True:
+        try:
+            # Shape of tensors preserved, unlike with a for loop.
+            input_image, target = iterator.get_next()
+            train_step(generator, discriminator, input_image, target)
+        except tf.errors.OutOfRangeError:
+            break
 
 def train(generator, discriminator, train_dataset, test_dataset, epochs):
     checkpoint_dir = './training_checkpoints'
@@ -82,15 +94,12 @@ def train(generator, discriminator, train_dataset, test_dataset, epochs):
                                      discriminator=discriminator)
 
     for epoch in range(epochs):
+        print('Starting epoch {}'.format(epoch + 1))
         start = time.time()
 
-        for input_image, target in train_dataset:
-            train_step(generator, discriminator, input_image, target)
+        train_epoch(train_dataset, generator, discriminator)
 
-        for inp, tar in test_dataset.take(1):
-            generate_images(generator, inp, tar)
-
-        if (epoch + 1) % 5 == 0:
+        if (epoch + 1) % 15 == 0:
             checkpoint.save(file_prefix=checkpoint_prefix)
 
         print('Time taken for epoch {} is {} sec\n'.format(epoch + 1, time.time() - start))
