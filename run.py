@@ -5,7 +5,7 @@ import tensorflow as tf
 from src.train import train
 from src.model_state import ModelState
 from src.utils import generate_inferred_images
-from src.parameters import BUFFER_SIZE, EPOCHS, TEST_DATA_DIR
+from src.parameters import BUFFER_SIZE, TEST_DATA_DIR
 
 
 if __name__ == '__main__':
