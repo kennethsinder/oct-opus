@@ -2,19 +2,34 @@ import glob
 import os
 import re
 import tensorflow as tf
+from src.parameters import BUFFER_SIZE
 
 IMAGE_DIM = 512
 PIXEL_DEPTH = 256
 
+def get_dataset(data_dir):
+    dataset = tf.data.Dataset.from_generator(
+        lambda: map(get_images, glob.glob(os.path.join(data_dir, '*', 'xzIntensity', '*.png'))),
+        output_types=(tf.float32, tf.float32)
+    )
+    # silently drop data that causes errors (e.g. corresponding OMAG file doesn't exist)
+    dataset = dataset.apply(tf.data.experimental.ignore_errors())
+    dataset = dataset.shuffle(BUFFER_SIZE)
+    dataset = dataset.batch(1)
+    return dataset
+
 def resize(input_image, real_image, height, width):
-    input_image = tf.image.resize(input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-    real_image = tf.image.resize(real_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    input_image = tf.image.resize(
+        input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    real_image = tf.image.resize(
+        real_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     return input_image, real_image
 
 
 def random_crop(input_image, real_image):
     stacked_image = tf.stack([input_image, real_image], axis=0)
-    cropped_image = tf.image.random_crop(stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
+    cropped_image = tf.image.random_crop(
+        stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
     return cropped_image[0], cropped_image[1]
 
 
@@ -73,19 +88,22 @@ def get_images(bscan_path, use_random_jitter=True):
 
     return bscan_img, omag_img
 
+
 def get_images_no_jitter(bscan_path):
     return get_images(bscan_path, False)
+
 
 def generate_inferred_images(generator, test_data_dir):
     # Generate full sets of inferred cross-section PNGs,
     # save them to /predicted/<dataset_name>_1.png -> /predicted/<dataset_name>_<N>.png
     # where N is the number of input B-scans
     # (i.e. 4 times the number of OMAGs we'd have for each test set).
+    NUM_ACQUISITIONS = 4
     for dataset_path in glob.glob(os.path.join(test_data_dir, '*')):
         dataset_name = dataset_path.split('/')[-1]
         for i, fn in enumerate(glob.glob(os.path.join(dataset_path, 'xzIntensity', '*.png'))):
-            if i % 4:
-                # We only want 1 out of every 4 B-scans to gather
+            if i % NUM_ACQUISITIONS:
+                # We only want 1 out of every NUM_ACQUISITIONS B-scans to gather
                 # a prediction from.
                 continue
             dataset = tf.data.Dataset.from_generator(
@@ -97,8 +115,9 @@ def generate_inferred_images(generator, test_data_dir):
 
             prediction = generator(inp, training=True)
             predicted_img = prediction[0]
-            img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
+            img_to_save = tf.image.encode_png(tf.dtypes.cast(
+                (predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
             os.makedirs('./predicted/{}'.format(dataset_name), exist_ok=True)
             write_op = tf.io.write_file('./predicted/{}/{}.png'.format(
-                dataset_name, i + 1,
+                dataset_name, i // NUM_ACQUISITIONS,
             ), img_to_save)

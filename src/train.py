@@ -1,4 +1,3 @@
-import gc
 import os
 import time
 import tensorflow as tf
@@ -12,7 +11,8 @@ loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 def discriminator_loss(disc_real_output, disc_generated_output):
     real_loss = loss_object(tf.ones_like(disc_real_output), disc_real_output)
 
-    generated_loss = loss_object(tf.zeros_like(disc_generated_output), disc_generated_output)
+    generated_loss = loss_object(tf.zeros_like(
+        disc_generated_output), disc_generated_output)
 
     total_disc_loss = real_loss + generated_loss
 
@@ -20,7 +20,8 @@ def discriminator_loss(disc_real_output, disc_generated_output):
 
 
 def generator_loss(disc_generated_output, gen_output, target):
-    gan_loss = loss_object(tf.ones_like(disc_generated_output), disc_generated_output)
+    gan_loss = loss_object(tf.ones_like(
+        disc_generated_output), disc_generated_output)
 
     # mean absolute error
     l1_loss = tf.reduce_mean(tf.abs(target - gen_output))
@@ -30,27 +31,28 @@ def generator_loss(disc_generated_output, gen_output, target):
     return total_gen_loss
 
 
-# TODO: remove global variables
-generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
-discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
-
-
 @tf.function
-def train_step(generator, discriminator, input_image, target):
+def train_step(model_state, input_image, target):
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-        gen_output = generator(input_image, training=True)
+        gen_output = model_state.generator(input_image, training=True)
 
-        disc_real_output = discriminator([input_image, target], training=True)
-        disc_generated_output = discriminator([input_image, gen_output], training=True)
+        disc_real_output = model_state.discriminator(
+            [input_image, target], training=True)
+        disc_generated_output = model_state.discriminator(
+            [input_image, gen_output], training=True)
 
         gen_loss = generator_loss(disc_generated_output, gen_output, target)
         disc_loss = discriminator_loss(disc_real_output, disc_generated_output)
 
-    generator_gradients = gen_tape.gradient(gen_loss, generator.trainable_variables)
-    discriminator_gradients = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
+    generator_gradients = gen_tape.gradient(
+        gen_loss, model_state.generator.trainable_variables)
+    discriminator_gradients = disc_tape.gradient(
+        disc_loss, model_state.discriminator.trainable_variables)
 
-    generator_optimizer.apply_gradients(zip(generator_gradients, generator.trainable_variables))
-    discriminator_optimizer.apply_gradients(zip(discriminator_gradients, discriminator.trainable_variables))
+    model_state.generator_optimizer.apply_gradients(
+        zip(generator_gradients, model_state.generator.trainable_variables))
+    model_state.discriminator_optimizer.apply_gradients(
+        zip(discriminator_gradients, model_state.discriminator.trainable_variables))
 
 
 def generate_images(model, test_input, tar):
@@ -73,33 +75,18 @@ def generate_images(model, test_input, tar):
         plt.axis('off')
     plt.show()
 
-def train_epoch(train_dataset, generator, discriminator):
-    # This is extremely sad.
-    # See https://github.com/tensorflow/tensorflow/issues/29996
-    iterator = tf.compat.v1.data.make_one_shot_iterator(train_dataset)
-    while True:
-        try:
-            # Shape of tensors preserved, unlike with a for loop.
-            input_image, target = iterator.get_next()
-            train_step(generator, discriminator, input_image, target)
-        except tf.errors.OutOfRangeError:
-            break
 
-def train(generator, discriminator, train_dataset, test_dataset, epochs):
-    checkpoint_dir = './training_checkpoints'
-    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
-                                     discriminator_optimizer=discriminator_optimizer,
-                                     generator=generator,
-                                     discriminator=discriminator)
+def train_epoch(train_dataset, model_state):
+    for input_image, target in train_dataset:
+        train_step(model_state, input_image, target)
 
-    for epoch in range(epochs):
-        print('Starting epoch {}'.format(epoch + 1))
-        start = time.time()
 
-        train_epoch(train_dataset, generator, discriminator)
+def train(model_state, epoch):
+    print('Starting epoch {}'.format(epoch + 1))
+    start = time.time()
 
-        if (epoch + 1) % 15 == 0:
-            checkpoint.save(file_prefix=checkpoint_prefix)
+    train_epoch(model_state.train_dataset, model_state)
+    model_state.save_checkpoint()
 
-        print('Time taken for epoch {} is {} sec\n'.format(epoch + 1, time.time() - start))
+    print('Time taken for epoch {} is {} sec\n'.format(
+        epoch + 1, time.time() - start))
