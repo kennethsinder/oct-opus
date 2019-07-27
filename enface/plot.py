@@ -61,8 +61,13 @@ def single_slice(eye, level, orientation):
 
 def load_data_set(src_dir, num_images):
     eye = np.ndarray(shape=(512, 512, num_images), dtype=float)
+    j = 0
     for i in range(num_images):
-        eye[:, :, i] = imread(join(src_dir, str(i + 1) + '.png'))
+        try:
+            j += 1
+            eye[:, :, i] = imread(join(src_dir, '{}.png'.format(j)))
+        except:
+            i -= 1
     return eye
 
 
