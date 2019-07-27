@@ -1,10 +1,21 @@
+"""
+Displays C-scan images computed from a folder supplied on standard input.
+Script assumes all images in the folder have the same square dimensions.
+"""
+
 import matplotlib.pyplot as plt
 from matplotlib.image import imread
+from PIL import Image
 import numpy as np
 from os.path import join
 from skimage.transform import resize
 from os import listdir
 
+
+IMAGE_DIMENSIONS = None
+
+def image_dimensions(filename):
+    return Image.open(filename).size
 
 def fly_through(eye, slice_indices, nrows=1, ncols=7):
     if (nrows * ncols != len(slice_indices)) or (len(slice_indices) == 0):
@@ -12,7 +23,7 @@ def fly_through(eye, slice_indices, nrows=1, ncols=7):
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
     for row in range(nrows):
         for col in range(ncols):
-            eye_slice = resize(eye[slice_indices[row * col], :, :], (512, 512), anti_aliasing=True)
+            eye_slice = resize(eye[slice_indices[row * col], :, :], IMAGE_DIMENSIONS, anti_aliasing=True)
             axes[row][col].imshow(eye_slice, cmap='gray')
             axes[row][col].axis('off')
     plt.show()
@@ -27,7 +38,7 @@ def multi_slice_sum(eye, lower, upper):
         count += 1
 
     eye_summed = np.sum(layers, 0)
-    resized_img = resize(eye_summed, (512, 512), anti_aliasing=True)
+    resized_img = resize(eye_summed, IMAGE_DIMENSIONS, anti_aliasing=True)
     plt.imshow(resized_img, cmap='gray')
     plt.show()
 
@@ -41,7 +52,7 @@ def multi_slice_min_norm(eye, lower, upper):
         count += 1
     max_val = np.max(layers)
     eye_norm = np.min(np.divide(layers, max_val), 0)
-    resized_img = resize(eye_norm, (512, 512), anti_aliasing=True)
+    resized_img = resize(eye_norm, IMAGE_DIMENSIONS, anti_aliasing=True)
     plt.imshow(resized_img, cmap='gray')
     plt.show()
 
@@ -60,7 +71,7 @@ def single_slice(eye, level, orientation):
 
 
 def load_data_set(src_dir, num_images):
-    eye = np.ndarray(shape=(512, 512, num_images), dtype=float)
+    eye = np.ndarray(shape=(IMAGE_DIMENSIONS[0], IMAGE_DIMENSIONS[1], num_images), dtype=float)
     j = 0
     for i in range(num_images):
         try:
@@ -77,6 +88,7 @@ if __name__ == '__main__':
     if n == 0:
         raise ValueError('FoundZeroImages')
     print('loading {} images from `{}` ...'.format(n, src))
+    IMAGE_DIMENSIONS = image_dimensions(join(src, listdir(src)[0]))
     eye = load_data_set(src, n)
     print("loading complete")
     multi_slice_sum(eye, 60, 120)
