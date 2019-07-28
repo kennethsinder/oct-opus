@@ -1,0 +1,2 @@
+These enface images were created from the 256x256 inferred images from the 60-epoch Jupyter notebook training a while back (found in the `round0` folder of the `oct-opus-data` repository). The results are pretty bad, but I'm not sure whether that might be because we generated an inferred image for every B-scan (rather than for every 4 B-scans) blowing up the cardinality by 4 (which might affect how the blood vessels get put together by the script).
+
