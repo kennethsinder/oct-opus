@@ -38,7 +38,7 @@ class Slicer:
         plt.imshow(resized_img, cmap='gray')
         plt.show()
 
-    def multi_slice_min_norm(self, eye, lower, upper):
+    def multi_slice_max_norm(self, eye, lower, upper):
         (_, y, z) = eye.shape
         layers = np.ndarray(shape=(upper - lower, y, z), dtype=float)
         count = 0
@@ -46,7 +46,7 @@ class Slicer:
             layers[count, :, :] = eye[level, :, :]
             count += 1
         max_val = np.max(layers)
-        eye_norm = np.min(np.divide(layers, max_val), 0)
+        eye_norm = np.max(np.divide(layers, max_val), 0)
         resized_img = resize(eye_norm, self.image_dimensions, anti_aliasing=True)
         plt.imshow(resized_img, cmap='gray')
         plt.show()
