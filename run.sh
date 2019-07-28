@@ -1,10 +1,10 @@
 #!/bin/bash
 
-NUM_EPOCHS=20
+NUM_EPOCHS=100
 
-python run.py train 7
+python run.py train 0
 
-STARTING_EPOCH=8
+STARTING_EPOCH=1
 for i in $( seq $STARTING_EPOCH $NUM_EPOCHS )
 do
     python run.py restore train $i
