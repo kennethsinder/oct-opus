@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     if 'train' in sys.argv:
         # train
-        train(model_state, int(sys.argv[-1]))
+        train(model_state)
 
     if 'predict' in sys.argv:
         # load from checkpoint
