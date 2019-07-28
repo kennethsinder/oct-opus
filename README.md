@@ -4,9 +4,11 @@ Image processing for OCT retina and cornea cross-sections.
 
 ## To run training
 
-1. Open `./run.sh` with a text editor and feel free to configure the number of epochs you want to run, and the starting epoch (based on whichever one is the latest one we have a checkpoint for - if none, just leave it at 1). If you do have a relevant checkpoint you want to start from, modify the script on line 5 to be `python run.py restore train x`, where x is the last epoch number for which you have a checkpoint, and then modify line 7 to store x+1.
+1. Move all unrelated checkpoints out of the `./training_checkpoints` folder.
 
-2. Execute `./run.sh` under the virtual env with all `pip` dependencies already installed. The `run.sh` script will run `python run.py` with the correct parameters to run for the number of epochs specified in the script.
+2. Open `./run.sh` with a text editor and configure the starting and ending epoch numbers.
+
+3. Execute `./run.sh` (under the virtual env with all `pip` dependencies already installed.) The `run.sh` script will run `python run.py` with the correct parameters to run for the number of epochs specified in the script.
 
 This is a stupid procedure, because we're actually spawning a new `run.py` program for every epoch, and then `run.py` loads a checkpoint (if the `restore` argument was supplied, that is) and then runs just one epoch of training, saves a checkpoint, and bails out. And `run.sh` is the harness that keeps spawning new `run.py` programs for each epoch. The reason we're doing this dumb thing is because of a memory leak that we don't have time to look into right now - the main thing is just to evaluate the pix2pix baseline, and the results should be the same with this approach, and the memory consumption will be under control so we can run large numbers of epochs.
 

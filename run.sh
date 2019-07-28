@@ -1,11 +1,9 @@
 #!/bin/bash
 
-NUM_EPOCHS=100
-
-python run.py train 0
-
 STARTING_EPOCH=1
-for i in $( seq $STARTING_EPOCH $NUM_EPOCHS )
+ENDING_EPOCH=100
+for i in $( seq $STARTING_EPOCH $ENDING_EPOCH )
 do
-    python run.py restore train $i
+    echo "----- Epoch number $i -----"
+    python run.py restore train
 done
