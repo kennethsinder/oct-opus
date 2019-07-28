@@ -25,7 +25,7 @@ class Loader:
             raise ValueError('FoundZeroImages')
         print('Loading {} images from `{}` ...'.format(num_images, self.src_dir))
 
-        eye = np.ndarray(shape=(self.image_dimensions[0], self.image_dimensions[1], num_images), dtype=float)
+        eye = np.ndarray(shape=(self.image_dimensions[1], self.image_dimensions[0], num_images), dtype=float)
         j = 0
         for i in range(num_images):
             try:
