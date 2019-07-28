@@ -5,7 +5,7 @@ import re
 import tensorflow as tf
 from src.parameters import BUFFER_SIZE
 
-IMAGE_DIM = 512
+IMAGE_DIM = 256
 PIXEL_DEPTH = 256
 NUM_ACQUISITIONS = 4
 
@@ -40,10 +40,10 @@ def random_crop(input_image, real_image):
 
 @tf.function()
 def random_jitter(input_image, real_image):
-    # resizing to 572 x 572
-    input_image, real_image = resize(input_image, real_image, 572, 572)
+    # resizing to 286 x 286
+    input_image, real_image = resize(input_image, real_image, 286, 286)
 
-    # randomly cropping to 512 x 512
+    # randomly cropping to 256 x 256
     input_image, real_image = random_crop(input_image, real_image)
 
     if tf.random.uniform(()) > 0.5:
@@ -57,7 +57,7 @@ def random_jitter(input_image, real_image):
 # Decodes a grayscale PNG, returns a 2D tensor.
 def load_image(file_name):
     image = tf.io.read_file(file_name)
-    image = tf.image.decode_png(image)
+    image = tf.image.decode_png(image, channels=1)
     return image
 
 

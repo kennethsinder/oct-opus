@@ -81,12 +81,12 @@ def train_epoch(train_dataset, model_state):
         train_step(model_state, input_image, target)
 
 
-def train(model_state, epoch):
-    print('Starting epoch {}'.format(epoch + 1))
+def train(model_state):
+    print('Starting epoch')
     start = time.time()
 
     train_epoch(model_state.train_dataset, model_state)
     model_state.save_checkpoint()
 
-    print('Time taken for epoch {} is {} sec\n'.format(
-        epoch + 1, time.time() - start))
+    print('Time taken for epoch is {} sec\n'.format(
+        time.time() - start))
