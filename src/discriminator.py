@@ -5,7 +5,7 @@ from src.sampling import downsample
 def discriminator():
     initializer = tf.random_normal_initializer(0., 0.02)
 
-    inp = tf.keras.layers.Input(shape=[None, None, 1], name='input_image')
+    inp = tf.keras.layers.Input(shape=[None, None, 3], name='input_image')
     tar = tf.keras.layers.Input(shape=[None, None, 1], name='target_image')
 
     x = tf.keras.layers.concatenate([inp, tar])  # (bs, 256, 256, channels*2)

@@ -33,7 +33,7 @@ def generator(OUTPUT_CHANNELS):
 
     concat = tf.keras.layers.Concatenate()
 
-    inputs = tf.keras.layers.Input(shape=[None, None, 1])
+    inputs = tf.keras.layers.Input(shape=[None, None, 3])
     x = inputs
 
     # Downsampling through the model

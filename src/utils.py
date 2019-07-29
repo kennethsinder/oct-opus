@@ -23,41 +23,39 @@ def get_dataset(data_dir):
     return dataset
 
 
-def resize(input_image, real_image, height, width):
-    input_image = tf.image.resize(
-        input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-    real_image = tf.image.resize(
-        real_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-    return input_image, real_image
+def resize(images, height, width):
+    for image in images:
+        image = tf.image.resize(image, [height, width],
+                                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    return images
 
+def random_crop(images):
+    stacked_images = tf.stack(images, axis=0)
+    cropped_images = tf.image.random_crop(
+      stacked_images, size=[len(images), 256, 256, 1])
 
-def random_crop(input_image, real_image):
-    stacked_image = tf.stack([input_image, real_image], axis=0)
-    cropped_image = tf.image.random_crop(
-        stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
-    return cropped_image[0], cropped_image[1]
-
+    return tf.unstack(cropped_images)
 
 @tf.function()
-def random_jitter(input_image, real_image):
+def random_jitter(images):
     # resizing to 286 x 286
-    input_image, real_image = resize(input_image, real_image, 286, 286)
+    images = resize(images, 286, 286)
 
     # randomly cropping to 256 x 256
-    input_image, real_image = random_crop(input_image, real_image)
+    images = random_crop(images)
 
     if tf.random.uniform(()) > 0.5:
         # random mirroring
-        input_image = tf.image.flip_left_right(input_image)
-        real_image = tf.image.flip_left_right(real_image)
+        for image in images:
+            image = tf.image.flip_left_right(image)
 
-    return input_image, real_image
+    return images
 
-
-# Decodes a grayscale PNG, returns a 2D tensor.
+# Decodes a grayscale PNG, returns a 2D float tensor.
 def load_image(file_name):
     image = tf.io.read_file(file_name)
     image = tf.image.decode_png(image, channels=1)
+    image = tf.cast(image, tf.float32)
     return image
 
 
@@ -80,24 +78,39 @@ def get_images(bscan_path, use_random_jitter=True):
     dir_path = path_components.group(1)
     bscan_num = int(path_components.group(2))
 
+    try:
+        prev_bscan = load_image(
+            os.path.join(dir_path, 'xzIntensity',
+                         '{}.png'.format(bscan_num - 1)))
+    except tf.errors.NotFoundError:
+        prev_bscan = tf.zeros(bscan_img.shape)
+
+    try:
+        next_bscan = load_image(
+            os.path.join(dir_path, 'xzIntensity',
+                         '{}.png'.format(bscan_num + 1)))
+    except tf.errors.NotFoundError:
+        next_bscan = tf.zeros(bscan_img.shape)
+
+    input_imgs = [prev_bscan, bscan_img, next_bscan]
+
     omag_num = bscan_num_to_omag_num(bscan_num)
 
     omag_img = load_image(os.path.join(
         dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)))
 
-    bscan_img = tf.cast(bscan_img, tf.float32)
-    omag_img = tf.cast(omag_img, tf.float32)
-
     bscan_img = (bscan_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
     omag_img = (omag_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
 
     if use_random_jitter:
-        bscan_img, omag_img = random_jitter(bscan_img, omag_img)
+        resized_imgs = random_jitter(input_imgs + [omag_img])
     else:
-        bscan_img, omag_img = resize(
-            bscan_img, omag_img, IMAGE_DIM, IMAGE_DIM)
+        resized_imgs = resize(
+            input_imgs + [omag_img], IMAGE_DIM, IMAGE_DIM)
 
-    return bscan_img, omag_img
+    input_imgs = tf.squeeze(tf.stack(resized_imgs[:-1], axis=2))
+
+    return input_imgs, resized_imgs[-1]
 
 
 def get_images_no_jitter(bscan_path):
@@ -121,8 +134,8 @@ def generate_inferred_images(model_state, test_data_dir):
             # TODO: this is dumb, find a better way later (we have an issue
             # open that includes this).
             if not os.path.isfile(os.path.join(
-                dataset_path, 'OMAG Bscans', '{}.png'.format(
-                    bscan_num_to_omag_num(i)))):
+                    dataset_path, 'OMAG Bscans', '{}.png'.format(
+                        bscan_num_to_omag_num(i)))):
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
