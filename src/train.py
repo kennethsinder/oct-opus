@@ -86,6 +86,8 @@ def train(model_state):
     start = time.time()
 
     train_epoch(model_state.train_dataset, model_state)
+    # for inp, tar in model_state.test_dataset.take(1):
+    #     generate_images(model_state.generator, inp, tar)
     model_state.save_checkpoint()
 
     print('Time taken for epoch is {} sec\n'.format(
