@@ -2,10 +2,15 @@ import glob
 import os
 import os.path
 import re
+import io
+import math
 import tensorflow as tf
 from src.parameters import BUFFER_SIZE
+from src.train import discriminator_loss
+from PIL import Image
+from random import randint
 
-IMAGE_DIM = 256
+IMAGE_DIM = 512
 PIXEL_DEPTH = 256
 NUM_ACQUISITIONS = 4
 
@@ -40,11 +45,14 @@ def random_crop(input_image, real_image):
 
 @tf.function()
 def random_jitter(input_image, real_image):
-    # resizing to 286 x 286
-    input_image, real_image = resize(input_image, real_image, 286, 286)
+    if tf.random.uniform(()) > 0.5:
+        input_image, real_image = resize(
+            input_image, real_image, IMAGE_DIM + 30, IMAGE_DIM + 30)
 
-    # randomly cropping to 256 x 256
-    input_image, real_image = random_crop(input_image, real_image)
+        input_image, real_image = random_crop(input_image, real_image)
+    else:
+        input_image, real_image = resize(
+            input_image, real_image, IMAGE_DIM, IMAGE_DIM)
 
     if tf.random.uniform(()) > 0.5:
         # random mirroring
@@ -55,25 +63,35 @@ def random_jitter(input_image, real_image):
 
 
 # Decodes a grayscale PNG, returns a 2D tensor.
-def load_image(file_name):
-    image = tf.io.read_file(file_name)
-    image = tf.image.decode_png(image, channels=1)
-    return image
+def load_image(file_name, angle=0):
+    if angle == 0:
+        image = tf.io.read_file(file_name)
+        image = tf.image.decode_png(image, channels=1)
+        return image
+    else:
+        image = Image.open(file_name).rotate(angle)
+        output = io.BytesIO()
+        image.save(output, format='JPEG')
+        return tf.image.decode_png(output.getvalue())
 
 
 def bscan_num_to_omag_num(bscan_num):
     return ((bscan_num - 1) // NUM_ACQUISITIONS) + 1
 
-# Returns a pair of tensors containing the given B-scan and its
-# corresponding OMAG. |bscan_path| should be in directory 'xzIntensity'
-# and its parent directory should contain 'OMAG Bscans'. Scan files
-# should be named <num>.png (no leading 0s), with a 4-to-1 ratio of
-# B-scans to OMAGs.
-# (OMAG Bscans/1.png corresponds to xzIntensity/{1,2,3,4}.png.)
-
 
 def get_images(bscan_path, use_random_jitter=True):
-    bscan_img = load_image(bscan_path)
+    """
+    Returns a pair of tensors containing the given B-scan and its
+    corresponding OMAG. |bscan_path| should be in directory 'xzIntensity'
+    and its parent directory should contain 'OMAG Bscans'. Scan files
+    should be named <num>.png (no leading 0s), with a 4-to-1 ratio of
+    B-scans to OMAGs.
+    (OMAG Bscans/1.png corresponds to xzIntensity/{1,2,3,4}.png.)
+    """
+    angle = 0
+    if use_random_jitter and tf.random.uniform(()) > 0.8:
+        angle = randint(0, 45)
+    bscan_img = load_image(bscan_path, angle)
 
     path_components = re.search(r'^(.*)xzIntensity/(\d+)\.png$', bscan_path)
 
@@ -83,7 +101,7 @@ def get_images(bscan_path, use_random_jitter=True):
     omag_num = bscan_num_to_omag_num(bscan_num)
 
     omag_img = load_image(os.path.join(
-        dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)))
+        dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle)
 
     bscan_img = tf.cast(bscan_img, tf.float32)
     omag_img = tf.cast(omag_img, tf.float32)
@@ -105,10 +123,12 @@ def get_images_no_jitter(bscan_path):
 
 
 def generate_inferred_images(model_state, test_data_dir):
-    # Generate full sets of inferred cross-section PNGs,
-    # save them to /predicted/<dataset_name>_1.png -> /predicted/<dataset_name>_<N>.png
-    # where N is the number of input B-scans
-    # (i.e. 4 times the number of OMAGs we'd have for each test set).
+    """
+    Generate full sets of inferred cross-section PNGs,
+    save them to /predicted/<dataset_name>_1.png -> /predicted/<dataset_name>_<N>.png
+    where N is the number of input B-scans
+    (i.e. 4 times the number of OMAGs we'd have for each test set).
+    """
     for dataset_path in glob.glob(os.path.join(test_data_dir, '*')):
         dataset_name = dataset_path.split('/')[-1]
         for fn in glob.glob(os.path.join(dataset_path, 'xzIntensity', '*.png')):
@@ -130,12 +150,22 @@ def generate_inferred_images(model_state, test_data_dir):
                 lambda: map(get_images_no_jitter, [fn]),
                 output_types=(tf.float32, tf.float32))
             dataset = dataset.batch(1)
-            for inp, _ in dataset.take(1):
+            for inp, tar in dataset.take(1):
                 pass
             prediction = model_state.generator(inp, training=True)
-            predicted_img = prediction[0]
+
+            # Compute the loss.
+            disc_generated_output = model_state.discriminator(
+                [inp, prediction], training=True)
+            disc_real_output = model_state.discriminator(
+                [inp, tar], training=True)
+            disc_loss = discriminator_loss(
+                disc_real_output, disc_generated_output)
+            if i < 10:
+                print('Discriminator loss: {}'.format(disc_loss))
 
             # Save the prediction to disk under a sub-directory.
+            predicted_img = prediction[0]
             img_to_save = tf.image.encode_png(tf.dtypes.cast(
                 (predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
             os.makedirs('./predicted/{}'.format(dataset_name), exist_ok=True)
