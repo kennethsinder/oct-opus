@@ -8,9 +8,9 @@ Image processing for OCT retina and cornea cross-sections.
 
 2. Move all unrelated checkpoints out of the `./training_checkpoints` folder.
 
-3. Execute `./run.sh STARTING_EPOCH ENDING_EPOCH`. The bash script will run `python run.py` with the appropriate parameters.
+3. Execute `./run.sh <STARTING_EPOCH> <ENDING_EPOCH>`. The bash script will run `python run.py` with the appropriate parameters.
 
-If you are training a model from scratch, `STARTING_EPOCH` should be 1. If you are restoring a model from a checkpoint, `STARTING_EPOCH` should be the next epoch to train on (eg. if the model has already done 2 epochs of training, `STARTING_EPOCH` should be 3).
+If you are training a model from scratch, `<STARTING_EPOCH>` should be 1. If you are restoring a model from a checkpoint, `<STARTING_EPOCH>` should be the next epoch to train on (eg. if the model has already done 2 epochs of training, `<STARTING_EPOCH>` should be 3).
 
 This is a stupid procedure, because we're actually spawning a new `run.py` program for every epoch, and then `run.py` loads a checkpoint (if the `--restore` flag is set, that is) and then runs just one epoch of training, saves a checkpoint, and bails out. And `run.sh` is the harness that keeps spawning new `run.py` programs for each epoch. The reason we're doing this dumb thing is because of a memory leak that we don't have time to look into right now - the main thing is just to evaluate the pix2pix baseline, and the results should be the same with this approach, and the memory consumption will be under control so we can run large numbers of epochs.
 
@@ -32,9 +32,11 @@ You should see something like this:
 
 The x-axis is measured by training step.
 
-You can view the Tensorboard dashboard while the model is training, or after it's done. Since the model is trained via re-running run.py for each epoch, each epoch has its own line in the graphs. In the future, hopefully all the epochs will log to the same, continuous line.
+You can view the Tensorboard dashboard while the model is training, or after it's done. Since the model is trained by executing `run.py` for each epoch, each epoch has its own line in the graphs. In the future, hopefully all the epochs will log to the same, continuous line.
 
-Tensorboard logs will be stored in`./logs/`. For example, if you start training a model during the morning of July 32, 2019, the logs will be stored in `./logs/31-07-2019_10:32:53/`. Within `./logs/31-07-2019_10:32:53/`, there will be folders containing the data for each epoch, eg. `./logs/31-07-2019_10:32:53/epoch_1`, `./logs/31-07-2019_10:32:53/epoch_2`.
+Tensorboard logs will be stored in `./logs/`. eg. `./logs/31-07-2019_10:32:53/` contains the logs for training that started on 31-07-2019 at 10:32:53. For every execution of `run.sh`, a new folder will be created in './logs'.
+
+Within `./logs/31-07-2019_10:32:53/`, there will be folders containing the data for each epoch, eg. `./logs/31-07-2019_10:32:53/epoch_1`.
 
 Feel free to rename, move, or delete folders; Tensorboard will update accordingly.
 
