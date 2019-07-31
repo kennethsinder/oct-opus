@@ -83,8 +83,6 @@ def generate_images(model, test_input, tar):
 def train_epoch(train_dataset, model_state, curr_step, writer):
     idx = 0
     for input_image, target in train_dataset:
-        if idx == 10:
-            break
         print('\tTraining model on next image...')
         gen_loss, disc_loss = train_step(model_state, input_image, target)
         if idx % LOG_INTERVAL == 0:

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 STARTING_EPOCH=1
-ENDING_EPOCH=2
+ENDING_EPOCH=100
 LOGDIR='logs/'$(date +"%d-%m-%Y_%H:%M:%S")
 CURR_STEP=1
 
