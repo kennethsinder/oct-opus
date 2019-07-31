@@ -5,14 +5,10 @@ import re
 import io
 import math
 import tensorflow as tf
-from src.parameters import BUFFER_SIZE
+from src.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, NUM_ACQUISITIONS
 from src.train import discriminator_loss
 from PIL import Image
 from random import randint
-
-IMAGE_DIM = 512
-PIXEL_DEPTH = 256
-NUM_ACQUISITIONS = 4
 
 
 def get_dataset(data_dir):
