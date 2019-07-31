@@ -1,10 +1,13 @@
 import os
 import time
+
 import tensorflow as tf
+import numpy as np
 import matplotlib.pyplot as plt
 
+from src.parameters import GPU, LAMBDA, LOG_INTERVAL
+
 # TODO: remove global variables
-LAMBDA = 100
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 
@@ -54,6 +57,7 @@ def train_step(model_state, input_image, target):
     model_state.discriminator_optimizer.apply_gradients(
         zip(discriminator_gradients, model_state.discriminator.trainable_variables))
 
+    return gen_loss, disc_loss
 
 def generate_images(model, test_input, tar):
     # the training=True is intentional here since
@@ -76,19 +80,27 @@ def generate_images(model, test_input, tar):
     plt.show()
 
 
-def train_epoch(train_dataset, model_state):
+def train_epoch(train_dataset, model_state, writer):
+    step = 0
     for input_image, target in train_dataset:
-        train_step(model_state, input_image, target)
+        print('\tTraining model on image {}...'.format(step))
+        gen_loss, disc_loss = train_step(model_state, input_image, target)
+        if step % LOG_INTERVAL == 0:
+            # log data to Tensorboard
+            print('\tLogging to Tensorboard...')
+            with writer.as_default():
+                tf.summary.scalar('gen_loss', gen_loss, step=step)
+                tf.summary.scalar('disc_loss', disc_loss, step=step)
+        step += 1
 
 
-def train(model_state):
-    print('Starting epoch')
+def train(model_state, writer):
+    print('Starting epoch ...')
     start = time.time()
 
-    train_epoch(model_state.train_dataset, model_state)
+    train_epoch(model_state.train_dataset, model_state, writer)
     # for inp, tar in model_state.test_dataset.take(1):
     #     generate_images(model_state.generator, inp, tar)
     model_state.save_checkpoint()
 
-    print('Time taken for epoch is {} sec\n'.format(
-        time.time() - start))
+    print('Time taken for epoch is {} sec\n'.format(time.time() - start))
