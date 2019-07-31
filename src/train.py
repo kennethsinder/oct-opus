@@ -98,11 +98,9 @@ def train(model_state, writer):
     print('Starting epoch ...')
     start = time.time()
 
-    curr_step = train_epoch(model_state.train_dataset, model_state, writer)
+    train_epoch(model_state.train_dataset, model_state, writer)
     # for inp, tar in model_state.test_dataset.take(1):
     #     generate_images(model_state.generator, inp, tar)
     model_state.save_checkpoint()
 
     print('Time taken for epoch is {} sec\n'.format(time.time() - start))
-
-    return curr_step
