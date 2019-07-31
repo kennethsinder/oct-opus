@@ -80,27 +80,25 @@ def generate_images(model, test_input, tar):
     plt.show()
 
 
-def train_epoch(train_dataset, model_state, curr_step, writer):
-    idx = 0
+def train_epoch(train_dataset, model_state, writer):
+    step = 0
     for input_image, target in train_dataset:
-        print('\tTraining model on next image...')
+        print('\tTraining model on image {}...'.format(step))
         gen_loss, disc_loss = train_step(model_state, input_image, target)
-        if idx % LOG_INTERVAL == 0:
+        if step % LOG_INTERVAL == 0:
             # log data to Tensorboard
             print('\tLogging to Tensorboard...')
             with writer.as_default():
-                tf.summary.scalar('gen_loss', gen_loss, step=curr_step)
-                tf.summary.scalar('disc_loss', disc_loss, step=curr_step)
-        idx += 1
-        curr_step += 1
-    return curr_step
+                tf.summary.scalar('gen_loss', gen_loss, step=step)
+                tf.summary.scalar('disc_loss', disc_loss, step=step)
+        step += 1
 
 
-def train(model_state, curr_step, writer):
+def train(model_state, writer):
     print('Starting epoch ...')
     start = time.time()
 
-    curr_step = train_epoch(model_state.train_dataset, model_state, curr_step, writer)
+    curr_step = train_epoch(model_state.train_dataset, model_state, writer)
     # for inp, tar in model_state.test_dataset.take(1):
     #     generate_images(model_state.generator, inp, tar)
     model_state.save_checkpoint()

@@ -16,7 +16,7 @@ def get_args():
     parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the mode')
     parser.add_argument('-l', '--logdir', metavar='PATH', help='Specify where to store the Tensorboard logs')
     parser.add_argument('-r', '--restore', action='store_true', help='Restore model state from latest checkpoint')
-    parser.add_argument('-s', '--step', type=int, required=True, help="The step that Tensorboard is currently")
+    parser.add_argument('-e', '--epoch', type=int, help='Specify the epoch number')
     return parser.parse_args()
 
 
@@ -31,12 +31,11 @@ if __name__ == '__main__':
     model_state = ModelState()
 
     if args.mode == 'train':
-        writer = tf.summary.create_file_writer(args.logdir)
+        writer = tf.summary.create_file_writer(args.logdir + '/epoch_' + str(args.epoch))
         if args.restore:
             # load from latest checkpoint
             model_state.restore_from_checkpoint()
-            step = train(model_state, args.step, writer)
-            sys.exit(step)
+        train(model_state, writer)
     else:
         # load from latest checkpoint
         model_state.restore_from_checkpoint()
