@@ -14,7 +14,7 @@ from src.parameters import GPU, BUFFER_SIZE, TEST_DATA_DIR
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the mode')
-    parser.add_argument('logdir', help='Specify where to store the Tensorboard logs')
+    parser.add_argument('-l', '--logdir', metavar='PATH', help='Specify where to store the Tensorboard logs')
     parser.add_argument('-r', '--restore', action='store_true', help='Restore model state from latest checkpoint')
     parser.add_argument('-s', '--step', type=int, required=True, help="The step that Tensorboard is currently")
     return parser.parse_args()

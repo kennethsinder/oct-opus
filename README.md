@@ -14,6 +14,14 @@ This is a stupid procedure, because we're actually spawning a new `run.py` progr
 
 The only thing we have to watch out for is SSD space (TODO: modify the code to only keep training checkpoints in a certain window and auto-delete old ones whenever we save a new one. This code might live at the bottom of `train.py` - take a look.)
 
+## To view Tensorboard
+
+Execute `tensorboard --logdir logs/`, then open `localhost:6006` in a web browser. You should see something like this:
+
+![Screenshot of the Tensorboard UI](./imgs/tensorboard_screenshot.png)
+
+You can view the Tensorboard dashboard both during or after training the model.
+
 ## To generate inferred images
 
 To generate sets of predicted images based on B-scans within test sets, put all relevant test sets within the `/private/fydp1/testing-data` folder. Note that `utils.py` will assume 4 acquisitions (i.e. 4 B-scans) for each particular cross section, so 4:1 ratio between OMAGs:Bscans. Then, run `python run.py predict`. It will create a `predicted` folder containing subfolders for every eye in the test set and in there will be the inferred images, of the same cardinality as the number of OMAGs (so you can compare each inferred image in sequence to the OMAG to see how good of a job it did at enhancing capillaries).
