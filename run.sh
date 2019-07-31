@@ -1,7 +1,7 @@
 #!/bin/bash
 
 STARTING_EPOCH=1
-ENDING_EPOCH=2
+ENDING_EPOCH=100
 LOGDIR='logs/'$(date +"%d-%m-%Y_%H:%M:%S")
 CURR_STEP=1
 
@@ -9,6 +9,6 @@ echo "Logs are being sent to $LOGDIR..."
 for i in $( seq $STARTING_EPOCH $ENDING_EPOCH )
 do
     echo "----- Epoch number $i -----"
-    python run.py -r -s $CURR_STEP train $LOGDIR
+    python run.py -r -l $LOGDIR -s $CURR_STEP train
     CURR_STEP=$?
 done
