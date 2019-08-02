@@ -9,8 +9,8 @@ from os.path import join
 from enface.slicer import Slicer
 from enface.loader import Loader
 
-LOW_BOUND_LAYER = 0
-HIGH_BOUND_LAYER = 512
+LOW_BOUND_LAYER = 60
+HIGH_BOUND_LAYER = 240
 
 
 def image_dimensions(filename):
@@ -36,5 +36,5 @@ if __name__ == '__main__':
     slicer = Slicer(eye, IMAGE_DIMENSIONS)
     slicer.multi_slice_sum(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
     slicer.multi_slice_max_norm(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
-    slicer.fly_through(eye, range(LOW_BOUND_LAYER, HIGH_BOUND_LAYER, 10), 2, 3)
+    # slicer.fly_through(eye, range(LOW_BOUND_LAYER, HIGH_BOUND_LAYER, 10), 2, 3)
 
