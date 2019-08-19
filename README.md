@@ -2,7 +2,7 @@
 
 Image processing for OCT retina and cornea cross-sections.
 
-## To run training
+## Run Training
 
 1. Activate the virtual environment.
 
@@ -16,7 +16,11 @@ This is a stupid procedure, because we're actually spawning a new `run.py` progr
 
 The only thing we have to watch out for is SSD space (TODO: modify the code to only keep training checkpoints in a certain window and auto-delete old ones whenever we save a new one. This code might live at the bottom of `train.py` - take a look.)
 
-## To view Tensorboard
+## Generate Inferred Images
+
+To generate sets of predicted images based on B-scans within test sets, put all relevant test sets within the `/private/fydp1/testing-data` folder. Note that `utils.py` will assume 4 acquisitions (i.e. 4 B-scans) for each particular cross section, so 4:1 ratio between OMAGs:Bscans. Then, run `python run.py predict`. It will create a `predicted` folder containing subfolders for every eye in the test set and in there will be the inferred images, of the same cardinality as the number of OMAGs (so you can compare each inferred image in sequence to the OMAG to see how good of a job it did at enhancing capillaries).
+
+## View Tensorboard
 
 1. SSH into `eceubuntu4` using `ssh workstation`.
 
@@ -28,7 +32,7 @@ The only thing we have to watch out for is SSD space (TODO: modify the code to o
 
 You should see something like this:
 
-![Screenshot of the Tensorboard UI](./imgs/tensorboard_screen.png)
+![Screenshot of the Tensorboard UI](tensorboard_screen.png)
 
 The x-axis is measured by training step.
 
@@ -40,11 +44,38 @@ Within `./logs/31-07-2019_10:32:53/`, there will be folders containing the data 
 
 Feel free to rename, move, or delete folders; Tensorboard will update accordingly.
 
-## To generate inferred images
+## Generate Enface Images
 
-To generate sets of predicted images based on B-scans within test sets, put all relevant test sets within the `/private/fydp1/testing-data` folder. Note that `utils.py` will assume 4 acquisitions (i.e. 4 B-scans) for each particular cross section, so 4:1 ratio between OMAGs:Bscans. Then, run `python run.py predict`. It will create a `predicted` folder containing subfolders for every eye in the test set and in there will be the inferred images, of the same cardinality as the number of OMAGs (so you can compare each inferred image in sequence to the OMAG to see how good of a job it did at enhancing capillaries).
+1. Remember to ssh using the `-Y` flag
 
-## Setup Procedure (for ecelinux)
+2. Execute `python3 ./plot.py` and follow prompts
+
+3. Change `LOW_BOUND_LAYER` and `HIGH_BOUND_LAYER` in `plot.py` as necessary
+
+4. Save image using the matplotlib UI
+
+## General Recommendations and Links
+
+- Adding the following to your local machine's `~/.ssh/config` file will automatically do the port forwarding stuff every time you run the command `ssh workstation` (coupling together the SSHing in and also forwarding your 8888 port to the server's):
+
+```
+Host workstation
+    HostName eceUbuntu4.uwaterloo.ca
+    User <yourusername>
+    LocalForward 8888 localhost:8888
+    LocalForward 6006 localhost:6006
+```
+
+There are other things you can do, like setting up a `ProxyJump` via another campus server that happens to be accessible from outside, so that you don't have to launch a VPN or be physically present on campus to directly connect to `eceUbuntu4.uwaterloo.ca`.
+
+- Use `gpustat` to keep an eye on GPU stats like temperature as you run training.
+
+- Use `ls -hal` to keep an eye on groups and permissions for files in `/private/fydp1/oct-opus`, make sure group `fydp2019a` has access (Pei Lin has been using 770 perms so far with success), `chgrp` or `chmod` as necessary to ensure this.
+
+- Once you're SSHed in and wanting to start your Jupyter Notebook server, first spin up `tmux` (`tmux new -s coolcats`). Then you can Ctrl+B, D to detach from that tmux session anytime (or lose your Internet connection and Jupyter will keep running in the background. Then `tmux attach -t coolcats` to re-attach to that tmux session. [More information here](https://towardsdatascience.com/jupyter-and-tensorboard-in-tmux-5e5d202a4fb6).
+
+
+## Run Jupyter Notebook (Deprecated)
 
 1. Go to eceubuntu4 via `ssh username@eceubuntu4.uwaterloo.ca` (may have to use `username@ecelinux4.uwaterloo.ca` as proxy).
 
@@ -80,69 +111,3 @@ To generate sets of predicted images based on B-scans within test sets, put all 
 6. Go to `http://localhost:8000/?token=96e57ab83cd927178dd00e463bb4af11b54053d05829041a`, replacing the token in the URL with your own.
 
 7. Use Ctrl-C to close the ssh tunnel and the Jupyter server.
-
-## Enface Procedure (for ecelinux)
-
-1. ssh to eceubuntu4 using the `-Y` flag
-
-2. go to your source directory
-
-3. `cd enface`
-
-4. `./enface.sh`, a matlab terminal will pop up
-
-5. enter the datestamp of the directory as per the prompt (e.g. `2015-09-07-Images-46`). The output should look something like the following.
-
-   ```bash
-   pl3li@eceubuntu4: /private/fydp1/pl3li-oct-opus/pl3li-playground:$ ./enface.sh
-   MATLAB is selecting SOFTWARE OPENGL rendering.
-
-                                                                                             < M A T L A B (R) >
-                                                                                   Copyright 1984-2018 The MathWorks, Inc.
-                                                                                    R2018b (9.5.0.944444) 64-bit (glnxa64)
-                                                                                               August 28, 2018
-   ```
-
-
-    To get started, type doc.
-    For product information, visit www.mathworks.com.
-
-
-        Classroom License -- for classroom instructional use only.
-    please provide datestamp for /private/fydp1/oct-opus-data/??? : 2015-09-07-Images-46
-    Warning: Directory already exists.
-    > In matlab_combine_images (line 13)
-      In run (line 91)
-    1280 images found
-    Step 1/3 Complete
-    Step 2/3 Complete
-    Step 3/3 Complete
-    Warning: MATLAB has disabled some advanced graphics rendering features by switching to software OpenGL. For more information, click <a href="matlab:opengl('problems')">here</a>.
-    Warning: Image is too big to fit on screen; displaying at 67%
-    ```
-
-6. two images should pop up once all steps have completed, save these if you wish
-
-7. type `rmdir(dst, 's')` if you want to remove the intermediate cross-section images
-
-8. `exit`
-
-## Other General Recommendations and Links
-
-- Adding the following to your local machine's `~/.ssh/config` file will automatically do the port forwarding stuff every time you run the command `ssh workstation` (coupling together the SSHing in and also forwarding your 8888 port to the server's):
-
-```
-Host workstation
-    HostName eceUbuntu4.uwaterloo.ca
-    User <yourusername>
-    LocalForward 8888 localhost:8888
-    LocalForward 6006 localhost:6006
-```
-
-There are other things you can do, like setting up a `ProxyJump` via another campus server that happens to be accessible from outside, so that you don't have to launch a VPN or be physically present on campus to directly connect to `eceUbuntu4.uwaterloo.ca`.
-
-- Use `gpustat` to keep an eye on GPU stats like temperature as you run training.
-
-- Use `ls -hal` to keep an eye on groups and permissions for files in `/private/fydp1/oct-opus`, make sure group `fydp2019a` has access (Pei Lin has been using 770 perms so far with success), `chgrp` or `chmod` as necessary to ensure this.
-
-- Once you're SSHed in and wanting to start your Jupyter Notebook server, first spin up `tmux` (`tmux new -s coolcats`). Then you can Ctrl+B, D to detach from that tmux session anytime (or lose your Internet connection and Jupyter will keep running in the background. Then `tmux attach -t coolcats` to re-attach to that tmux session. [More information here](https://towardsdatascience.com/jupyter-and-tensorboard-in-tmux-5e5d202a4fb6).
