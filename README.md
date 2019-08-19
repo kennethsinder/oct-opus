@@ -28,7 +28,7 @@ The only thing we have to watch out for is SSD space (TODO: modify the code to o
 
 You should see something like this:
 
-![Screenshot of the Tensorboard UI](./imgs/tensorboard_screen.png)
+![Screenshot of the Tensorboard UI](tensorboard_screen.png)
 
 The x-axis is measured by training step.
 
