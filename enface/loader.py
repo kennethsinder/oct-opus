@@ -17,7 +17,10 @@ class Loader:
         self.image_dimensions = image_dimensions
 
     def invert_color_scheme(self, filename):
-        return PIL.ImageOps.invert(Image.open(filename))
+        return PIL.ImageOps.invert(self.load_single_image(filename))
+
+    def load_single_image(self, filename):
+        return Image.open(filename)
 
     def load_data_set(self):
         num_images = len(listdir(self.src_dir))
@@ -33,7 +36,7 @@ class Loader:
                 if self.input_type == self.InputType.BSCAN:
                     img = self.invert_color_scheme(join(self.src_dir, '{}.png'.format(j)))
                 else:
-                    img = PIL.Image.open(join(self.src_dir, '{}.png'.format(j)))
+                    img = self.load_single_image(join(self.src_dir, '{}.png'.format(j)))
                 eye[:, :, i] = np.asarray(img)
             except FileNotFoundError:
                 i -= 1
