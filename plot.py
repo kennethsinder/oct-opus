@@ -18,7 +18,8 @@ def image_dimensions(filename):
 
 
 if __name__ == '__main__':
-    src_dir = str(input("Enter the absolute path to the images you wish to process ... : "))
+    src_dir = str(
+        input("Enter the absolute path to the images you wish to process ... : "))
     img_type = str(input("Enter the image type {OMAG|BSCAN} ... : "))
     if img_type == "OMAG":
         input_type = Loader.InputType.OMAG
@@ -36,5 +37,5 @@ if __name__ == '__main__':
     slicer = Slicer(eye, IMAGE_DIMENSIONS)
     slicer.multi_slice_sum(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
     slicer.multi_slice_max_norm(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
-    # slicer.fly_through(eye, range(LOW_BOUND_LAYER, HIGH_BOUND_LAYER, 10), 2, 3)
-
+    slicer.fly_through(eye, range(LOW_BOUND_LAYER, HIGH_BOUND_LAYER,
+                                  (HIGH_BOUND_LAYER - LOW_BOUND_LAYER) // 6), 2, 3)
