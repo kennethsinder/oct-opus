@@ -5,15 +5,20 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.parameters import GPU, LAMBDA, LOG_INTERVAL
+from src.parameters import GPU, LAMBDA, LOG_INTERVAL, START_ROW, END_ROW
 
 # TODO: remove global variables
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
+def slice_tensor(t):
+    dim_1, dim_2, dim_3, dim_4 = t.get_shape().as_list()
+    start_row = START_ROW if START_ROW is not None else 0
+    end_row = END_ROW if END_ROW is not None else (dim_2 // 2)
+    return tf.slice(t, (0, start_row, 0, 0), (dim_1, end_row - start_row, dim_3, dim_4))
 
 def discriminator_loss(disc_real_output, disc_generated_output):
-    disc_real_output_c = disc_real_output #[60:256]
-    disc_generated_output_c = disc_generated_output #[60:256]
+    disc_real_output_c = disc_real_output
+    disc_generated_output_c = disc_generated_output
 
     real_loss = loss_object(tf.ones_like(disc_real_output_c), disc_real_output_c)
 
@@ -26,12 +31,18 @@ def discriminator_loss(disc_real_output, disc_generated_output):
 
 
 def generator_loss(disc_generated_output, gen_output, target):
-    disc_generated_output_c = disc_generated_output #[60:256]
-    gen_output_c = gen_output #[60:256]
-    target_c = target #[60:256]
+    gen_output_c = slice_tensor(gen_output)
+    target_c = slice_tensor(target)
+    # TODO: test this shit to make sure we're getting the _right_ slice
+    # for some reason i cant figure out the syntax to do an imshow from a tensor
+    # am i doing something dumb? r we losing tensor information in the slice?
+    # import pdb; pdb.set_trace()
+    # plt.imshow(tf.cast(tf.squeeze(target_c[0]), tf.float32) * 0.5 + 0.5)
+    # plt.show()
+    import sys; sys.exit(1)
 
     gan_loss = loss_object(tf.ones_like(
-        disc_generated_output_c), disc_generated_output_c)
+        disc_generated_output), disc_generated_output)
 
     # mean absolute error
     l1_loss = tf.reduce_mean(tf.abs(target_c - gen_output_c))
