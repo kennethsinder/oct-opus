@@ -20,3 +20,7 @@ NUM_ACQUISITIONS = 4
 
 # Used by Tensorboard
 LOG_INTERVAL = 10
+
+# Rows we care about in each image
+START_ROW = 50
+END_ROW = 256
