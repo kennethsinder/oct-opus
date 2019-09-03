@@ -38,6 +38,12 @@ def random_crop(input_image, real_image):
         stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
     return cropped_image[0], cropped_image[1]
 
+def random_noise(input_image):
+    if tf.random.uniform(()) > 0.5:
+        converted_image = tf.image.convert_image_dtype(input_image, tf.float32)
+        noise = tf.random.normal(input_image.shape, stddev=0.1)
+        input_image = tf.image.convert_image_dtype(converted_image + noise, tf.uint8)
+    return input_image
 
 @tf.function()
 def random_jitter(input_image, real_image):
@@ -75,7 +81,7 @@ def bscan_num_to_omag_num(bscan_num):
     return ((bscan_num - 1) // NUM_ACQUISITIONS) + 1
 
 
-def get_images(bscan_path, use_random_jitter=True):
+def get_images(bscan_path, use_random_jitter=True, use_random_noise=True):
     """
     Returns a pair of tensors containing the given B-scan and its
     corresponding OMAG. |bscan_path| should be in directory 'xzIntensity'
@@ -110,6 +116,10 @@ def get_images(bscan_path, use_random_jitter=True):
     else:
         bscan_img, omag_img = resize(
             bscan_img, omag_img, IMAGE_DIM, IMAGE_DIM)
+
+    if use_random_noise:
+        # don't add noise to the omag image
+        bscan_img = random_noise(bscan_img)
 
     return bscan_img, omag_img
 
