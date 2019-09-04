@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.parameters import GPU, LAMBDA, LOG_INTERVAL, START_ROW, END_ROW
+from src.parameters import GPU, LAMBDA, SCALAR_LOG_INTERVAL, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
 
 # TODO: remove global variables
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
@@ -65,7 +65,7 @@ def train_step(model_state, input_image, target):
     model_state.discriminator_optimizer.apply_gradients(
         zip(discriminator_gradients, model_state.discriminator.trainable_variables))
 
-    return gen_loss, disc_loss
+    return gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss
 
 def generate_images(model, test_input, tar):
     # the training=True is intentional here since
@@ -91,14 +91,20 @@ def generate_images(model, test_input, tar):
 def train_epoch(train_dataset, model_state, writer):
     step = 0
     for input_image, target in train_dataset:
-        print('\tTraining model on image {}...'.format(step))
-        gen_loss, disc_loss = train_step(model_state, input_image, target)
-        if step % LOG_INTERVAL == 0:
-            # log data to Tensorboard
-            print('\tLogging to Tensorboard...')
+        gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss = train_step(model_state, input_image, target)
+        if step % SCALAR_LOG_INTERVAL == 0:
+            print('\tStep {}: logging scalars to Tensorboard...'.format(step))
             with writer.as_default():
                 tf.summary.scalar('gen_loss', gen_loss, step=step)
                 tf.summary.scalar('disc_loss', disc_loss, step=step)
+        if step % IMAGE_LOG_INTERVAL == 0:
+            print('\tStep {}: logging images to Tensorboard...'.format(step))
+            with writer.as_default():
+                tf.summary.image('input_image', input_image, step=step)
+                tf.summary.image('target', target, step=step)
+                tf.summary.image('gen_output', gen_output, step=step)
+                tf.summary.image('disc_real_output', disc_real_output, step=step)
+                tf.summary.image('disc_generated_output', disc_generated_output, step=step)
         step += 1
 
 

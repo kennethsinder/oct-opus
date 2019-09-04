@@ -26,7 +26,7 @@ To generate sets of predicted images based on B-scans within test sets, put all 
 
 2. Activate the virtual environment.
 
-3. Execute `tensorboard --logdir logs/`.
+3. Execute `tensorboard --logdir logs/ --samples_per_plugin images=100`.
 
 4. Open `localhost:6006` in a web browser.
 
