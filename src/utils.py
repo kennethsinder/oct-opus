@@ -45,7 +45,6 @@ def random_noise(input_image):
         input_image = tf.image.convert_image_dtype(converted_image + noise, tf.uint8)
     return input_image
 
-@tf.function()
 def random_jitter(input_image, real_image):
     if tf.random.uniform(()) > 0.5:
         input_image, real_image = resize(
