@@ -1,14 +1,11 @@
-import os
-import sys
 import argparse
-import glob
 
 import tensorflow as tf
 
-from src.train import train
 from src.model_state import ModelState
+from src.parameters import GPU, TEST_DATA_DIR
+from src.train import train
 from src.utils import generate_inferred_images
-from src.parameters import GPU, BUFFER_SIZE, TEST_DATA_DIR
 
 
 def get_args():
