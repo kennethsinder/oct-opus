@@ -93,6 +93,8 @@ def train_epoch(train_dataset, model_state, writer, epoch_num):
     disc_loss_sum = 0
     idx = 0
     for input_image, target in train_dataset:
+        if idx == 50:
+            break
         gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss = train_step(model_state, input_image, target)
         if idx % IMAGE_LOG_INTERVAL == 0:
             print('\tStep {}: logging images to Tensorboard...'.format(step))
