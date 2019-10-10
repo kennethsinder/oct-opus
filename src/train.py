@@ -88,16 +88,13 @@ def generate_images(model, test_input, tar):
     plt.show()
 
 
-def train_epoch(train_dataset, model_state, writer):
-    step = 0
+def train_epoch(train_dataset, model_state, writer, epoch_num):
+    gen_loss_sum = 0
+    disc_loss_sum = 0
+    idx = 0
     for input_image, target in train_dataset:
         gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss = train_step(model_state, input_image, target)
-        if step % SCALAR_LOG_INTERVAL == 0:
-            print('\tStep {}: logging scalars to Tensorboard...'.format(step))
-            with writer.as_default():
-                tf.summary.scalar('gen_loss', gen_loss, step=step)
-                tf.summary.scalar('disc_loss', disc_loss, step=step)
-        if step % IMAGE_LOG_INTERVAL == 0:
+        if idx % IMAGE_LOG_INTERVAL == 0:
             print('\tStep {}: logging images to Tensorboard...'.format(step))
             with writer.as_default():
                 tf.summary.image('input_image', input_image, step=step)
@@ -105,16 +102,21 @@ def train_epoch(train_dataset, model_state, writer):
                 tf.summary.image('gen_output', gen_output, step=step)
                 tf.summary.image('disc_real_output', disc_real_output, step=step)
                 tf.summary.image('disc_generated_output', disc_generated_output, step=step)
-        step += 1
+        gen_loss_sum += gen_loss
+        disc_loss_sum += disc_loss
+        idx += 1
+    with writer.as_default():
+        tf.summary.scalar('avg_gen_loss', gen_loss_sum / len(train_dataset), step=epoch_num)
+        tf.summary.scalar('avg_disc_loss', disc_loss_sum / len(train_dataset), step=epoch_num)
 
 
-def train(model_state, writer):
-    print('Starting epoch ...')
+def train(model_state, writer, epoch_num):
+    print('Starting epoch {} ...'.format(epoch_num))
     start = time.time()
 
-    train_epoch(model_state.train_dataset, model_state, writer)
+    atrain_epoch(model_state.train_dataset, model_state, writer, epoch_num)
     # for inp, tar in model_state.test_dataset.take(1):
     #     generate_images(model_state.generator, inp, tar)
     model_state.save_checkpoint()
 
-    print('Time taken for epoch is {} sec\n'.format(time.time() - start))
+    print('Time taken for epoch {} is {} sec\n'.format(epoch_num, time.time() - start))

@@ -35,7 +35,7 @@ if __name__ == '__main__':
         if args.restore:
             # load from latest checkpoint
             model_state.restore_from_checkpoint()
-        train(model_state, writer)
+        train(model_state, writer, args.epoch)
     else:
         # load from latest checkpoint
         model_state.restore_from_checkpoint()
