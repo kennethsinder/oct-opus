@@ -1,14 +1,15 @@
 import glob
+import io
 import os
 import os.path
 import re
-import io
-import math
+from random import randint
+
 import tensorflow as tf
+from PIL import Image
+
 from src.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, NUM_ACQUISITIONS
 from src.train import discriminator_loss
-from PIL import Image
-from random import randint
 
 
 def get_dataset(data_dir):
@@ -25,18 +26,16 @@ def get_dataset(data_dir):
 
 
 def resize(input_image, real_image, height, width):
-    input_image = tf.image.resize(
-        input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-    real_image = tf.image.resize(
-        real_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    input_image = tf.image.resize(input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    real_image = tf.image.resize(real_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     return input_image, real_image
 
 
 def random_crop(input_image, real_image):
     stacked_image = tf.stack([input_image, real_image], axis=0)
-    cropped_image = tf.image.random_crop(
-        stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
+    cropped_image = tf.image.random_crop(stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
     return cropped_image[0], cropped_image[1]
+
 
 def random_noise(input_image):
     if tf.random.uniform(()) > 0.5:
@@ -45,16 +44,13 @@ def random_noise(input_image):
         input_image = tf.image.convert_image_dtype(converted_image + noise, tf.uint8)
     return input_image
 
-@tf.function()
+
 def random_jitter(input_image, real_image):
     if tf.random.uniform(()) > 0.5:
-        input_image, real_image = resize(
-            input_image, real_image, IMAGE_DIM + 30, IMAGE_DIM + 30)
-
+        input_image, real_image = resize(input_image, real_image, IMAGE_DIM + 30, IMAGE_DIM + 30)
         input_image, real_image = random_crop(input_image, real_image)
     else:
-        input_image, real_image = resize(
-            input_image, real_image, IMAGE_DIM, IMAGE_DIM)
+        input_image, real_image = resize(input_image, real_image, IMAGE_DIM, IMAGE_DIM)
 
     if tf.random.uniform(()) > 0.5:
         # random mirroring
@@ -102,8 +98,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=True):
 
     omag_num = bscan_num_to_omag_num(bscan_num)
 
-    omag_img = load_image(os.path.join(
-        dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle)
+    omag_img = load_image(os.path.join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle)
 
     bscan_img = tf.cast(bscan_img, tf.float32)
     omag_img = tf.cast(omag_img, tf.float32)
@@ -114,8 +109,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=True):
     if use_random_jitter:
         bscan_img, omag_img = random_jitter(bscan_img, omag_img)
     else:
-        bscan_img, omag_img = resize(
-            bscan_img, omag_img, IMAGE_DIM, IMAGE_DIM)
+        bscan_img, omag_img = resize(bscan_img, omag_img, IMAGE_DIM, IMAGE_DIM)
 
     if use_random_noise:
         # don't add noise to the omag image
@@ -144,11 +138,8 @@ def generate_inferred_images(model_state, test_data_dir):
                 # We only want 1 out of every NUM_ACQUISITIONS B-scans to gather
                 # a prediction from.
                 continue
-            # TODO: this is dumb, find a better way later (we have an issue
-            # open that includes this).
-            if not os.path.isfile(os.path.join(
-                dataset_path, 'OMAG Bscans', '{}.png'.format(
-                    bscan_num_to_omag_num(i)))):
+            # TODO: this is dumb, find a better way later (we have an issue open that includes this).
+            if not os.path.isfile(os.path.join(dataset_path, 'OMAG Bscans', '{}.png'.format(bscan_num_to_omag_num(i)))):
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
@@ -161,19 +152,15 @@ def generate_inferred_images(model_state, test_data_dir):
             prediction = model_state.generator(inp, training=True)
 
             # Compute the loss.
-            disc_generated_output = model_state.discriminator(
-                [inp, prediction], training=True)
-            disc_real_output = model_state.discriminator(
-                [inp, tar], training=True)
-            disc_loss = discriminator_loss(
-                disc_real_output, disc_generated_output)
+            disc_generated_output = model_state.discriminator([inp, prediction], training=True)
+            disc_real_output = model_state.discriminator([inp, tar], training=True)
+            disc_loss = discriminator_loss(disc_real_output, disc_generated_output)
             if i < 10:
                 print('Discriminator loss: {}'.format(disc_loss))
 
             # Save the prediction to disk under a sub-directory.
             predicted_img = prediction[0]
-            img_to_save = tf.image.encode_png(tf.dtypes.cast(
-                (predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
+            img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
             os.makedirs('./predicted/{}'.format(dataset_name), exist_ok=True)
             write_op = tf.io.write_file('./predicted/{}/{}.png'.format(
                 dataset_name, i // NUM_ACQUISITIONS + 1,

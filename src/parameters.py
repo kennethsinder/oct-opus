@@ -1,8 +1,8 @@
 GPU = '/device:GPU:0'
 
 # Training and testing data set locations
-TRAIN_DATA_DIR = '/private/fydp1/training-data'
-TEST_DATA_DIR = '/private/fydp1/testing-data'
+TRAIN_DATA_DIR = '/Users/peilinli/Documents/fydp.nosync/optics-project/training-data'
+TEST_DATA_DIR = '/Users/peilinli/Documents/fydp.nosync/optics-project/testing-data'
 
 # This should actually be much more but also that will blow up the RAM
 # CURRENTLY UNUSED! See https://github.com/kennethsinder/oct-opus/pull/35
