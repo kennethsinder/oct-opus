@@ -99,11 +99,11 @@ def train_epoch(train_dataset, model_state, writer, epoch_num):
         if idx % IMAGE_LOG_INTERVAL == 0:
             print('\tStep {}: logging images to Tensorboard...'.format(idx))
             with writer.as_default():
-                tf.summary.image('input_image', input_image, step=idx)
-                tf.summary.image('target', target, step=idx)
-                tf.summary.image('gen_output', gen_output, step=idx)
-                tf.summary.image('disc_real_output', disc_real_output, step=idx)
-                tf.summary.image('disc_generated_output', disc_generated_output, step=idx)
+                tf.summary.image('{}_input_image'.format(idx), input_image, step=idx)
+                tf.summary.image('{}_target'.format(idx), target, step=idx)
+                tf.summary.image('{}_gen_output'.format(idx), gen_output, step=idx)
+                tf.summary.image('{}_disc_real_output'.format(idx), disc_real_output, step=idx)
+                tf.summary.image('{}_disc_generated_output'.format(idx), disc_generated_output, step=idx)
         gen_loss_sum += gen_loss
         disc_loss_sum += disc_loss
         idx += 1
