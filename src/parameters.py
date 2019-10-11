@@ -19,8 +19,7 @@ PIXEL_DEPTH = 256
 NUM_ACQUISITIONS = 4
 
 # Used by Tensorboard
-SCALAR_LOG_INTERVAL = 10
-IMAGE_LOG_INTERVAL = 10
+IMAGE_LOG_INTERVAL = 100
 
 # Rows we care about in each image
 START_ROW = 50
