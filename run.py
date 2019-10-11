@@ -1,19 +1,17 @@
-import os
-import sys
 import argparse
-import glob
 
 import tensorflow as tf
 
-from src.train import train
 from src.model_state import ModelState
+from src.parameters import GPU, TEST_DATA_DIR
+from src.train import train
 from src.utils import generate_inferred_images
-from src.parameters import GPU, BUFFER_SIZE, TEST_DATA_DIR
 
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the mode')
+    parser.add_argument('hardware', choices=['cpu', 'gpu'], help='Specify whether script is being run on CPU or GPU')
     parser.add_argument('-l', '--logdir', metavar='PATH', help='Specify where to store the Tensorboard logs')
     parser.add_argument('-r', '--restore', action='store_true', help='Restore model state from latest checkpoint')
     parser.add_argument('-e', '--epoch', type=int, help='Specify the epoch number')
@@ -23,10 +21,11 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    device_name = tf.test.gpu_device_name()
-    if device_name != GPU:
-        raise SystemError('GPU device not found')
-    print('Found GPU at: {}'.format(device_name))
+    if args.hardware == "gpu":
+        device_name = tf.test.gpu_device_name()
+        if device_name != GPU:
+            raise SystemError('GPU device not found')
+        print('Found GPU at: {}'.format(device_name))
 
     model_state = ModelState()
 
