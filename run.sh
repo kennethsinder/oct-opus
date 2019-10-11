@@ -12,11 +12,17 @@ else
     ENDING_EPOCH=$2
 fi
 
+if [ "$3" = "" ];then
+    HARDWARE="gpu"
+else
+    HARDWARE=$3
+fi
+
 LOGDIR='logs/'$(date +"%d-%m-%Y_%H:%M:%S")
 
 echo "Logs are being sent to $LOGDIR..."
 for i in $( seq $STARTING_EPOCH $ENDING_EPOCH )
 do
     echo "----- Epoch number $i -----"
-    python run.py --restore --logdir $LOGDIR --epoch $i train
+    python run.py --restore --logdir $LOGDIR --epoch $i train $HARDWARE
 done

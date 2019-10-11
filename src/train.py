@@ -1,14 +1,13 @@
-import os
 import time
 
-import tensorflow as tf
-import numpy as np
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
-from src.parameters import GPU, LAMBDA, SCALAR_LOG_INTERVAL, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
+from src.parameters import LAMBDA, SCALAR_LOG_INTERVAL, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
 
 # TODO: remove global variables
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+
 
 def slice_tensor(t):
     dim_1, dim_2, dim_3, dim_4 = t.get_shape().as_list()
@@ -16,29 +15,21 @@ def slice_tensor(t):
     end_row = END_ROW if END_ROW is not None else (dim_2 // 2)
     return tf.slice(t, (0, start_row, 0, 0), (dim_1, end_row - start_row, dim_3, dim_4))
 
+
 def discriminator_loss(disc_real_output, disc_generated_output):
     real_loss = loss_object(tf.ones_like(disc_real_output), disc_real_output)
-
-    generated_loss = loss_object(tf.zeros_like(
-        disc_generated_output), disc_generated_output)
-
+    generated_loss = loss_object(tf.zeros_like(disc_generated_output), disc_generated_output)
     total_disc_loss = real_loss + generated_loss
-
     return total_disc_loss
 
 
 def generator_loss(disc_generated_output, gen_output, target):
     gen_output_c = slice_tensor(gen_output)
     target_c = slice_tensor(target)
-
-    gan_loss = loss_object(tf.ones_like(
-        disc_generated_output), disc_generated_output)
-
+    gan_loss = loss_object(tf.ones_like(disc_generated_output), disc_generated_output)
     # mean absolute error
     l1_loss = tf.reduce_mean(tf.abs(target_c - gen_output_c))
-
     total_gen_loss = gan_loss + (LAMBDA * l1_loss)
-
     return total_gen_loss
 
 
@@ -47,25 +38,20 @@ def train_step(model_state, input_image, target):
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
         gen_output = model_state.generator(input_image, training=True)
 
-        disc_real_output = model_state.discriminator(
-            [input_image, target], training=True)
-        disc_generated_output = model_state.discriminator(
-            [input_image, gen_output], training=True)
+        disc_real_output = model_state.discriminator([input_image, target], training=True)
+        disc_generated_output = model_state.discriminator([input_image, gen_output], training=True)
 
         gen_loss = generator_loss(disc_generated_output, gen_output, target)
         disc_loss = discriminator_loss(disc_real_output, disc_generated_output)
 
-    generator_gradients = gen_tape.gradient(
-        gen_loss, model_state.generator.trainable_variables)
-    discriminator_gradients = disc_tape.gradient(
-        disc_loss, model_state.discriminator.trainable_variables)
+    generator_gradients = gen_tape.gradient(gen_loss, model_state.generator.trainable_variables)
+    discriminator_gradients = disc_tape.gradient(disc_loss, model_state.discriminator.trainable_variables)
 
-    model_state.generator_optimizer.apply_gradients(
-        zip(generator_gradients, model_state.generator.trainable_variables))
-    model_state.discriminator_optimizer.apply_gradients(
-        zip(discriminator_gradients, model_state.discriminator.trainable_variables))
+    model_state.generator_optimizer.apply_gradients(zip(generator_gradients, model_state.generator.trainable_variables))
+    model_state.discriminator_optimizer.apply_gradients(zip(discriminator_gradients, model_state.discriminator.trainable_variables))
 
     return gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss
+
 
 def generate_images(model, test_input, tar):
     # the training=True is intentional here since
@@ -80,7 +66,7 @@ def generate_images(model, test_input, tar):
     title = ['Input Image', 'Ground Truth', 'Predicted Image']
 
     for i in range(3):
-        plt.subplot(1, 3, i+1)
+        plt.subplot(1, 3, i + 1)
         plt.title(title[i])
         # getting the pixel values between [0, 1] to plot it.
         plt.imshow(tf.squeeze(display_list[i]) * 0.5 + 0.5)
@@ -91,7 +77,8 @@ def generate_images(model, test_input, tar):
 def train_epoch(train_dataset, model_state, writer):
     step = 0
     for input_image, target in train_dataset:
-        gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss = train_step(model_state, input_image, target)
+        gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss = train_step(model_state, input_image,
+                                                                                              target)
         if step % SCALAR_LOG_INTERVAL == 0:
             print('\tStep {}: logging scalars to Tensorboard...'.format(step))
             with writer.as_default():

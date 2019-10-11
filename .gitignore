@@ -114,3 +114,7 @@ venv.bak/
 
 # Pycharm
 .idea
+
+# tensorboard logging
+log
+logs
