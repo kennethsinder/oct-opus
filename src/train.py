@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.parameters import GPU, LAMBDA, SCALAR_LOG_INTERVAL, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
+from src.parameters import GPU, LAMBDA, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
 
 # TODO: remove global variables
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
@@ -97,26 +97,26 @@ def train_epoch(train_dataset, model_state, writer, epoch_num):
             break
         gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss = train_step(model_state, input_image, target)
         if idx % IMAGE_LOG_INTERVAL == 0:
-            print('\tStep {}: logging images to Tensorboard...'.format(step))
+            print('\tStep {}: logging images to Tensorboard...'.format(idx))
             with writer.as_default():
-                tf.summary.image('input_image', input_image, step=step)
-                tf.summary.image('target', target, step=step)
-                tf.summary.image('gen_output', gen_output, step=step)
-                tf.summary.image('disc_real_output', disc_real_output, step=step)
-                tf.summary.image('disc_generated_output', disc_generated_output, step=step)
+                tf.summary.image('input_image', input_image, step=idx)
+                tf.summary.image('target', target, step=idx)
+                tf.summary.image('gen_output', gen_output, step=idx)
+                tf.summary.image('disc_real_output', disc_real_output, step=idx)
+                tf.summary.image('disc_generated_output', disc_generated_output, step=idx)
         gen_loss_sum += gen_loss
         disc_loss_sum += disc_loss
         idx += 1
     with writer.as_default():
-        tf.summary.scalar('avg_gen_loss', gen_loss_sum / len(train_dataset), step=epoch_num)
-        tf.summary.scalar('avg_disc_loss', disc_loss_sum / len(train_dataset), step=epoch_num)
+        tf.summary.scalar('avg_gen_loss', gen_loss_sum / idx, step=epoch_num)
+        tf.summary.scalar('avg_disc_loss', disc_loss_sum / idx, step=epoch_num)
 
 
 def train(model_state, writer, epoch_num):
     print('Starting epoch {} ...'.format(epoch_num))
     start = time.time()
 
-    atrain_epoch(model_state.train_dataset, model_state, writer, epoch_num)
+    train_epoch(model_state.train_dataset, model_state, writer, epoch_num)
     # for inp, tar in model_state.test_dataset.take(1):
     #     generate_images(model_state.generator, inp, tar)
     model_state.save_checkpoint()
