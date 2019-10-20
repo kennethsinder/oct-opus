@@ -1,6 +1,5 @@
 import numpy as np
 from enum import Enum
-import matplotlib.pyplot as plt
 from skimage.transform import resize
 
 
@@ -14,31 +13,24 @@ class Slicer:
         self.eye = eye
         self.image_dimensions = image_dimensions
 
-    def fly_through(self, eye, slice_indices, nrows=1, ncols=7):
-        if (nrows * ncols != len(slice_indices)) or (len(slice_indices) == 0):
-            raise ValueError('InvalidDimensions')
-        fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
-        for row in range(nrows):
-            for col in range(ncols):
-                eye_slice = resize(eye[slice_indices[row * col], :, :], self.image_dimensions, anti_aliasing=True)
-                axes[row][col].imshow(eye_slice, cmap='gray')
-                axes[row][col].axis('off')
-        plt.show()
+    def fly_through(self, eye, slice_indices, anti_aliasing=False):
+        res = []
+        for slice_index in slice_indices:
+            eye_slice = resize(eye[slice_index, :, :], self.image_dimensions, anti_aliasing=anti_aliasing)
+            res.append(eye_slice)
+        return res
 
-    def multi_slice_sum(self, eye, lower, upper):
+    def multi_slice_sum(self, eye, lower, upper, anti_aliasing=False):
         _, y, z = eye.shape
         layers = np.ndarray(shape=(upper - lower, y, z), dtype=float)
         count = 0
         for level in range(lower, upper):
             layers[count, :, :] = eye[level, :, :]
             count += 1
-
         eye_summed = np.sum(layers, 0)
-        resized_img = resize(eye_summed, self.image_dimensions, anti_aliasing=True)
-        plt.imshow(resized_img, cmap='gray')
-        plt.show()
+        return resize(eye_summed, self.image_dimensions, anti_aliasing=anti_aliasing)
 
-    def multi_slice_max_norm(self, eye, lower, upper):
+    def multi_slice_max_norm(self, eye, lower, upper, anti_aliasing=False):
         (_, y, z) = eye.shape
         layers = np.ndarray(shape=(upper - lower, y, z), dtype=float)
         count = 0
@@ -47,18 +39,13 @@ class Slicer:
             count += 1
         max_val = np.max(layers)
         eye_norm = np.max(np.divide(layers, max_val), 0)
-        resized_img = resize(eye_norm, self.image_dimensions, anti_aliasing=True)
-        plt.imshow(resized_img, cmap='gray')
-        plt.show()
+        return resize(eye_norm, self.image_dimensions, anti_aliasing=anti_aliasing)
 
     def single_slice(self, eye, level, orientation: Orientation):
         if orientation == self.Orientation.DEPTH:
             eye_slice = eye[level, :, :]
         elif orientation == self.Orientation.TOP:
             eye_slice = eye[:, level, :]
-        elif orientation == self.Orientation.SIDE:
+        else:  # orientation == self.Orientation.SIDE:
             eye_slice = eye[:, :, level]
-        else:
-            return ValueError('InvalidOrientation')
-        plt.imshow(eye_slice, cmap='gray')
-        plt.show()
+        return eye_slice
