@@ -8,9 +8,7 @@ from os import listdir
 from os.path import join
 from enface.slicer import Slicer
 from enface.loader import Loader
-
-LOW_BOUND_LAYER = 60
-HIGH_BOUND_LAYER = 240
+import matplotlib.pyplot as plt
 
 
 def image_dimensions(filename):
@@ -28,14 +26,27 @@ if __name__ == '__main__':
     else:
         raise Exception("UnknownInputType")
 
+    # parameters
+    LOW_BOUND_LAYER = 60
+    HIGH_BOUND_LAYER = 240
     IMAGE_DIMENSIONS = image_dimensions(join(src_dir, listdir(src_dir)[0]))
     print("Image Dimensions are " + str(IMAGE_DIMENSIONS))
+
+    # loading
     loader = Loader(src_dir, input_type, IMAGE_DIMENSIONS)
     eye = loader.load_data_set()
     print("Loading Complete")
 
+    plt.gray()  # set to gray scale
+
+    # slices
     slicer = Slicer(eye, IMAGE_DIMENSIONS)
-    slicer.multi_slice_sum(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
-    slicer.multi_slice_max_norm(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
-    slicer.fly_through(eye, range(LOW_BOUND_LAYER, HIGH_BOUND_LAYER,
-                                  (HIGH_BOUND_LAYER - LOW_BOUND_LAYER) // 6), 2, 3)
+    multi_slice_sum = slicer.multi_slice_sum(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
+    plt.imshow(multi_slice_sum)
+    plt.show(dpi='figure', bbox_inches='tight')
+    print("Multi-Slice Sum Complete")
+
+    multi_slice_max_norm = slicer.multi_slice_max_norm(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
+    plt.imshow(multi_slice_max_norm)
+    plt.show(dpi='figure', bbox_inches='tight')
+    print("Multi-Slice Max Norm Complete")
