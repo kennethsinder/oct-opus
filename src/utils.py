@@ -94,7 +94,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=True):
     angle = 0
     if use_random_jitter and tf.random.uniform(()) > 0.8:
         angle = randint(0, 45)
-    bscan_img = load_image(bscan_path, angle)
+    bscan_img = load_image(bscan_path, angle, contrast_factor=1.85)
 
     path_components = re.search(r'^(.*)xzIntensity/(\d+)\.png$', bscan_path)
 
@@ -103,7 +103,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=True):
 
     omag_num = bscan_num_to_omag_num(bscan_num)
 
-    omag_img = load_image(os.path.join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle)
+    omag_img = load_image(os.path.join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
 
     bscan_img = tf.cast(bscan_img, tf.float32)
     omag_img = tf.cast(omag_img, tf.float32)
