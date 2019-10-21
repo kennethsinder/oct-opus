@@ -6,7 +6,7 @@ import re
 from random import randint
 
 import tensorflow as tf
-from PIL import Image
+from PIL import Image, ImageEnhance
 
 from src.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, NUM_ACQUISITIONS
 from src.train import discriminator_loss
@@ -61,16 +61,21 @@ def random_jitter(input_image, real_image):
 
 
 # Decodes a grayscale PNG, returns a 2D tensor.
-def load_image(file_name, angle=0):
-    if angle == 0:
-        image = tf.io.read_file(file_name)
-        image = tf.image.decode_png(image, channels=1)
-        return image
-    else:
-        image = Image.open(file_name).rotate(angle)
-        output = io.BytesIO()
-        image.save(output, format='JPEG')
-        return tf.image.decode_png(output.getvalue())
+def load_image(file_name, angle=0, contrast_factor=1.0, sharpness_factor=1.0):
+    original_image = Image.open(file_name).rotate(angle)
+
+    # contrast
+    contrast_enhancer = ImageEnhance.Contrast(original_image)
+    contrast_image = contrast_enhancer.enhance(contrast_factor)
+
+    # sharpness
+    sharpness_enhancer = ImageEnhance.Sharpness(contrast_image)
+    sharpened_image = sharpness_enhancer.enhance(sharpness_factor)
+
+    # write to buffer then tensor
+    output = io.BytesIO()
+    sharpened_image.save(output, format='png')
+    return tf.image.decode_png(output.getvalue(), channels=1)
 
 
 def bscan_num_to_omag_num(bscan_num):
