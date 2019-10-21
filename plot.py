@@ -42,11 +42,9 @@ if __name__ == '__main__':
     # slices
     slicer = Slicer(eye, IMAGE_DIMENSIONS)
     multi_slice_sum = slicer.multi_slice_sum(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
-    plt.imshow(multi_slice_sum)
-    plt.show(dpi='figure', bbox_inches='tight')
-    print("Multi-Slice Sum Complete")
+    plt.imsave("multi_slice_sum.png", multi_slice_sum)
+    print("1/2: Multi-Slice Sum Complete (multi_slice_sum.png)")
 
     multi_slice_max_norm = slicer.multi_slice_max_norm(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
-    plt.imshow(multi_slice_max_norm)
-    plt.show(dpi='figure', bbox_inches='tight')
-    print("Multi-Slice Max Norm Complete")
+    plt.imsave("multi_slice_max_norm.png", multi_slice_sum)
+    print("2/2: Multi-Slice Max Norm Complete (multi_slice_max_norm.png)")
