@@ -25,4 +25,8 @@ for i in $( seq $STARTING_EPOCH $ENDING_EPOCH )
 do
     echo "----- Epoch number $i -----"
     python run.py --restore --logdir $LOGDIR --epoch $i train $HARDWARE
+    n=$(($i%5))
+    if [[ n -eq 0 ]]; then
+        python run.py --restore --epoch $i predict $HARDWARE && python plot.py ./predicted/2015-10-20___512_2048_Horizontal_Images43 $i
+    fi
 done

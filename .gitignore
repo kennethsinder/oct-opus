@@ -4,6 +4,7 @@ predicted
 results
 *training_checkpoints
 logs
+comparison_epoch*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

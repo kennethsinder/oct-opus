@@ -13,10 +13,12 @@ from src.train import discriminator_loss
 
 
 def get_dataset(data_dir):
+    image_files = glob.glob(os.path.join(data_dir, '*', 'xzIntensity', '*.png'))
+    if not image_files:
+        raise Exception('Check src/parameters.py, no B-scan images were found.')
     dataset = tf.data.Dataset.from_generator(
-        lambda: map(get_images, glob.glob(os.path.join(
-            data_dir, '*', 'xzIntensity', '*.png'))),
-        output_types=(tf.float32, tf.float32)
+        lambda: map(get_images, image_files),
+        output_types=(tf.float32, tf.float32),
     )
     # silently drop data that causes errors (e.g. corresponding OMAG file doesn't exist)
     dataset = dataset.apply(tf.data.experimental.ignore_errors())
