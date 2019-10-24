@@ -34,7 +34,7 @@ if __name__ == '__main__':
         # Usage: python plot.py <directory path here> <suffix for file names here>
         src_dir = sys.argv[1]
         suffix = sys.argv[2]
-        input_type = 'OMAG'
+        input_type = Loader.InputType.OMAG
     else:
         raise Exception('Invalid number of command line arguments')
 
