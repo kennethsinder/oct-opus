@@ -14,9 +14,8 @@ LAMBDA = 100
 
 # Used in utils
 IMAGE_DIM = 512
-BUFFER_SIZE = 400 # Shuffle buffer size (>= dataset size for perfect shuffling)
+BUFFER_SIZE = 1300 # Shuffle buffer size (>= dataset size for perfect shuffling)
 PIXEL_DEPTH = 256
-NUM_ACQUISITIONS = 4
 
 # Used by Tensorboard
 IMAGE_LOG_INTERVAL = 100

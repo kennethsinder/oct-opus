@@ -23,9 +23,10 @@ def discriminator_loss(disc_real_output, disc_generated_output):
     return total_disc_loss
 
 
-def generator_loss(disc_generated_output, gen_output, target):
-    gen_output_c = slice_tensor(gen_output)
-    target_c = slice_tensor(target)
+def generator_loss(disc_generated_output, gen_output, target, should_slice=False):
+    gen_output_c = slice_tensor(gen_output) if should_slice else gen_output
+    target_c = slice_tensor(target) if should_slice else target
+
     gan_loss = loss_object(tf.ones_like(disc_generated_output), disc_generated_output)
     # mean absolute error
     l1_loss = tf.reduce_mean(tf.abs(target_c - gen_output_c))

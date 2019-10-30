@@ -30,11 +30,11 @@ if __name__ == '__main__':
             input_type = Loader.InputType.BSCAN
         else:
             raise Exception("UnknownInputType")
-    elif len(sys.argv) == 3:
+    elif len(sys.argv) in {3, 4}:
         # Usage: python plot.py <directory path here> <suffix for file names here>
         src_dir = sys.argv[1]
         suffix = sys.argv[2]
-        input_type = Loader.InputType.OMAG
+        input_type = Loader.InputType.OMAG if sys.argv[-1] == 'OMAG' else Loader.InputType.BSCAN
     else:
         raise Exception('Invalid number of command line arguments')
 
@@ -56,9 +56,9 @@ if __name__ == '__main__':
     multi_slice_sum = slicer.multi_slice_sum(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
     file_name = 'multi_slice_sum.png' if not suffix else 'multi_slice_sum_{}.png'.format(suffix)
     plt.imsave(file_name, multi_slice_sum)
-    print("1/2: Multi-Slice Sum Complete (multi_slice_sum.png)")
+    print('1/2: Multi-Slice Sum Complete ({})'.format(file_name))
 
     multi_slice_max_norm = slicer.multi_slice_max_norm(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
     file_name = 'multi_slice_max_norm.png' if not suffix else 'multi_slice_max_norm_{}.png'.format(suffix)
     plt.imsave(file_name, multi_slice_sum)
-    print("2/2: Multi-Slice Max Norm Complete (multi_slice_max_norm.png)")
+    print('2/2: Multi-Slice Max Norm Complete ({})'.format(file_name))
