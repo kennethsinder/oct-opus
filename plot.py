@@ -1,5 +1,6 @@
 """
-Displays C-scan images computed from a folder supplied on standard input.
+Displays C-scan images computed from a folder supplied on standard input,
+or via additional command-line arguments passed in.
 Script assumes all images in the folder have the same square dimensions.
 """
 
@@ -8,6 +9,8 @@ from os import listdir
 from os.path import join
 from enface.slicer import Slicer
 from enface.loader import Loader
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import sys
 
@@ -31,7 +34,7 @@ if __name__ == '__main__':
         else:
             raise Exception("UnknownInputType")
     elif len(sys.argv) in {3, 4}:
-        # Usage: python plot.py <directory path here> <suffix for file names here>
+        # Usage: python plot.py <directory path here> <suffix for file names here> [<OMAG for inverting>]
         src_dir = sys.argv[1]
         suffix = sys.argv[2]
         input_type = Loader.InputType.OMAG if sys.argv[-1] == 'OMAG' else Loader.InputType.BSCAN

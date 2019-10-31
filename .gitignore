@@ -5,6 +5,7 @@ results
 *training_checkpoints
 logs
 comparison_epoch*.png
+disc_losses.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -188,4 +188,4 @@ def generate_inferred_images(model_state, test_data_dir):
     avg_disc_loss = sum(disc_losses) / len(disc_losses)
     print('Average discriminator loss: {}'.format(avg_disc_loss))
     with open('disc_losses.txt', 'a+') as f:
-        f.write('{}{}'.format(avg_disc_loss, os.linesep))
+        f.write('{}\n'.format(avg_disc_loss))
