@@ -3,6 +3,7 @@ import time
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+plt.gray()
 import tensorflow as tf
 
 from src.parameters import LAMBDA, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
