@@ -8,15 +8,17 @@ from random import randint
 import tensorflow as tf
 from PIL import Image, ImageEnhance
 
-from src.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, NUM_ACQUISITIONS
+from src.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH
 from src.train import discriminator_loss
 
 
 def get_dataset(data_dir):
+    image_files = glob.glob(os.path.join(data_dir, '*', 'xzIntensity', '*.png'))
+    if not image_files:
+        raise Exception('Check src/parameters.py, no B-scan images were found.')
     dataset = tf.data.Dataset.from_generator(
-        lambda: map(get_images, glob.glob(os.path.join(
-            data_dir, '*', 'xzIntensity', '*.png'))),
-        output_types=(tf.float32, tf.float32)
+        lambda: map(get_images, image_files),
+        output_types=(tf.float32, tf.float32),
     )
     # silently drop data that causes errors (e.g. corresponding OMAG file doesn't exist)
     dataset = dataset.apply(tf.data.experimental.ignore_errors())
@@ -77,12 +79,23 @@ def load_image(file_name, angle=0, contrast_factor=1.0, sharpness_factor=1.0):
     sharpened_image.save(output, format='png')
     return tf.image.decode_png(output.getvalue(), channels=1)
 
+def get_num_acquisitions(data_folder_path):
+    """ (str) -> int
+    Auto-detect the number of acquisitions used for the data set in the
+    folder identified by `data_folder_path`. Usually this will return
+    the integer 1 or 4 (4 acquisitions is normal for OMAG).
+    """
+    bscan_paths = glob.glob(os.path.join(data_folder_path, 'xzIntensity', '*'))
+    omag_paths = glob.glob(os.path.join(data_folder_path, 'OMAG Bscans', '*'))
+    return int(round(len(bscan_paths) / float(len(omag_paths))))
 
-def bscan_num_to_omag_num(bscan_num):
-    return ((bscan_num - 1) // NUM_ACQUISITIONS) + 1
+def bscan_num_to_omag_num(bscan_num, num_acquisitions):
+    """ (int, int) -> int
+    """
+    return ((bscan_num - 1) // num_acquisitions) + 1
 
 
-def get_images(bscan_path, use_random_jitter=True, use_random_noise=True):
+def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     """
     Returns a pair of tensors containing the given B-scan and its
     corresponding OMAG. |bscan_path| should be in directory 'xzIntensity'
@@ -101,7 +114,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=True):
     dir_path = path_components.group(1)
     bscan_num = int(path_components.group(2))
 
-    omag_num = bscan_num_to_omag_num(bscan_num)
+    omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
 
     omag_img = load_image(os.path.join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
 
@@ -134,17 +147,20 @@ def generate_inferred_images(model_state, test_data_dir):
     where N is the number of input B-scans
     (i.e. 4 times the number of OMAGs we'd have for each test set).
     """
+    disc_losses = []
     for dataset_path in glob.glob(os.path.join(test_data_dir, '*')):
         dataset_name = dataset_path.split('/')[-1]
         for fn in glob.glob(os.path.join(dataset_path, 'xzIntensity', '*.png')):
             # Get number before '.png'
             i = int(re.search(r'(\d+)\.png', fn).group(1))
-            if i % NUM_ACQUISITIONS:
-                # We only want 1 out of every NUM_ACQUISITIONS B-scans to gather
+            num_acquisitions = get_num_acquisitions(dataset_path)
+            if i % num_acquisitions:
+                # We only want 1 out of every num_acquisitions B-scans to gather
                 # a prediction from.
                 continue
             # TODO: this is dumb, find a better way later (we have an issue open that includes this).
-            if not os.path.isfile(os.path.join(dataset_path, 'OMAG Bscans', '{}.png'.format(bscan_num_to_omag_num(i)))):
+            if not os.path.isfile(os.path.join(dataset_path, 'OMAG Bscans', '{}.png'.format(
+                bscan_num_to_omag_num(i, num_acquisitions)))):
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
@@ -160,13 +176,16 @@ def generate_inferred_images(model_state, test_data_dir):
             disc_generated_output = model_state.discriminator([inp, prediction], training=True)
             disc_real_output = model_state.discriminator([inp, tar], training=True)
             disc_loss = discriminator_loss(disc_real_output, disc_generated_output)
-            if i < 10:
-                print('Discriminator loss: {}'.format(disc_loss))
+            disc_losses.append(disc_loss)
 
             # Save the prediction to disk under a sub-directory.
             predicted_img = prediction[0]
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
             os.makedirs('./predicted/{}'.format(dataset_name), exist_ok=True)
             write_op = tf.io.write_file('./predicted/{}/{}.png'.format(
-                dataset_name, i // NUM_ACQUISITIONS + 1,
+                dataset_name, i // num_acquisitions + 1,
             ), img_to_save)
+    avg_disc_loss = sum(disc_losses) / len(disc_losses)
+    print('Average discriminator loss: {}'.format(avg_disc_loss))
+    with open('disc_losses.txt', 'a+') as f:
+        f.write('{}\n'.format(avg_disc_loss))

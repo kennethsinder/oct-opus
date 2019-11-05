@@ -1,6 +1,9 @@
 import time
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+plt.gray()
 import tensorflow as tf
 
 from src.parameters import LAMBDA, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
@@ -23,9 +26,10 @@ def discriminator_loss(disc_real_output, disc_generated_output):
     return total_disc_loss
 
 
-def generator_loss(disc_generated_output, gen_output, target):
-    gen_output_c = slice_tensor(gen_output)
-    target_c = slice_tensor(target)
+def generator_loss(disc_generated_output, gen_output, target, should_slice=False):
+    gen_output_c = slice_tensor(gen_output) if should_slice else gen_output
+    target_c = slice_tensor(target) if should_slice else target
+
     gan_loss = loss_object(tf.ones_like(disc_generated_output), disc_generated_output)
     # mean absolute error
     l1_loss = tf.reduce_mean(tf.abs(target_c - gen_output_c))
@@ -53,7 +57,7 @@ def train_step(model_state, input_image, target):
     return gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss
 
 
-def generate_images(model, test_input, tar):
+def generate_images(model, test_input, tar, epoch_num):
     # the training=True is intentional here since
     # we want the batch statistics while running the model
     # on the test dataset. If we use training=False, we will get
@@ -71,7 +75,7 @@ def generate_images(model, test_input, tar):
         # getting the pixel values between [0, 1] to plot it.
         plt.imshow(tf.squeeze(display_list[i]) * 0.5 + 0.5)
         plt.axis('off')
-    plt.show()
+    plt.savefig('comparison_epoch_{}.png'.format(epoch_num))
 
 
 def train_epoch(train_dataset, model_state, writer, epoch_num):
@@ -102,8 +106,8 @@ def train(model_state, writer, epoch_num):
     start = time.time()
 
     train_epoch(model_state.train_dataset, model_state, writer, epoch_num)
-    # for inp, tar in model_state.test_dataset.take(1):
-    #     generate_images(model_state.generator, inp, tar)
+    for inp, tar in model_state.test_dataset.take(1):
+        generate_images(model_state.generator, inp, tar, epoch_num)
     model_state.save_checkpoint()
 
     print('Time taken for epoch {} is {} sec\n'.format(epoch_num, time.time() - start))
