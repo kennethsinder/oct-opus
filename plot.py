@@ -63,5 +63,5 @@ if __name__ == '__main__':
 
     multi_slice_max_norm = slicer.multi_slice_max_norm(eye, LOW_BOUND_LAYER, HIGH_BOUND_LAYER)
     file_name = 'multi_slice_max_norm.png' if not suffix else 'multi_slice_max_norm_{}.png'.format(suffix)
-    plt.imsave(file_name, multi_slice_sum)
+    plt.imsave(file_name, multi_slice_max_norm)
     print('2/2: Multi-Slice Max Norm Complete ({})'.format(file_name))
