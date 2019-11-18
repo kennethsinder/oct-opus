@@ -9,9 +9,9 @@ class Slicer:
         SIDE = 2
         DEPTH = 3
 
-    def __init__(self, eye, image_dimensions):
-        self.eye = eye
+    def __init__(self, image_dimensions):
         self.image_dimensions = image_dimensions
+        assert image_dimensions[0] == image_dimensions[1] == 512
 
     def fly_through(self, eye, slice_indices, anti_aliasing=False):
         res = []
