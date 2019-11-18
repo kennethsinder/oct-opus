@@ -16,7 +16,7 @@ class Slicer:
         self.image_dimensions = image_dimensions
         assert image_dimensions[0] == image_dimensions[1] == IMAGE_DIM
 
-    def fly_through(self, eye, slice_indices, anti_aliasing=False):
+    def fly_through(self, eye: np.ndarray, slice_indices, anti_aliasing=False):
         res = []
         for slice_index in slice_indices:
             eye_slice = resize(eye[slice_index, :, :], self.image_dimensions, anti_aliasing=anti_aliasing)
@@ -33,7 +33,7 @@ class Slicer:
         eye_summed = np.sum(layers, 0)
         return resize(eye_summed, self.image_dimensions, anti_aliasing=anti_aliasing)
 
-    def multi_slice_max_norm(self, eye, lower, upper, anti_aliasing=False):
+    def multi_slice_max_norm(self, eye: np.ndarray, lower, upper, anti_aliasing=False):
         (_, y, z) = eye.shape
         layers = np.ndarray(shape=(upper - lower, y, z), dtype=float)
         count = 0
@@ -44,7 +44,7 @@ class Slicer:
         eye_norm = np.max(np.divide(layers, max_val), 0)
         return resize(eye_norm, self.image_dimensions, anti_aliasing=anti_aliasing)
 
-    def single_slice(self, eye, level, orientation: Orientation):
+    def single_slice(self, eye: np.ndarray, level, orientation: Orientation):
         if orientation == self.Orientation.DEPTH:
             eye_slice = eye[level, :, :]
         elif orientation == self.Orientation.TOP:
