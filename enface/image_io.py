@@ -6,7 +6,7 @@ from os import listdir
 from os.path import join
 
 
-class Loader:
+class ImageIO:
     class InputType(Enum):
         OMAG = 1
         BSCAN = 2
