@@ -1,9 +1,12 @@
-import PIL.ImageOps
-import numpy as np
-from PIL import Image, ImageEnhance
 from enum import Enum
 from os import listdir
 from os.path import join
+
+import PIL.ImageOps
+import numpy as np
+from PIL import Image, ImageEnhance
+
+from src.parameters import IMAGE_DIM
 
 
 class ImageIO:
@@ -15,7 +18,7 @@ class ImageIO:
         self.src_dir = src_dir
         self.input_type = input_type
         self.image_dimensions = image_dimensions
-        assert image_dimensions[0] == image_dimensions[1] == 512
+        assert image_dimensions[0] == image_dimensions[1] == IMAGE_DIM
 
     def save_enface_image(self, enface, filepath):
         # TODO: implement method

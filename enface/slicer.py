@@ -1,6 +1,9 @@
-import numpy as np
 from enum import Enum
+
+import numpy as np
 from skimage.transform import resize
+
+from src.parameters import IMAGE_DIM
 
 
 class Slicer:
@@ -11,7 +14,7 @@ class Slicer:
 
     def __init__(self, image_dimensions):
         self.image_dimensions = image_dimensions
-        assert image_dimensions[0] == image_dimensions[1] == 512
+        assert image_dimensions[0] == image_dimensions[1] == IMAGE_DIM
 
     def fly_through(self, eye, slice_indices, anti_aliasing=False):
         res = []
