@@ -12,13 +12,19 @@ from src.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, DATA_CONFIG
 from src.train import discriminator_loss
 
 
-def get_dataset(data_dir, restrict_data_type=None):
+def last_path_component(p: str) -> str:
+    return os.path.basename(os.path.normpath(p))
+
+
+def get_dataset(data_dir: str, restrict_data_type=None):
     image_files = glob.glob(os.path.join(
         data_dir, '*', 'xzIntensity', '*.png'))
     temp_image_files = []
     if restrict_data_type:
         for image_path in image_files:
-            if image_path in DATA_CONFIG[restrict_data_type]:
+            dataset_name = last_path_component(
+                os.path.join(image_path, '..', '..'))
+            if dataset_name in DATA_CONFIG[restrict_data_type]:
                 temp_image_files.append(image_path)
         image_files = temp_image_files
 
@@ -167,7 +173,11 @@ def generate_inferred_images(model_state, test_data_dir):
     """
     disc_losses = []
     for dataset_path in glob.glob(os.path.join(test_data_dir, '*')):
-        dataset_name = dataset_path.split('/')[-1]
+        dataset_name = last_path_component(dataset_path)
+        if dataset_name not in DATA_CONFIG['test']:
+            # Keep iterating if this data folder isn't configured to be in the
+            # test set.
+            continue
         for fn in glob.glob(os.path.join(dataset_path, 'xzIntensity', '*.png')):
             # Get number before '.png'
             i = int(re.search(r'(\d+)\.png', fn).group(1))
