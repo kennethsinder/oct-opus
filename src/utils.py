@@ -8,14 +8,23 @@ from random import randint
 import tensorflow as tf
 from PIL import Image, ImageEnhance
 
-from src.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH
+from src.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, DATA_CONFIG
 from src.train import discriminator_loss
 
 
-def get_dataset(data_dir):
-    image_files = glob.glob(os.path.join(data_dir, '*', 'xzIntensity', '*.png'))
+def get_dataset(data_dir, restrict_data_type=None):
+    image_files = glob.glob(os.path.join(
+        data_dir, '*', 'xzIntensity', '*.png'))
+    temp_image_files = []
+    if restrict_data_type:
+        for image_path in image_files:
+            if image_path in DATA_CONFIG[restrict_data_type]:
+                temp_image_files.append(image_path)
+        image_files = temp_image_files
+
     if not image_files:
-        raise Exception('Check src/parameters.py, no B-scan images were found.')
+        raise Exception(
+            'Check src/parameters.py, no B-scan images were found.')
     dataset = tf.data.Dataset.from_generator(
         lambda: map(get_images, image_files),
         output_types=(tf.float32, tf.float32),
@@ -28,14 +37,17 @@ def get_dataset(data_dir):
 
 
 def resize(input_image, real_image, height, width):
-    input_image = tf.image.resize(input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-    real_image = tf.image.resize(real_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    input_image = tf.image.resize(
+        input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    real_image = tf.image.resize(
+        real_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     return input_image, real_image
 
 
 def random_crop(input_image, real_image):
     stacked_image = tf.stack([input_image, real_image], axis=0)
-    cropped_image = tf.image.random_crop(stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
+    cropped_image = tf.image.random_crop(
+        stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
     return cropped_image[0], cropped_image[1]
 
 
@@ -43,16 +55,19 @@ def random_noise(input_image):
     if tf.random.uniform(()) > 0.5:
         converted_image = tf.image.convert_image_dtype(input_image, tf.float32)
         noise = tf.random.normal(input_image.shape, stddev=0.1)
-        input_image = tf.image.convert_image_dtype(converted_image + noise, tf.uint8)
+        input_image = tf.image.convert_image_dtype(
+            converted_image + noise, tf.uint8)
     return input_image
 
 
 def random_jitter(input_image, real_image):
     if tf.random.uniform(()) > 0.5:
-        input_image, real_image = resize(input_image, real_image, IMAGE_DIM + 30, IMAGE_DIM + 30)
+        input_image, real_image = resize(
+            input_image, real_image, IMAGE_DIM + 30, IMAGE_DIM + 30)
         input_image, real_image = random_crop(input_image, real_image)
     else:
-        input_image, real_image = resize(input_image, real_image, IMAGE_DIM, IMAGE_DIM)
+        input_image, real_image = resize(
+            input_image, real_image, IMAGE_DIM, IMAGE_DIM)
 
     if tf.random.uniform(()) > 0.5:
         # random mirroring
@@ -79,6 +94,7 @@ def load_image(file_name, angle=0, contrast_factor=1.0, sharpness_factor=1.0):
     sharpened_image.save(output, format='png')
     return tf.image.decode_png(output.getvalue(), channels=1)
 
+
 def get_num_acquisitions(data_folder_path):
     """ (str) -> int
     Auto-detect the number of acquisitions used for the data set in the
@@ -88,6 +104,7 @@ def get_num_acquisitions(data_folder_path):
     bscan_paths = glob.glob(os.path.join(data_folder_path, 'xzIntensity', '*'))
     omag_paths = glob.glob(os.path.join(data_folder_path, 'OMAG Bscans', '*'))
     return int(round(len(bscan_paths) / float(len(omag_paths))))
+
 
 def bscan_num_to_omag_num(bscan_num, num_acquisitions):
     """ (int, int) -> int
@@ -116,7 +133,8 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
 
     omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
 
-    omag_img = load_image(os.path.join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
+    omag_img = load_image(os.path.join(dir_path, 'OMAG Bscans', '{}.png'.format(
+        omag_num)), angle, contrast_factor=1.85)
 
     bscan_img = tf.cast(bscan_img, tf.float32)
     omag_img = tf.cast(omag_img, tf.float32)
@@ -160,7 +178,7 @@ def generate_inferred_images(model_state, test_data_dir):
                 continue
             # TODO: this is dumb, find a better way later (we have an issue open that includes this).
             if not os.path.isfile(os.path.join(dataset_path, 'OMAG Bscans', '{}.png'.format(
-                bscan_num_to_omag_num(i, num_acquisitions)))):
+                    bscan_num_to_omag_num(i, num_acquisitions)))):
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
@@ -173,14 +191,18 @@ def generate_inferred_images(model_state, test_data_dir):
             prediction = model_state.generator(inp, training=True)
 
             # Compute the loss.
-            disc_generated_output = model_state.discriminator([inp, prediction], training=True)
-            disc_real_output = model_state.discriminator([inp, tar], training=True)
-            disc_loss = discriminator_loss(disc_real_output, disc_generated_output)
+            disc_generated_output = model_state.discriminator(
+                [inp, prediction], training=True)
+            disc_real_output = model_state.discriminator(
+                [inp, tar], training=True)
+            disc_loss = discriminator_loss(
+                disc_real_output, disc_generated_output)
             disc_losses.append(disc_loss)
 
             # Save the prediction to disk under a sub-directory.
             predicted_img = prediction[0]
-            img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
+            img_to_save = tf.image.encode_png(tf.dtypes.cast(
+                (predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
             os.makedirs('./predicted/{}'.format(dataset_name), exist_ok=True)
             write_op = tf.io.write_file('./predicted/{}/{}.png'.format(
                 dataset_name, i // num_acquisitions + 1,
