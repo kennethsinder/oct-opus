@@ -18,10 +18,9 @@ import sys
 def image_dimensions(filename):
     return Image.open(filename).size
 
-
-if __name__ == '__main__':
+def main(args):
     suffix = None
-    if len(sys.argv) == 1:
+    if len(args) == 1:
         # Usage: python plot.py
         #        ...and then information supplied as input to stdin.
         src_dir = str(
@@ -33,11 +32,11 @@ if __name__ == '__main__':
             input_type = Loader.InputType.BSCAN
         else:
             raise Exception("UnknownInputType")
-    elif len(sys.argv) in {3, 4}:
+    elif len(args) in {3, 4}:
         # Usage: python plot.py <directory path here> <suffix for file names here> [<OMAG for inverting>]
-        src_dir = sys.argv[1]
-        suffix = sys.argv[2]
-        input_type = Loader.InputType.OMAG if sys.argv[-1] == 'OMAG' else Loader.InputType.BSCAN
+        src_dir = args[1]
+        suffix = args[2]
+        input_type = Loader.InputType.OMAG if args[-1] == 'OMAG' else Loader.InputType.BSCAN
     else:
         raise Exception('Invalid number of command line arguments')
 
@@ -65,3 +64,6 @@ if __name__ == '__main__':
     file_name = 'multi_slice_max_norm.png' if not suffix else 'multi_slice_max_norm_{}.png'.format(suffix)
     plt.imsave(file_name, multi_slice_max_norm)
     print('2/2: Multi-Slice Max Norm Complete ({})'.format(file_name))
+
+if __name__ == '__main__':
+    main(sys.argv)
