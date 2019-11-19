@@ -31,11 +31,12 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    if args.hardware == "gpu":
-        device_name = tf.test.gpu_device_name()
-        if device_name != GPU:
-            raise SystemError('GPU device not found')
-        print('Found GPU at: {}'.format(device_name))
+    # TODO(ksinder): why is this failing on eceUbuntu4?
+    # if args.hardware == "gpu":
+    #     device_name = tf.test.gpu_device_name()
+    #     if device_name != GPU:
+    #         raise SystemError('GPU device not found')
+    #     print('Found GPU at: {}'.format(device_name))
 
     model_state = ModelState()
 

@@ -36,8 +36,11 @@ class ModelState:
 
     def __moving_window_checkpoint_cleanup(self, window_size=5):
         # list of all checkpoint files
+        os.makedirs(self.checkpoint_dir, exist_ok=True)
         checkpoint_files = os.listdir(self.checkpoint_dir)
-        checkpoint_files.remove("checkpoint")  # no need to consider this file
+        if 'checkpoint' in checkpoint_files:
+            # no need to consider this file
+            checkpoint_files.remove("checkpoint")
 
         if len(checkpoint_files) == 0:
             return
