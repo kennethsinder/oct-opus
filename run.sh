@@ -27,6 +27,6 @@ do
     python run.py --restore --logdir $LOGDIR --epoch $i train $HARDWARE
     n=$(($i%5))
     if [[ n -eq 0 ]]; then
-        python run.py --restore --epoch $i predict $HARDWARE && python plot.py ./predicted/2015-10-22___512_2048_Horizontal_Images13 $i
+        python run.py --restore --epoch $i predict $HARDWARE && python plot.py ./predicted/2015-10-23___512_2048_Horizontal_Images64 $i
     fi
 done
