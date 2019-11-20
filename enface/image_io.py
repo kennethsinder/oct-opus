@@ -35,15 +35,17 @@ class ImageIO:
     def __invert_color_scheme(self, filename, contrast_factor, sharpness_factor):
         return PIL.ImageOps.invert(self.__load_single_image(filename, contrast_factor, sharpness_factor))
 
-    def load_single_eye(self, contrast_factor=1.0, sharpness_factor=1.0):
+    def load_single_eye(self, contrast_factor=1.0, sharpness_factor=1.0) -> np.ndarray:
         num_images = len(listdir(self.src_dir))
         if num_images == 0:
             raise ValueError('FoundZeroImages')
         print('Loading {} images from `{}` ...'.format(num_images, self.src_dir))
 
         eye = np.ndarray(shape=(self.image_dimensions[0], self.image_dimensions[1], num_images), dtype=float)
+        j = 0
         for i in range(num_images):
             try:
+                j += 1
                 if self.input_type == self.InputType.BSCAN:
                     img = self.__invert_color_scheme(join(self.src_dir, '{}.png'.format(j)), contrast_factor, sharpness_factor)
                 else:
