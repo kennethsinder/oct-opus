@@ -5,6 +5,7 @@ from os.path import join
 import PIL.ImageOps
 import numpy as np
 from PIL import Image, ImageEnhance
+from matplotlib.image import imsave
 
 from src.parameters import IMAGE_DIM
 
@@ -20,9 +21,9 @@ class ImageIO:
         self.image_dimensions = image_dimensions
         assert image_dimensions[0] == image_dimensions[1] == IMAGE_DIM
 
-    def save_enface_image(self, enface, filepath):
-        # TODO: implement method
-        pass
+    @staticmethod
+    def save_enface_image(enface, filepath, filename):
+        imsave("{}/{}.png".format(filepath, filename), enface, format="png", cmap="gray")
 
     @staticmethod
     def __load_single_image(filename, contrast_factor=1.0, sharpness_factor=1.0):
