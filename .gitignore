@@ -122,7 +122,5 @@ venv.bak/
 log
 logs
 
-# generated enface images
-multi_slice_*.png
-
+# vscode
 .vscode
