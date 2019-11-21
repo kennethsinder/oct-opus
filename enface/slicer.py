@@ -17,7 +17,7 @@ class Slicer:
         self.image_dimensions = image_dimensions
         assert image_dimensions[0] == image_dimensions[1] == IMAGE_DIM
 
-    def fly_through(self, eye: np.ndarray, slice_indices: List, anti_aliasing=False) -> List[np.ndarray]:
+    def fly_through(self, eye: np.ndarray, slice_indices: List[int], anti_aliasing=False) -> List[np.ndarray]:
         res = []
         for slice_index in slice_indices:
             eye_slice = resize(eye[slice_index, :, :], self.image_dimensions, anti_aliasing=anti_aliasing)

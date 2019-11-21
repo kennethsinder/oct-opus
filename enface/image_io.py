@@ -23,7 +23,7 @@ class ImageIO:
 
     @staticmethod
     def save_enface_image(enface, filepath, filename):
-        imsave(os.path.join(filepath, '{}.png'.format(filename)), enface, format="png", cmap="gray")
+        imsave(join(filepath, '{}.png'.format(filename)), enface, format="png", cmap="gray")
 
     @staticmethod
     def __load_single_image(filename, contrast_factor=1.0, sharpness_factor=1.0):
