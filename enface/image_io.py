@@ -1,12 +1,16 @@
-import PIL.ImageOps
-import numpy as np
-from PIL import Image, ImageEnhance
 from enum import Enum
 from os import listdir
 from os.path import join
 
+import PIL.ImageOps
+import numpy as np
+from PIL import Image, ImageEnhance
+from matplotlib.image import imsave
 
-class Loader:
+from src.parameters import IMAGE_DIM
+
+
+class ImageIO:
     class InputType(Enum):
         OMAG = 1
         BSCAN = 2
@@ -15,32 +19,38 @@ class Loader:
         self.src_dir = src_dir
         self.input_type = input_type
         self.image_dimensions = image_dimensions
+        assert image_dimensions[0] == image_dimensions[1] == IMAGE_DIM
 
-    def invert_color_scheme(self, filename, contrast_factor, sharpness_factor):
-        return PIL.ImageOps.invert(self.load_single_image(filename, contrast_factor, sharpness_factor))
+    @staticmethod
+    def save_enface_image(enface, filepath, filename):
+        imsave(join(filepath, '{}.png'.format(filename)), enface, format="png", cmap="gray")
 
-    def load_single_image(self, filename, contrast_factor=1.0, sharpness_factor=1.0):
+    @staticmethod
+    def __load_single_image(filename, contrast_factor=1.0, sharpness_factor=1.0):
         original_image = Image.open(filename)
         contrast_enhancer = ImageEnhance.Contrast(original_image)
         contrast_image = contrast_enhancer.enhance(contrast_factor)
         sharpness_enhancer = ImageEnhance.Sharpness(contrast_image)
         return sharpness_enhancer.enhance(sharpness_factor)
 
-    def load_data_set(self, contrast_factor=1.0, sharpness_factor=1.0):
+    def __invert_color_scheme(self, filename, contrast_factor, sharpness_factor):
+        return PIL.ImageOps.invert(self.__load_single_image(filename, contrast_factor, sharpness_factor))
+
+    def load_single_eye(self, contrast_factor=1.0, sharpness_factor=1.0) -> np.ndarray:
         num_images = len(listdir(self.src_dir))
         if num_images == 0:
             raise ValueError('FoundZeroImages')
         print('Loading {} images from `{}` ...'.format(num_images, self.src_dir))
 
-        eye = np.ndarray(shape=(self.image_dimensions[1], self.image_dimensions[0], num_images), dtype=float)
+        eye = np.ndarray(shape=(self.image_dimensions[0], self.image_dimensions[1], num_images), dtype=float)
         j = 0
         for i in range(num_images):
             try:
                 j += 1
                 if self.input_type == self.InputType.BSCAN:
-                    img = self.invert_color_scheme(join(self.src_dir, '{}.png'.format(j)), contrast_factor, sharpness_factor)
+                    img = self.__invert_color_scheme(join(self.src_dir, '{}.png'.format(j)), contrast_factor, sharpness_factor)
                 else:
-                    img = self.load_single_image(join(self.src_dir, '{}.png'.format(j)), contrast_factor, sharpness_factor)
+                    img = self.__load_single_image(join(self.src_dir, '{}.png'.format(j)), contrast_factor, sharpness_factor)
                 eye[:, :, i] = np.asarray(img)
             except FileNotFoundError:
                 i -= 1
