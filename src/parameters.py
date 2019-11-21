@@ -26,6 +26,7 @@ START_ROW = 50
 END_ROW = 256
 
 # Train/test split
+# TODO: replace with DatasetsManager
 DATA_CONFIG = {
     "train": [
         "2015-10-23___512_2048_Horizontal_Images9",
@@ -39,3 +40,7 @@ DATA_CONFIG = {
         "2015-10-22___512_2048_Horizontal_Images41",
     ]
 }
+
+# Directory names for B-Scans and OMAGs
+BSCAN_DIRNAME = "xzIntensity"
+OMAG_DIRNAME = "OMAG Bscans"

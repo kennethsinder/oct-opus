@@ -2,6 +2,7 @@ import glob
 import os
 import os.path
 import sys
+# TODO: use new enface API
 from plot import main
 
 for folder in glob.glob(os.path.join(sys.argv[1], '*')):
