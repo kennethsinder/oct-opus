@@ -39,8 +39,14 @@ class ModelState:
         # sort by asc epoch numbers
         checkpoint_files.sort(key=lambda elem: int(elem.split(".")[0].split("-")[1]), reverse=False)
 
-        # account for multiple records e.g. ckpt-30.data-00000-of-00002, ckpt-30.data-00001-of-00002,  ckpt-30.index,
-        checkpoint_multiplier = int(checkpoint_files[-1].split(".")[1].split("-")[3]) + 1
+        # account for multiple records e.g. ckpt-30.data-00000-of-00002, ckpt-30.data-00001-of-00002, ckpt-30.index
+        # by parsing nnnnn from `ckpt-30.data-00001-of-nnnnn` file name
+        try:
+            checkpoint_multiplier = int(checkpoint_files[-1].split(".")[1].split("-")[3]) + 1
+        except IndexError:
+            # last element is of format `ckpt-xx.index`, cannot use, fall back to second-last
+            # element of `ckpt-xx.data-xxxxx-of-xxxxx` format
+            checkpoint_multiplier = int(checkpoint_files[-2].split(".")[1].split("-")[3]) + 1
 
         checkpoints_to_keep = checkpoint_files[-1 * window_size * checkpoint_multiplier:]  # save most recent
         checkpoints_to_delete = list(filter(lambda elem: elem not in checkpoints_to_keep, checkpoint_files))
