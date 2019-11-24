@@ -3,9 +3,22 @@ from glob import glob
 from os import makedirs, chdir
 from os.path import isfile, join, basename, normpath
 
+from enface.image_io import ImageIO
+from enface.slicer import Slicer
 
-def gen_single_enface(dirname):
-    pass
+from src.parameters import START_ROW, END_ROW
+
+
+def gen_single_enface(input_dir, input_type: ImageIO.InputType, output_dir, output_file):
+    image_io = ImageIO(input_dir, input_type)
+    eye = image_io.load_single_eye()
+    slicer = Slicer()
+
+    multi_slice_max_norm = slicer.multi_slice_max_norm(eye=eye, lower=START_ROW, upper=END_ROW)
+    image_io.save_enface_image(enface=multi_slice_max_norm, filepath=output_dir, filename=output_file)
+
+    multi_slice_sum = slicer.multi_slice_sum(eye=eye, lower=START_ROW, upper=END_ROW)
+    image_io.save_enface_image(enface=multi_slice_sum, filepath=output_dir, filename=output_file)
 
 
 def gen_enface_all_testing():
