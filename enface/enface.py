@@ -6,7 +6,8 @@ from os.path import isfile, join, basename, normpath
 from enface.image_io import ImageIO
 from enface.slicer import Slicer
 
-from src.parameters import START_ROW, END_ROW
+from configs.parameters import START_ROW, END_ROW
+from datasets.train_and_test import TESTING_DATASETS
 
 
 def gen_single_enface(input_dir, input_type: ImageIO.InputType, output_dir, output_file):
@@ -22,7 +23,9 @@ def gen_single_enface(input_dir, input_type: ImageIO.InputType, output_dir, outp
 
 
 def gen_enface_all_testing():
-    pass
+    for test_dataset in TESTING_DATASETS:
+        # TODO: implement
+        pass
 
 
 def bulk_enface():
