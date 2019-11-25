@@ -124,6 +124,7 @@ def generate_inferred_images(model_state, test_data_dir, epoch_num):
     (i.e. 4 times the number of OMAGs we'd have for each test set).
     """
     disc_losses = []
+    predicted_dir = "./predicted-epoch-{}/".format(epoch_num)
     for dataset_path in glob.glob(join(test_data_dir, '*')):
         dataset_name = last_path_component(dataset_path)
         if dataset_name not in TESTING_DATASETS:
@@ -147,9 +148,7 @@ def generate_inferred_images(model_state, test_data_dir, epoch_num):
                 lambda: map(get_images_no_jitter, [fn]),
                 output_types=(tf.float32, tf.float32)
             )
-            dataset = dataset.batch(1)
-            for inp, tar in dataset.take(1):
-                pass
+            inp, tar = dataset.batch(1).take(1)
             prediction = model_state.generator(inp, training=True)
 
             # Compute the loss.
@@ -161,7 +160,6 @@ def generate_inferred_images(model_state, test_data_dir, epoch_num):
             predicted_img = prediction[0]
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
 
-            predicted_dir = "./predicted-epoch-{}/".format(epoch_num)
             makedirs(join(predicted_dir, dataset_name), exist_ok=True)
             tf.io.write_file('./predicted-epoch-{}/{}/{}.png'.format(epoch_num, dataset_name, i // num_acquisitions + 1), img_to_save)
 
