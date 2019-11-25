@@ -1,86 +1,37 @@
 import glob
 import io
-import os
-import os.path
 import re
+from os import makedirs
+from os.path import join, basename, normpath, isfile
 from random import randint
 
 import tensorflow as tf
 from PIL import Image, ImageEnhance
 
-from src.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, DATA_CONFIG
+from configs.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH
+from datasets.train_and_test import TESTING_DATASETS
+from enface.enface import gen_enface_all_testing
+from src.random import resize, random_jitter, random_noise
 from src.train import discriminator_loss
 
 
-def last_path_component(p: str) -> str:
-    return os.path.basename(os.path.normpath(p))
-
-
-def get_dataset(data_dir: str, restrict_data_type=None):
-    image_files = glob.glob(os.path.join(
-        data_dir, '*', 'xzIntensity', '*.png'))
+def get_dataset(data_dir: str, dataset_list):
+    image_files = glob.glob(join(data_dir, '*', 'xzIntensity', '*.png'))
     temp_image_files = []
-    if restrict_data_type:
-        for image_path in image_files:
-            dataset_name = last_path_component(
-                os.path.join(image_path, '..', '..'))
-            if dataset_name in DATA_CONFIG[restrict_data_type]:
-                temp_image_files.append(image_path)
-        image_files = temp_image_files
+    for image_path in image_files:
+        dataset_name = last_path_component(join(image_path, '..', '..'))
+        if dataset_name in dataset_list:
+            temp_image_files.append(image_path)
+    image_files = temp_image_files
 
     if not image_files:
-        raise Exception(
-            'Check src/parameters.py, no B-scan images were found.')
+        raise Exception('Check src/parameters.py, no B-scan images were found.')
     dataset = tf.data.Dataset.from_generator(
         lambda: map(get_images, image_files),
         output_types=(tf.float32, tf.float32),
     )
     # silently drop data that causes errors (e.g. corresponding OMAG file doesn't exist)
-    dataset = dataset.apply(tf.data.experimental.ignore_errors())
-    dataset = dataset.shuffle(BUFFER_SIZE)
-    dataset = dataset.batch(1)
-    return dataset
-
-
-def resize(input_image, real_image, height, width):
-    input_image = tf.image.resize(
-        input_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-    real_image = tf.image.resize(
-        real_image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-    return input_image, real_image
-
-
-def random_crop(input_image, real_image):
-    stacked_image = tf.stack([input_image, real_image], axis=0)
-    cropped_image = tf.image.random_crop(
-        stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
-    return cropped_image[0], cropped_image[1]
-
-
-def random_noise(input_image):
-    if tf.random.uniform(()) > 0.5:
-        converted_image = tf.image.convert_image_dtype(input_image, tf.float32)
-        noise = tf.random.normal(input_image.shape, stddev=0.1)
-        input_image = tf.image.convert_image_dtype(
-            converted_image + noise, tf.uint8)
-    return input_image
-
-
-def random_jitter(input_image, real_image):
-    if tf.random.uniform(()) > 0.5:
-        input_image, real_image = resize(
-            input_image, real_image, IMAGE_DIM + 30, IMAGE_DIM + 30)
-        input_image, real_image = random_crop(input_image, real_image)
-    else:
-        input_image, real_image = resize(
-            input_image, real_image, IMAGE_DIM, IMAGE_DIM)
-
-    if tf.random.uniform(()) > 0.5:
-        # random mirroring
-        input_image = tf.image.flip_left_right(input_image)
-        real_image = tf.image.flip_left_right(real_image)
-
-    return input_image, real_image
+    return dataset.apply(tf.data.experimental.ignore_errors()).shuffle(BUFFER_SIZE).batch(1)
 
 
 # Decodes a grayscale PNG, returns a 2D tensor.
@@ -107,14 +58,12 @@ def get_num_acquisitions(data_folder_path):
     folder identified by `data_folder_path`. Usually this will return
     the integer 1 or 4 (4 acquisitions is normal for OMAG).
     """
-    bscan_paths = glob.glob(os.path.join(data_folder_path, 'xzIntensity', '*'))
-    omag_paths = glob.glob(os.path.join(data_folder_path, 'OMAG Bscans', '*'))
+    bscan_paths = glob.glob(join(data_folder_path, 'xzIntensity', '*'))
+    omag_paths = glob.glob(join(data_folder_path, 'OMAG Bscans', '*'))
     return int(round(len(bscan_paths) / float(len(omag_paths))))
 
 
-def bscan_num_to_omag_num(bscan_num, num_acquisitions):
-    """ (int, int) -> int
-    """
+def bscan_num_to_omag_num(bscan_num: int, num_acquisitions: int) -> int:
     return ((bscan_num - 1) // num_acquisitions) + 1
 
 
@@ -139,8 +88,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
 
     omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
 
-    omag_img = load_image(os.path.join(dir_path, 'OMAG Bscans', '{}.png'.format(
-        omag_num)), angle, contrast_factor=1.85)
+    omag_img = load_image(join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
 
     bscan_img = tf.cast(bscan_img, tf.float32)
     omag_img = tf.cast(omag_img, tf.float32)
@@ -164,7 +112,11 @@ def get_images_no_jitter(bscan_path):
     return get_images(bscan_path, False)
 
 
-def generate_inferred_images(model_state, test_data_dir):
+def last_path_component(p: str) -> str:
+    return basename(normpath(p))
+
+
+def generate_inferred_images(model_state, test_data_dir, epoch_num):
     """
     Generate full sets of inferred cross-section PNGs,
     save them to /predicted/<dataset_name>_1.png -> /predicted/<dataset_name>_<N>.png
@@ -172,13 +124,13 @@ def generate_inferred_images(model_state, test_data_dir):
     (i.e. 4 times the number of OMAGs we'd have for each test set).
     """
     disc_losses = []
-    for dataset_path in glob.glob(os.path.join(test_data_dir, '*')):
+    for dataset_path in glob.glob(join(test_data_dir, '*')):
         dataset_name = last_path_component(dataset_path)
-        if dataset_name not in DATA_CONFIG['test']:
+        if dataset_name not in TESTING_DATASETS:
             # Keep iterating if this data folder isn't configured to be in the
             # test set.
             continue
-        for fn in glob.glob(os.path.join(dataset_path, 'xzIntensity', '*.png')):
+        for fn in glob.glob(join(dataset_path, 'xzIntensity', '*.png')):
             # Get number before '.png'
             i = int(re.search(r'(\d+)\.png', fn).group(1))
             num_acquisitions = get_num_acquisitions(dataset_path)
@@ -187,36 +139,33 @@ def generate_inferred_images(model_state, test_data_dir):
                 # a prediction from.
                 continue
             # TODO: this is dumb, find a better way later (we have an issue open that includes this).
-            if not os.path.isfile(os.path.join(dataset_path, 'OMAG Bscans', '{}.png'.format(
-                    bscan_num_to_omag_num(i, num_acquisitions)))):
+            if not isfile(join(dataset_path, 'OMAG Bscans', '{}.png'.format(bscan_num_to_omag_num(i, num_acquisitions)))):
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
             dataset = tf.data.Dataset.from_generator(
                 lambda: map(get_images_no_jitter, [fn]),
-                output_types=(tf.float32, tf.float32))
+                output_types=(tf.float32, tf.float32)
+            )
             dataset = dataset.batch(1)
             for inp, tar in dataset.take(1):
                 pass
             prediction = model_state.generator(inp, training=True)
 
             # Compute the loss.
-            disc_generated_output = model_state.discriminator(
-                [inp, prediction], training=True)
-            disc_real_output = model_state.discriminator(
-                [inp, tar], training=True)
-            disc_loss = discriminator_loss(
-                disc_real_output, disc_generated_output)
-            disc_losses.append(disc_loss)
+            disc_generated_output = model_state.discriminator([inp, prediction], training=True)
+            disc_real_output = model_state.discriminator([inp, tar], training=True)
+            disc_losses.append(discriminator_loss(disc_real_output, disc_generated_output))
 
             # Save the prediction to disk under a sub-directory.
             predicted_img = prediction[0]
-            img_to_save = tf.image.encode_png(tf.dtypes.cast(
-                (predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
-            os.makedirs('./predicted/{}'.format(dataset_name), exist_ok=True)
-            write_op = tf.io.write_file('./predicted/{}/{}.png'.format(
-                dataset_name, i // num_acquisitions + 1,
-            ), img_to_save)
+            img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
+
+            predicted_dir = "./predicted-epoch-{}/".format(epoch_num)
+            makedirs(join(predicted_dir, dataset_name), exist_ok=True)
+            tf.io.write_file('./predicted-epoch-{}/{}/{}.png'.format(epoch_num, dataset_name, i // num_acquisitions + 1), img_to_save)
+
+    gen_enface_all_testing(predicted_dir)
     avg_disc_loss = sum(disc_losses) / len(disc_losses)
     print('Average discriminator loss: {}'.format(avg_disc_loss))
     with open('disc_losses.txt', 'a+') as f:

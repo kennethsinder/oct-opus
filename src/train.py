@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 plt.gray()
 import tensorflow as tf
 
-from src.parameters import LAMBDA, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
+from configs.parameters import LAMBDA, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
 
 # TODO: remove global variables
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
