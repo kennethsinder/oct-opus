@@ -1,3 +1,8 @@
+from src.utils import generate_inferred_images
+from src.train import train
+from configs.parameters import GPU, ALL_DATA_DIR
+from src.model_state import ModelState
+import tensorflow as tf
 import argparse
 
 # This is why we can't have nice things:
@@ -5,13 +10,7 @@ import argparse
 # (Also, this doesn't seem to be affecting the verbosity much if at all...)
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import tensorflow as tf
 tf.get_logger().setLevel('WARNING')
-
-from src.model_state import ModelState
-from src.parameters import GPU, TEST_DATA_DIR
-from src.train import train
-from src.utils import generate_inferred_images
 
 
 def get_args():
@@ -46,4 +45,4 @@ if __name__ == '__main__':
         model_state.restore_from_checkpoint()
 
         # generate results based on prediction
-        generate_inferred_images(model_state, TEST_DATA_DIR)
+        generate_inferred_images(model_state, ALL_DATA_DIR, args.epoch)

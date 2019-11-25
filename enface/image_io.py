@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image, ImageEnhance
 from matplotlib.image import imsave
 
-from src.parameters import IMAGE_DIM
+from configs.parameters import IMAGE_DIM
 
 
 class ImageIO:
@@ -15,11 +15,9 @@ class ImageIO:
         OMAG = 1
         BSCAN = 2
 
-    def __init__(self, src_dir, input_type: InputType, image_dimensions):
+    def __init__(self, src_dir, input_type: InputType):
         self.src_dir = src_dir
         self.input_type = input_type
-        self.image_dimensions = image_dimensions
-        assert image_dimensions[0] == image_dimensions[1] == IMAGE_DIM
 
     @staticmethod
     def save_enface_image(enface, filepath, filename):
@@ -42,7 +40,7 @@ class ImageIO:
             raise ValueError('FoundZeroImages')
         print('Loading {} images from `{}` ...'.format(num_images, self.src_dir))
 
-        eye = np.ndarray(shape=(self.image_dimensions[0], self.image_dimensions[1], num_images), dtype=float)
+        eye = np.ndarray(shape=(IMAGE_DIM, IMAGE_DIM, num_images), dtype=float)
         j = 0
         for i in range(num_images):
             try:
