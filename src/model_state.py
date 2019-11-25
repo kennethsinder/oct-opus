@@ -33,6 +33,10 @@ class ModelState:
         self.__moving_window_checkpoint_cleanup()
         self.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir))
 
+    @staticmethod
+    def __get_epoch_num(checkpoint_name):
+        return int(checkpoint_name.split(".")[0].split("-")[1])
+
     def __moving_window_checkpoint_cleanup(self, window_size=5):
         # list of all checkpoint files
         os.makedirs(self.checkpoint_dir, exist_ok=True)
@@ -45,20 +49,11 @@ class ModelState:
             return
 
         # sort by asc epoch numbers
-        checkpoint_files.sort(key=lambda elem: int(elem.split(".")[0].split("-")[1]), reverse=False)
+        checkpoint_files.sort(key=self.__get_epoch_num, reverse=False)
 
-        # account for multiple records e.g. ckpt-30.data-00000-of-00002, ckpt-30.data-00001-of-00002, ckpt-30.index
-        # by parsing nnnnn from `ckpt-30.data-00001-of-nnnnn` file name
-        try:
-            checkpoint_multiplier = int(checkpoint_files[-1].split(".")[1].split("-")[3]) + 1
-        except IndexError:
-            # last element is of format `ckpt-xx.index`, cannot use, fall back to second-last
-            # element of `ckpt-xx.data-xxxxx-of-xxxxx` format
-            checkpoint_multiplier = int(checkpoint_files[-2].split(".")[1].split("-")[3]) + 1
-
-        checkpoints_to_keep = checkpoint_files[-1 * window_size * checkpoint_multiplier:]  # save most recent
-        checkpoints_to_delete = list(filter(lambda elem: elem not in checkpoints_to_keep, checkpoint_files))
-
-        # delete the old checkpoints
-        for checkpoint in checkpoints_to_delete:
-            os.remove(self.checkpoint_dir + "/" + checkpoint)
+        # cleanup old checkpoints
+        highest_epoch_num = self.__get_epoch_num(checkpoint_files[-1])
+        for checkpoint in checkpoint_files:
+            if self.__get_epoch_num(checkpoint) < (highest_epoch_num - window_size):
+                os.remove(self.checkpoint_dir + "/" + checkpoint)
+                print("cleaned up checkpoint ", checkpoint)
