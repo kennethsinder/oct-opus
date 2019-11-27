@@ -148,7 +148,9 @@ def generate_inferred_images(model_state, test_data_dir, epoch_num):
                 lambda: map(get_images_no_jitter, [fn]),
                 output_types=(tf.float32, tf.float32)
             )
-            inp, tar = dataset.batch(1).take(1)
+            dataset = dataset.batch(1)
+            for inp, tar in dataset.take(1):
+                pass
             prediction = model_state.generator(inp, training=True)
 
             # Compute the loss.
