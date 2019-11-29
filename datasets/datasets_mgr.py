@@ -18,8 +18,3 @@ class DatasetsManager:
                         width, height = img.size
                         if width != IMAGE_DIM or height != IMAGE_DIM:
                             print("Image " + img_path + " has dimensions (" + str(width) + "x" + str(height) + ")")
-
-
-if __name__ == '__main__':
-    dsm = DatasetsManager()
-    dsm.check_image_dimensions()
