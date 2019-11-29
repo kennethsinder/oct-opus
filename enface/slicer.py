@@ -31,7 +31,7 @@ class Slicer:
             layers[count, :, :] = eye[level, :, :]
             count += 1
         eye_summed = np.sum(layers, 0)
-        return resize(eye_summed, IMAGE_DIM, anti_aliasing=anti_aliasing)
+        return resize(eye_summed, (IMAGE_DIM, IMAGE_DIM), anti_aliasing=anti_aliasing)
 
     def multi_slice_max_norm(self, eye: np.ndarray, lower, upper, anti_aliasing=False) -> np.ndarray:
         (_, y, z) = eye.shape
@@ -42,7 +42,7 @@ class Slicer:
             count += 1
         max_val = np.max(layers)
         eye_norm = np.max(np.divide(layers, max_val), 0)
-        return resize(eye_norm, IMAGE_DIM, anti_aliasing=anti_aliasing)
+        return resize(eye_norm, (IMAGE_DIM, IMAGE_DIM), anti_aliasing=anti_aliasing)
 
     def single_slice(self, eye: np.ndarray, level, orientation: Orientation) -> np.ndarray:
         if orientation == self.Orientation.DEPTH:
