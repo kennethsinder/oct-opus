@@ -16,10 +16,10 @@ def gen_single_enface(input_dir, input_type: ImageIO.InputType, output_dir):
     slicer = Slicer()
 
     multi_slice_max_norm = slicer.multi_slice_max_norm(eye=eye, lower=START_ROW, upper=END_ROW)
-    image_io.save_enface_image(enface=multi_slice_max_norm, filepath=output_dir, filename="multi_slice_max_norm")
+    image_io.save_enface_image(enface=multi_slice_max_norm, filepath=output_dir, filename="multi_slice_max_norm.png")
 
     multi_slice_sum = slicer.multi_slice_sum(eye=eye, lower=START_ROW, upper=END_ROW)
-    image_io.save_enface_image(enface=multi_slice_sum, filepath=output_dir, filename="multi_slice_sum")
+    image_io.save_enface_image(enface=multi_slice_sum, filepath=output_dir, filename="multi_slice_sum.png")
 
 
 def gen_enface_all_testing(predicted_dir):
@@ -32,9 +32,6 @@ def gen_enface_all_testing(predicted_dir):
 
 
 def bulk_enface():
-    if len(sys.argv) < 2:
-        raise Exception("MissingArgument")
-
     for folder in glob(join(sys.argv[1], '*')):
         if isfile(folder):
             continue
@@ -59,3 +56,19 @@ def bulk_enface():
                 # Error from enface script: No files in the directory
                 continue
             chdir('..')
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 4:
+        print("python enface.py input_dir img_type={omag,bscan} output_dir")
+        raise Exception("MissingArgument")
+
+    if str(sys.argv[2]).lower() == "omag":
+        img_type = ImageIO.InputType.OMAG
+    elif str(sys.argv[2]).lower() == "bscan":
+        img_type = ImageIO.InputType.BSCAN
+    else:
+        print("python enface.py input_dir img_type={omag,bscan} output_dir")
+        raise Exception("InvalidImageType")
+
+    gen_single_enface(input_dir=sys.argv[1], input_type=img_type, output_dir=sys.argv[3])
