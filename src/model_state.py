@@ -2,7 +2,8 @@ import os
 import tensorflow as tf
 from src.generator import generator
 from src.discriminator import discriminator
-from configs.parameters import OUTPUT_CHANNELS, ALL_DATA_DIR
+from configs.parameters import OUTPUT_CHANNELS, ALL_DATA_DIR, \
+    ENFACE_DATA_DIR, IS_ENFACE_TRAINING
 from src.utils import get_dataset
 from datasets.train_and_test import TRAINING_DATASETS, TESTING_DATASETS
 
@@ -14,8 +15,9 @@ class ModelState:
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator = generator(OUTPUT_CHANNELS)
         self.discriminator = discriminator()
-        self.test_dataset = get_dataset(ALL_DATA_DIR, dataset_list=TESTING_DATASETS)
-        self.train_dataset = get_dataset(ALL_DATA_DIR, dataset_list=TRAINING_DATASETS)
+        DATA_DIR = ENFACE_DATA_DIR if IS_ENFACE_TRAINING else ALL_DATA_DIR
+        self.test_dataset = get_dataset(DATA_DIR, dataset_list=TESTING_DATASETS)
+        self.train_dataset = get_dataset(DATA_DIR, dataset_list=TRAINING_DATASETS)
         self.checkpoint_dir = './training_checkpoints'
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, 'ckpt')
         self.checkpoint = tf.train.Checkpoint(

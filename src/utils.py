@@ -8,7 +8,8 @@ from random import randint
 import tensorflow as tf
 from PIL import Image, ImageEnhance
 
-from configs.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH
+from configs.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, \
+    BSCAN_DIRNAME, OMAG_DIRNAME, IS_ENFACE_TRAINING
 from datasets.train_and_test import TESTING_DATASETS
 from enface.enface import gen_enface_all_testing
 from src.random import resize, random_jitter, random_noise
@@ -16,7 +17,7 @@ from src.train import discriminator_loss
 
 
 def get_dataset(data_dir: str, dataset_list):
-    image_files = glob.glob(join(data_dir, '*', 'xzIntensity', '*.png'))
+    image_files = glob.glob(join(data_dir, '*', BSCAN_DIRNAME, '*.png'))
     temp_image_files = []
     for image_path in image_files:
         dataset_name = last_path_component(join(image_path, '..', '..'))
@@ -58,8 +59,8 @@ def get_num_acquisitions(data_folder_path):
     folder identified by `data_folder_path`. Usually this will return
     the integer 1 or 4 (4 acquisitions is normal for OMAG).
     """
-    bscan_paths = glob.glob(join(data_folder_path, 'xzIntensity', '*'))
-    omag_paths = glob.glob(join(data_folder_path, 'OMAG Bscans', '*'))
+    bscan_paths = glob.glob(join(data_folder_path, BSCAN_DIRNAME, '*'))
+    omag_paths = glob.glob(join(data_folder_path, OMAG_DIRNAME, '*'))
     return int(round(len(bscan_paths) / float(len(omag_paths))))
 
 
@@ -76,26 +77,41 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     B-scans to OMAGs.
     (OMAG Bscans/1.png corresponds to xzIntensity/{1,2,3,4}.png.)
     """
+    # 1. Load B-scan
     angle = 0
     if use_random_jitter and tf.random.uniform(()) > 0.8:
         angle = randint(0, 45)
     bscan_img = load_image(bscan_path, angle, contrast_factor=1.85)
 
-    path_components = re.search(r'^(.*)xzIntensity/(\d+)\.png$', bscan_path)
+    # 2. Extract the dataset dir path and individual B-scan
+    # file name from the given `bscan_path`.
+    pattern = r'^(.*)' + BSCAN_DIRNAME + r'/(.+)\.png$'
+    path_components = re.search(pattern, bscan_path)
 
+    # 3. Figure out where the corresponding OMAG for this
+    # B-scan lives
     dir_path = path_components.group(1)
-    bscan_num = int(path_components.group(2))
+    if IS_ENFACE_TRAINING:
+        bscan_name = path_components.group(2)
+        omag_location = join(
+            dir_path, OMAG_DIRNAME, '{}.png'.format(bscan_name))
+    else:
+        bscan_num = int(path_components.group(2))
+        omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
+        omag_location = join(dir_path, OMAG_DIRNAME, \
+            '{}.png'.format(omag_num))
 
-    omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
+    # 4. Load the OMAG image from its path, which we know now.
+    omag_img = load_image(omag_location, angle, contrast_factor=1.85)
 
-    omag_img = load_image(join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
-
+    # 5. Cast tensor elements to floats and normalize the pixel values.
     bscan_img = tf.cast(bscan_img, tf.float32)
     omag_img = tf.cast(omag_img, tf.float32)
 
     bscan_img = (bscan_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
     omag_img = (omag_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
 
+    # 6. Apply random jitter and noise
     if use_random_jitter:
         bscan_img, omag_img = random_jitter(bscan_img, omag_img)
     else:
@@ -105,6 +121,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
         # don't add noise to the omag image
         bscan_img = random_noise(bscan_img)
 
+    # 7. Return the loaded and augmented B-scan and OMAG images as a 2-tuple.
     return bscan_img, omag_img
 
 
@@ -131,17 +148,22 @@ def generate_inferred_images(model_state, test_data_dir, epoch_num):
             # Keep iterating if this data folder isn't configured to be in the
             # test set.
             continue
-        for fn in glob.glob(join(dataset_path, 'xzIntensity', '*.png')):
-            # Get number before '.png'
-            i = int(re.search(r'(\d+)\.png', fn).group(1))
+        for fn in glob.glob(join(dataset_path, BSCAN_DIRNAME, '*.png')):
             num_acquisitions = get_num_acquisitions(dataset_path)
-            if i % num_acquisitions:
-                # We only want 1 out of every num_acquisitions B-scans to gather
-                # a prediction from.
-                continue
-            # TODO: this is dumb, find a better way later (we have an issue open that includes this).
-            if not isfile(join(dataset_path, 'OMAG Bscans', '{}.png'.format(bscan_num_to_omag_num(i, num_acquisitions)))):
-                continue
+
+            # Get number before '.png'
+            if not IS_ENFACE_TRAINING:
+                i = int(re.search(r'(\d+)\.png', fn).group(1))
+                if i % num_acquisitions:
+                    # We only want 1 out of every num_acquisitions B-scans to gather
+                    # a prediction from.
+                    continue
+                # TODO: this is dumb, find a better way later (we have an issue open that includes this).
+                if not isfile(join(dataset_path, OMAG_DIRNAME, '{}.png'.format(bscan_num_to_omag_num(i, num_acquisitions)))):
+                    continue
+                save_file_name = i // num_acquisitions + 1
+            else:
+                save_file_name = str(re.search(r'([^/]+)\.png', fn).group(1))
 
             # Obtain a prediction of the image identified by filename `fn`.
             dataset = tf.data.Dataset.from_generator(
@@ -163,9 +185,10 @@ def generate_inferred_images(model_state, test_data_dir, epoch_num):
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
 
             makedirs(join(predicted_dir, dataset_name), exist_ok=True)
-            tf.io.write_file('./predicted-epoch-{}/{}/{}.png'.format(epoch_num, dataset_name, i // num_acquisitions + 1), img_to_save)
+            tf.io.write_file('./predicted-epoch-{}/{}/{}.png'.format(epoch_num, dataset_name, save_file_name), img_to_save)
 
-    gen_enface_all_testing(predicted_dir)
+    if not IS_ENFACE_TRAINING:
+        gen_enface_all_testing(predicted_dir)
     avg_disc_loss = sum(disc_losses) / len(disc_losses)
     print('Average discriminator loss: {}'.format(avg_disc_loss))
     with open('disc_losses.txt', 'a+') as f:

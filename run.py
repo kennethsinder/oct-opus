@@ -1,6 +1,7 @@
 from src.utils import generate_inferred_images
 from src.train import train
-from configs.parameters import GPU, ALL_DATA_DIR
+from configs.parameters import GPU, ALL_DATA_DIR, ENFACE_DATA_DIR, \
+    IS_ENFACE_TRAINING
 from src.model_state import ModelState
 import tensorflow as tf
 import argparse
@@ -45,4 +46,5 @@ if __name__ == '__main__':
         model_state.restore_from_checkpoint()
 
         # generate results based on prediction
-        generate_inferred_images(model_state, ALL_DATA_DIR, args.epoch)
+        DATA_DIR = ENFACE_DATA_DIR if IS_ENFACE_TRAINING else ALL_DATA_DIR
+        generate_inferred_images(model_state, DATA_DIR, args.epoch)
