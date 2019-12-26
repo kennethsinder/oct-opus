@@ -2,7 +2,7 @@
 GPU = '/device:GPU:0'
 
 # Training and testing data set locations
-ALL_DATA_DIR = '/private/fydp1/all_data'
+ALL_DATA_DIR = '/private/fydp1/oct-opus-data/all_data_original'
 ENFACE_DATA_DIR = '/private/fydp1/enface_data'
 
 # Used by generator
