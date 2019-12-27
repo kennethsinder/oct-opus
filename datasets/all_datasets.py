@@ -83,7 +83,7 @@ ALL_DATASETS = {
     "2015-10-23___512_2048_Horizontal_Images37",
     "2015-10-23___512_2048_Horizontal_Images58",
     "2015-10-23___512_2048_Horizontal_Images64",
-    "2015-10-23___512_2048_Horizontal_Images72",
+    # "2015-10-23___512_2048_Horizontal_Images72",
     "2015-10-23___512_2048_Horizontal_Images9",
     "2015-10-26___512_2048_Horizontal_Images10",
     "2015-10-26___512_2048_Horizontal_Images19",
