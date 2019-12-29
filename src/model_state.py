@@ -5,17 +5,21 @@ from src.discriminator import discriminator
 from configs.parameters import OUTPUT_CHANNELS, ALL_DATA_DIR
 from src.utils import get_dataset
 from datasets.train_and_test import TRAINING_DATASETS, TESTING_DATASETS
+from os.path import join
 
 
 class ModelState:
 
-    def __init__(self):
-        self.discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
+    def __init__(self, root_data_dir):
+        self.discriminator_optimizer = tf.keras.optimizers.Adam(
+            5e-4, beta_1=0.5)
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator = generator(OUTPUT_CHANNELS)
         self.discriminator = discriminator()
-        self.test_dataset = get_dataset(ALL_DATA_DIR, dataset_list=TESTING_DATASETS)
-        self.train_dataset = get_dataset(ALL_DATA_DIR, dataset_list=TRAINING_DATASETS)
+        self.test_dataset = get_dataset(
+            join(root_data_dir, ALL_DATA_DIR), dataset_list=TESTING_DATASETS)
+        self.train_dataset = get_dataset(
+            join(root_data_dir, ALL_DATA_DIR), dataset_list=TRAINING_DATASETS)
         self.checkpoint_dir = './training_checkpoints'
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, 'ckpt')
         self.checkpoint = tf.train.Checkpoint(
@@ -31,7 +35,8 @@ class ModelState:
     def restore_from_checkpoint(self):
         # cleanup old checkpoints to reduce memory footprint
         self.__moving_window_checkpoint_cleanup()
-        self.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir))
+        self.checkpoint.restore(
+            tf.train.latest_checkpoint(self.checkpoint_dir))
 
     @staticmethod
     def __get_epoch_num(checkpoint_name):

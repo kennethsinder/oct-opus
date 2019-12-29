@@ -12,14 +12,23 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.get_logger().setLevel('WARNING')
 
+from os.path import join
+
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the mode')
-    parser.add_argument('hardware', choices=['cpu', 'gpu'], help='Specify whether script is being run on CPU or GPU')
-    parser.add_argument('-l', '--logdir', metavar='PATH', help='Specify where to store the Tensorboard logs')
-    parser.add_argument('-r', '--restore', action='store_true', help='Restore model state from latest checkpoint')
-    parser.add_argument('-e', '--epoch', type=int, help='Specify the epoch number')
+    parser.add_argument('mode', choices=[
+                        'train', 'predict'], help='Specify the mode in which to run the mode')
+    parser.add_argument('hardware', choices=[
+                        'cpu', 'gpu'], help='Specify whether script is being run on CPU or GPU')
+    parser.add_argument('-l', '--logdir', metavar='PATH',
+                        help='Specify where to store the Tensorboard logs')
+    parser.add_argument('-r', '--restore', action='store_true',
+                        help='Restore model state from latest checkpoint')
+    parser.add_argument('-e', '--epoch', type=int,
+                        help='Specify the epoch number')
+    parser.add_argument('-d', '--datadir',
+                        help='Specify the root directory to look for data')
     return parser.parse_args()
 
 
@@ -32,7 +41,7 @@ if __name__ == '__main__':
             raise SystemError('GPU device not found')
         print('Found GPU at: {}'.format(device_name))
 
-    model_state = ModelState()
+    model_state = ModelState(args.datadir)
 
     if args.mode == 'train':
         writer = tf.summary.create_file_writer(args.logdir)
@@ -45,4 +54,5 @@ if __name__ == '__main__':
         model_state.restore_from_checkpoint()
 
         # generate results based on prediction
-        generate_inferred_images(model_state, ALL_DATA_DIR, args.epoch)
+        generate_inferred_images(model_state, join(
+            args.datadir, ALL_DATA_DIR), args.epoch)
