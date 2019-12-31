@@ -2,6 +2,18 @@
 
 Image processing for OCT retina and cornea cross-sections.
 
+## Run Training (Sharcnet)
+
+The instructions from Sharcnet are similar to the ones below, with the following points:
+
+- SSH to Sharcnet using `ssh s2saberi@graham.sharcnet.ca` and the password from @SamiSab (setting up SSH authorized keys to not require a password each time is highly recommended)
+- Run jobs using the instructions above (sbatch, or for <3 hour jobs creating an Interactive job using the instructions in the "Running jobs" wiki page above)
+- For non-CPU/GPU/memory-intensive tasks, they can be done on the login machine which is where you initially SSH to before running any jobs. Otherwise you should kick off a job.
+Project work / git cloning etc should all be done within ~/projects/def-vengu/s2saberi, and there's also access to a scratch folder at /scratch/s2saberi which gets wiped every 3 months but has a separate quota.
+- We're sharing the same user account for Sharcnet, so make sure to use regular HTTPS username/password authentication with GitHub (may need to set up a GitHub Personal Access Token to get the password to work).
+- Shell aliases: `gohome` takes you to `~/projects/def-vengu/s2saberi/` and `gogpu` opens an interactive GPU job, letting you effectively use a worker machine for up to 3 hours to test stuff.
+- Running training: From `~/projects/def-vengu/s2saberi/<repo root dir>`, run `sbatch run_job.sh` to run training, which will send all output to a file upon the completion of the job. This script will kick off a job that assumes `.tar.gz` files for `oct-opus-data` are available in `~/projects/def-vengu/s2saberi/*.tar.gz`.
+
 ## Run Training
 
 1. Activate the virtual environment.

@@ -7,7 +7,8 @@
 #SBATCH --gres=gpu:1
 
 cd $SLURM_TMPDIR
-tar -xzf ~/projects/def-vengu/s2saberi/*.tar.gz
+tar -xzf ~/projects/def-vengu/s2saberi/all_data_original.tar.gz
+tar -xzf ~/projects/def-vengu/s2saberi/all_data_enface.tar.gz
 
 cd -
 ./run.sh "$@" $SLURM_TMPDIR

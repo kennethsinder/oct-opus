@@ -30,7 +30,7 @@ echo "Logs are being sent to $LOGDIR..."
 for i in $( seq $STARTING_EPOCH $ENDING_EPOCH )
 do
     echo "----- Epoch number $i -----"
-    python run.py --restore --logdir $LOGDIR --epoch $i --datadir $DATA_DIR train $HARDWARE
+    python run.py --restore --logdir $LOGDIR --epoch $i -d $DATA_DIR train $HARDWARE
     n=$(($i%5))
     if [[ n -eq 0 ]]; then
         python run.py --restore --epoch $i --datadir $DATA_DIR predict $HARDWARE
