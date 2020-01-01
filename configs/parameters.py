@@ -3,7 +3,7 @@ GPU = '/device:GPU:0'
 
 # Training and testing data set locations
 ALL_DATA_DIR = 'all_data_original'
-ENFACE_DATA_DIR = 'enface_data'
+ENFACE_DATA_DIR = 'all_data_enface'
 
 # Used by generator
 OUTPUT_CHANNELS = 1
