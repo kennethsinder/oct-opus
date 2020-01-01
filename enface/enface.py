@@ -22,6 +22,6 @@ def gen_enface_all_testing(predicted_dir):
     for test_dataset in TESTING_DATASETS:
         gen_single_enface(
             input_dir=join(predicted_dir, test_dataset),
-            input_type=ImageIO.InputType.OMAG,
+            input_type=ImageIO.InputType.BSCAN,
             output_dir=join(predicted_dir, test_dataset)
         )
