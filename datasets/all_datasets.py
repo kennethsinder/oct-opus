@@ -113,5 +113,3 @@ ALL_DATASETS = {
     "2015-10-27___512_2048_Horizontal_Images73",
     # "2019_05_17 Dataset 11",
 }
-
-assert len(ALL_DATASETS) == 101
