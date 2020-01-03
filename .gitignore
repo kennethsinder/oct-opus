@@ -6,6 +6,7 @@ results
 logs
 comparison_epoch*.png
 disc_losses.txt
+slurm*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
