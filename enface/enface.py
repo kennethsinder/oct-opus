@@ -6,9 +6,9 @@ from enface.image_io import ImageIO
 from enface.slicer import Slicer
 
 
-def gen_single_enface(input_dir, input_type: ImageIO.InputType, output_dir):
-    image_io = ImageIO(input_dir, input_type)
-    eye = image_io.load_single_eye()
+def gen_single_enface(input_dir, output_dir):
+    image_io = ImageIO()
+    eye = image_io.load_single_eye(input_dir)
     slicer = Slicer()
 
     multi_slice_max_norm = slicer.multi_slice_max_norm(eye=eye, lower=START_ROW, upper=END_ROW)
@@ -22,6 +22,5 @@ def gen_enface_all_testing(predicted_dir):
     for test_dataset in TESTING_DATASETS:
         gen_single_enface(
             input_dir=join(predicted_dir, test_dataset),
-            input_type=ImageIO.InputType.BSCAN,
             output_dir=join(predicted_dir, test_dataset)
         )
