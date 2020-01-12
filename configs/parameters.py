@@ -1,3 +1,12 @@
+from comet_ml import Experiment
+import os
+
+# Comet Experiment
+COMET_API = Experiment(
+    api_key=os.environ.get("COMET_API_KEY"),
+    project_name="oct-opus"
+)
+
 # GPU device
 GPU = '/device:GPU:0'
 

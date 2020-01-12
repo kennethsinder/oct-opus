@@ -44,11 +44,10 @@ if __name__ == '__main__':
     model_state = ModelState(args.datadir)
 
     if args.mode == 'train':
-        writer = tf.summary.create_file_writer(args.logdir)
         if args.restore:
             # load from latest checkpoint
             model_state.restore_from_checkpoint()
-        train(model_state, writer, args.epoch)
+        train(model_state, args.epoch)
     else:
         # load from latest checkpoint
         model_state.restore_from_checkpoint()
