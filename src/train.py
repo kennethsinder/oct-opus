@@ -1,3 +1,4 @@
+from configs.parameters import LAMBDA, START_ROW, END_ROW, EXPERIMENT
 import time
 
 import matplotlib
@@ -5,8 +6,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.gray()
 import tensorflow as tf
-
-from configs.parameters import LAMBDA, START_ROW, END_ROW, COMET_API
 
 # TODO: remove global variables
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
@@ -87,8 +86,8 @@ def train_epoch(train_dataset, model_state, epoch_num):
         gen_loss_sum += gen_loss
         disc_loss_sum += disc_loss
         idx += 1
-    COMET_API.log_metric("avg_gen_loss", gen_loss_sum / idx, epoch=epoch_num)
-    COMET_API.log_metric("avg_disc_loss", disc_loss_sum / idx, epoch=epoch_num)
+    EXPERIMENT.log_metric("avg_gen_loss", gen_loss_sum / idx, epoch=epoch_num)
+    EXPERIMENT.log_metric("avg_disc_loss", disc_loss_sum / idx, epoch=epoch_num)
 
 
 def train(model_state, epoch_num):

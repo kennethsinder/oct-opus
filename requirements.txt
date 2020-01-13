@@ -26,3 +26,4 @@ tensorflow-gpu==2.0.0
 termcolor==1.1.0
 wrapt==1.11.2
 opencv-python
+comet-ml==3.0.2
