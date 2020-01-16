@@ -9,4 +9,4 @@ tar -xf --use-compress-program=pigz ~/projects/def-vengu/s2saberi/all_data_enfac
 
 cd -
 module load cuda/10.0
-python compare_all.py $SLURM_TMPDIR/all_data_original
+python compare_all.py $SLURM_TMPDIR

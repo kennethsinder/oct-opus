@@ -21,5 +21,5 @@ fi
 LOGDIR='logs/'$(date +"%d-%m-%Y_%H:%M:%S")
 
 echo "Logs are being sent to $LOGDIR..."
-python run.py --restore --logdir $LOGDIR --epoch $i --datadir $DATA_DIR train $HARDWARE
+python run.py --restore --logdir $LOGDIR --epoch $STARTING_EPOCH --datadir $DATA_DIR train $HARDWARE
 
