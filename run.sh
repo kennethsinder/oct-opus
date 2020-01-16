@@ -7,33 +7,19 @@ else
 fi
 
 if [ "$2" = "" ];then
-    ENDING_EPOCH=100
+    HARDWARE="gpu"
 else
-    ENDING_EPOCH=$2
+    HARDWARE=$2
 fi
 
 if [ "$3" = "" ];then
-    HARDWARE="gpu"
-else
-    HARDWARE=$3
-fi
-
-if [ "$4" = "" ];then
     DATA_DIR="~/projects/def-vengu/s2saberi"
 else
-    DATA_DIR=$4
+    DATA_DIR=$3
 fi
 
 LOGDIR='logs/'$(date +"%d-%m-%Y_%H:%M:%S")
 
 echo "Logs are being sent to $LOGDIR..."
-for i in $( seq $STARTING_EPOCH $ENDING_EPOCH )
-do
-    echo "----- Epoch number $i -----"
-    python run.py --restore --logdir $LOGDIR --epoch $i --datadir $DATA_DIR train $HARDWARE
-    n=$(($i%5))
-    if [[ n -eq 0 ]]; then
-        python run.py --restore --epoch $i --datadir $DATA_DIR predict $HARDWARE
-    fi
-done
+python run.py --restore --logdir $LOGDIR --epoch $i --datadir $DATA_DIR train $HARDWARE
 

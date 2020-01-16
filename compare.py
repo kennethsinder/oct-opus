@@ -1,6 +1,7 @@
 from skimage.measure import compare_psnr, compare_mse, compare_nrmse, compare_ssim
 import numpy as np
 from PIL import Image
+import sys
 
 
 def fsim(image_a, image_b):
@@ -14,7 +15,8 @@ def pae(image_a, image_b):
 
 def mae(image_a, image_b):
     # see https://en.wikipedia.org/wiki/Mean_absolute_error
-    error_sum = np.sum(np.absolute((image_a.astype("float") - image_b.astype("float"))))
+    error_sum = np.sum(np.absolute(
+        (image_a.astype("float") - image_b.astype("float"))))
     return error_sum / (image_a.shape[0] * image_a.shape[1])
 
 
@@ -46,16 +48,21 @@ def compare_all(image_a, image_b):
     print("Range [0, +INF) where 0 is identical", end="\n\n")
 
 
-if __name__ == '__main__':
-    image_a_path = str(input("Enter the absolute path of the 1st image : "))
-    image_b_path = str(input("Enter the absolute path of the 2nd image : "))
-
+def main(image_a_path, image_b_path):
     image_a_obj = Image.open(image_a_path)
     image_b_obj = Image.open(image_b_path)
-
     assert image_a_obj.size == image_b_obj.size
+
     print("Both images are " + str(image_a_obj.size), end="\n\n")
 
     image_a = np.asarray(image_a_obj)
     image_b = np.asarray(image_b_obj)
     compare_all(image_a, image_b)
+
+
+if __name__ == '__main__':
+    try:
+        main(sys.argv[1], sys.argv[2])
+    except:
+        raise Exception(
+            'Usage: {} <file 1 path> <file 2 path>'.format(sys.argv[0]))

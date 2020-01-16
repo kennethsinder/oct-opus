@@ -116,13 +116,14 @@ def last_path_component(p: str) -> str:
     return basename(normpath(p))
 
 
-def generate_inferred_images(model_state, test_data_dir, epoch_num):
+def generate_inferred_images(model_state, epoch_num):
     """
     Generate full sets of inferred cross-section PNGs,
     save them to /predicted/<dataset_name>_1.png -> /predicted/<dataset_name>_<N>.png
     where N is the number of input B-scans
     (i.e. 4 times the number of OMAGs we'd have for each test set).
     """
+    test_data_dir = model_state.all_data_path
     disc_losses = []
     predicted_dir = "./predicted-epoch-{}/".format(epoch_num)
     for dataset_path in glob.glob(join(test_data_dir, '*')):

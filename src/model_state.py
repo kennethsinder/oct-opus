@@ -16,10 +16,11 @@ class ModelState:
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator = generator(OUTPUT_CHANNELS)
         self.discriminator = discriminator()
+        self.all_data_path = join(root_data_dir, ALL_DATA_DIR)
         self.test_dataset = get_dataset(
-            join(root_data_dir, ALL_DATA_DIR), dataset_list=TESTING_DATASETS)
+            self.all_data_path, dataset_list=TESTING_DATASETS)
         self.train_dataset = get_dataset(
-            join(root_data_dir, ALL_DATA_DIR), dataset_list=TRAINING_DATASETS)
+            self.all_data_path, dataset_list=TRAINING_DATASETS)
         self.checkpoint_dir = './training_checkpoints'
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, 'ckpt')
         self.checkpoint = tf.train.Checkpoint(

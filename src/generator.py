@@ -15,9 +15,9 @@ def generator(OUTPUT_CHANNELS):
     ]
 
     up_stack = [
-        upsample(512, 4, apply_dropout=True),  # (bs, 2, 2, 1024)
-        upsample(512, 4, apply_dropout=True),  # (bs, 4, 4, 1024)
-        upsample(512, 4, apply_dropout=True),  # (bs, 8, 8, 1024)
+        upsample(512, 4),  # (bs, 2, 2, 1024)
+        upsample(512, 4),  # (bs, 4, 4, 1024)
+        upsample(512, 4),  # (bs, 8, 8, 1024)
         upsample(512, 4),  # (bs, 16, 16, 1024)
         upsample(256, 4),  # (bs, 32, 32, 512)
         upsample(128, 4),  # (bs, 64, 64, 256)
