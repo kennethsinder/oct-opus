@@ -1,4 +1,4 @@
-from configs.parameters import LAMBDA, START_ROW, END_ROW, NUM_EPOCHS
+from configs.parameters import LAMBDA, START_ROW, END_ROW, NUM_EPOCHS, EXPERIMENT
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import time
