@@ -1,3 +1,12 @@
+from comet_ml import OfflineExperiment
+
+# Comet Experiment
+EXPERIMENT = OfflineExperiment(
+    api_key="CnUAPYboS2Dbzv4j3qHkuxUev",
+    project_name="oct-opus",
+    offline_directory="./logs"
+)
+
 # GPU device
 GPU = '/device:GPU:0'
 
@@ -8,6 +17,7 @@ ENFACE_DATA_DIR = 'all_data_enface'
 # Used by generator
 OUTPUT_CHANNELS = 1
 LAMBDA = 100
+EXPERIMENT.log_parameter("lambda", LAMBDA)
 
 # Used in utils
 IMAGE_DIM = 512

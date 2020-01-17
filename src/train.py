@@ -1,3 +1,4 @@
+from configs.parameters import LAMBDA, START_ROW, END_ROW, EXPERIMENT
 import time
 
 import matplotlib
@@ -5,8 +6,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.gray()
 import tensorflow as tf
-
-from configs.parameters import LAMBDA, IMAGE_LOG_INTERVAL, START_ROW, END_ROW
 
 # TODO: remove global variables
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
@@ -54,7 +53,7 @@ def train_step(model_state, input_image, target):
     model_state.generator_optimizer.apply_gradients(zip(generator_gradients, model_state.generator.trainable_variables))
     model_state.discriminator_optimizer.apply_gradients(zip(discriminator_gradients, model_state.discriminator.trainable_variables))
 
-    return gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss
+    return gen_loss, disc_loss
 
 
 def generate_images(model, test_input, tar, epoch_num):
@@ -78,34 +77,24 @@ def generate_images(model, test_input, tar, epoch_num):
     plt.savefig('comparison_epoch_{}.png'.format(epoch_num))
 
 
-def train_epoch(train_dataset, model_state, writer, epoch_num):
+def train_epoch(train_dataset, model_state, epoch_num):
     gen_loss_sum = 0
     disc_loss_sum = 0
     idx = 0
     for input_image, target in train_dataset:
-        gen_output, disc_real_output, disc_generated_output, gen_loss, disc_loss = train_step(model_state, input_image,
-                                                                                              target)
-        if idx % IMAGE_LOG_INTERVAL == 0:
-            print('\tStep {}: logging images to Tensorboard...'.format(idx))
-            with writer.as_default():
-                tf.summary.image('{}_input_image'.format(epoch_num), input_image, step=idx)
-                tf.summary.image('{}_target'.format(epoch_num), target, step=idx)
-                tf.summary.image('{}_gen_output'.format(epoch_num), gen_output, step=idx)
-                tf.summary.image('{}_disc_real_output'.format(epoch_num), disc_real_output, step=idx)
-                tf.summary.image('{}_disc_generated_output'.format(epoch_num), disc_generated_output, step=idx)
+        gen_loss, disc_loss = train_step(model_state, input_image, target)
         gen_loss_sum += gen_loss
         disc_loss_sum += disc_loss
         idx += 1
-    with writer.as_default():
-        tf.summary.scalar('avg_gen_loss', gen_loss_sum / idx, step=epoch_num)
-        tf.summary.scalar('avg_disc_loss', disc_loss_sum / idx, step=epoch_num)
+    EXPERIMENT.log_metric("avg_gen_loss", gen_loss_sum / idx, epoch=epoch_num)
+    EXPERIMENT.log_metric("avg_disc_loss", disc_loss_sum / idx, epoch=epoch_num)
 
 
-def train(model_state, writer, epoch_num):
+def train(model_state, epoch_num):
     print('Starting epoch {} ...'.format(epoch_num))
     start = time.time()
 
-    train_epoch(model_state.train_dataset, model_state, writer, epoch_num)
+    train_epoch(model_state.train_dataset, model_state, epoch_num)
     for inp, tar in model_state.test_dataset.take(1):
         generate_images(model_state.generator, inp, tar, epoch_num)
     model_state.save_checkpoint()

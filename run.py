@@ -1,6 +1,6 @@
+from configs.parameters import GPU, ALL_DATA_DIR
 from src.utils import generate_inferred_images
 from src.train import train
-from configs.parameters import GPU, ALL_DATA_DIR
 from src.model_state import ModelState
 import tensorflow as tf
 import argparse
@@ -9,10 +9,9 @@ import argparse
 # https://stackoverflow.com/questions/38073432/how-to-suppress-verbose-tensorflow-logging
 # (Also, this doesn't seem to be affecting the verbosity much if at all...)
 import os
+from os.path import join
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.get_logger().setLevel('WARNING')
-
-from os.path import join
 
 
 def get_args():
@@ -44,11 +43,10 @@ if __name__ == '__main__':
     model_state = ModelState(args.datadir)
 
     if args.mode == 'train':
-        writer = tf.summary.create_file_writer(args.logdir)
         if args.restore:
             # load from latest checkpoint
             model_state.restore_from_checkpoint()
-        train(model_state, writer, args.epoch)
+        train(model_state, args.epoch)
     else:
         # load from latest checkpoint
         model_state.restore_from_checkpoint()

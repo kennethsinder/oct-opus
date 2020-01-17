@@ -163,10 +163,6 @@ def generate_inferred_images(model_state, test_data_dir, epoch_num):
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
 
             makedirs(join(predicted_dir, dataset_name), exist_ok=True)
-            tf.io.write_file('./predicted-epoch-{}/{}/{}.png'.format(epoch_num, dataset_name, i // num_acquisitions + 1), img_to_save)
+            tf.io.write_file('./{}/{}/{}.png'.format(predicted_dir, dataset_name, i // num_acquisitions + 1), img_to_save)
 
-    gen_enface_all_testing(predicted_dir)
-    avg_disc_loss = sum(disc_losses) / len(disc_losses)
-    print('Average discriminator loss: {}'.format(avg_disc_loss))
-    with open('disc_losses.txt', 'a+') as f:
-        f.write('{}\n'.format(avg_disc_loss))
+    gen_enface_all_testing(predicted_dir, epoch_num)
