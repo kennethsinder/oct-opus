@@ -108,7 +108,7 @@ def train_epoch(train_dataset, model_state, epoch_num):
                           num_images_per_epoch, epoch=epoch_num)
 
 
-def train(model_state, writer, initial_epoch_num, generate_inferred_images):
+def train(model_state, initial_epoch_num, generate_inferred_images):
     for epoch_num in range(initial_epoch_num, NUM_EPOCHS + initial_epoch_num):
         print('----- Starting epoch number {} -----'.format(epoch_num))
         start = time.time()
