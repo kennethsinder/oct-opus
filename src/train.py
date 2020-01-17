@@ -1,20 +1,13 @@
-<< << << < HEAD
-from configs.parameters import LAMBDA, START_ROW, END_ROW, EXPERIMENT
-== == == =
-from configs.parameters import LAMBDA, IMAGE_LOG_INTERVAL, START_ROW, END_ROW, NUM_EPOCHS
+from configs.parameters import LAMBDA, START_ROW, END_ROW, NUM_EPOCHS
 import tensorflow as tf
 import matplotlib.pyplot as plt
->>>>>> > Go back to single process for all epochs + job for objective comparison
 import time
 
 import matplotlib
 matplotlib.use('Agg')
 plt.gray()
 
-<< << << < HEAD
-== == == =
 
->>>>>> > Go back to single process for all epochs + job for objective comparison
 # TODO: remove global variables
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 num_images_per_epoch = None
@@ -96,6 +89,8 @@ def generate_images(model, test_input, tar, epoch_num):
 
 
 def train_epoch(train_dataset, model_state, epoch_num):
+    global global_index
+    global num_images_per_epoch
     gen_loss_sum = 0
     disc_loss_sum = 0
     for input_image, target in train_dataset:
@@ -113,7 +108,7 @@ def train_epoch(train_dataset, model_state, epoch_num):
                           num_images_per_epoch, epoch=epoch_num)
 
 
-def train(model_state, writer, initial_epoch_num):
+def train(model_state, writer, initial_epoch_num, generate_inferred_images):
     for epoch_num in range(initial_epoch_num, NUM_EPOCHS + initial_epoch_num):
         print('----- Starting epoch number {} -----'.format(epoch_num))
         start = time.time()
@@ -125,3 +120,7 @@ def train(model_state, writer, initial_epoch_num):
 
         print('Time taken for epoch {} is {} sec\n'.format(
             epoch_num, time.time() - start))
+
+        if epoch_num % 5 == 0:
+            generate_inferred_images(model_state, epoch_num)
+            print('Generated inferred images for epoch {}'.format(epoch_num))

@@ -35,7 +35,7 @@ def compare_all(image_a, image_b):
     print("NRMSE: {}".format(str(nrmse_score)), end="\n\n")
 
     # structural similarity measure (see https://en.wikipedia.org/wiki/Structural_similarity)
-    ssim_score = compare_ssim(image_a, image_b, full=False)
+    ssim_score = compare_ssim(image_a, image_b, full=False, multichannel=True)
     print("SSIM: {}".format(str(ssim_score)))
     print("Range [-1, +1] where +1 is identical", end="\n\n")
 
@@ -47,6 +47,14 @@ def compare_all(image_a, image_b):
     print("MAE: {}".format(str(mae_score)))
     print("Range [0, +INF) where 0 is identical", end="\n\n")
 
+    return {
+        'psnr_score': psnr_score,
+        'mse_score': mse_score,
+        'nrmse_score': nrmse_score,
+        'ssim_score': ssim_score,
+        'mae_score': mae_score,
+    }
+
 
 def main(image_a_path, image_b_path):
     image_a_obj = Image.open(image_a_path)
@@ -57,7 +65,7 @@ def main(image_a_path, image_b_path):
 
     image_a = np.asarray(image_a_obj)
     image_b = np.asarray(image_b_obj)
-    compare_all(image_a, image_b)
+    return compare_all(image_a, image_b)
 
 
 if __name__ == '__main__':

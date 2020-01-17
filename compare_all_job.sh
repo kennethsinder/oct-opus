@@ -4,8 +4,7 @@
 #SBATCH --gres=gpu:1
 
 cd $SLURM_TMPDIR
-tar -xf --use-compress-program=pigz ~/projects/def-vengu/s2saberi/all_data_original.tar.gz
-tar -xf --use-compress-program=pigz ~/projects/def-vengu/s2saberi/all_data_enface.tar.gz
+tar --use-compress-program=pigz -xf ~/projects/def-vengu/s2saberi/all_data_enfaces.tar.gz
 
 cd -
 module load cuda/10.0

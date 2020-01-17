@@ -1,6 +1,6 @@
-from configs.parameters import GPU, ALL_DATA_DIR
-from src.utils import generate_inferred_images
 from src.train import train
+from src.utils import generate_inferred_images
+from configs.parameters import GPU, ALL_DATA_DIR
 from src.model_state import ModelState
 import tensorflow as tf
 import argparse
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         if args.restore:
             # load from latest checkpoint
             model_state.restore_from_checkpoint()
-        train(model_state, args.epoch)
+        train(model_state, args.epoch, generate_inferred_images)
     else:
         # load from latest checkpoint
         model_state.restore_from_checkpoint()
