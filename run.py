@@ -1,6 +1,6 @@
-from configs.parameters import GPU, ALL_DATA_DIR
-from src.utils import generate_inferred_images
 from src.train import train
+from src.utils import generate_inferred_images
+from configs.parameters import GPU, ALL_DATA_DIR
 from src.model_state import ModelState
 import tensorflow as tf
 import argparse
@@ -25,7 +25,7 @@ def get_args():
     parser.add_argument('-r', '--restore', action='store_true',
                         help='Restore model state from latest checkpoint')
     parser.add_argument('-e', '--epoch', type=int,
-                        help='Specify the epoch number')
+                        help='Specify the (initial) epoch number', default=1)
     parser.add_argument('-d', '--datadir',
                         help='Specify the root directory to look for data')
     return parser.parse_args()
@@ -46,11 +46,10 @@ if __name__ == '__main__':
         if args.restore:
             # load from latest checkpoint
             model_state.restore_from_checkpoint()
-        train(model_state, args.epoch)
+        train(model_state, args.epoch, generate_inferred_images)
     else:
         # load from latest checkpoint
         model_state.restore_from_checkpoint()
 
         # generate results based on prediction
-        generate_inferred_images(model_state, join(
-            args.datadir, ALL_DATA_DIR), args.epoch)
+        generate_inferred_images(model_state, args.epoch)

@@ -14,6 +14,9 @@ GPU = '/device:GPU:0'
 ALL_DATA_DIR = 'all_data_original'
 ENFACE_DATA_DIR = 'all_data_enface'
 
+# Number of epochs
+NUM_EPOCHS = 10
+
 # Used by generator
 OUTPUT_CHANNELS = 1
 LAMBDA = 100
@@ -21,12 +24,13 @@ EXPERIMENT.log_parameter("lambda", LAMBDA)
 
 # Used in utils
 IMAGE_DIM = 512
+
 # Shuffle buffer size (>= dataset size for perfect shuffling)
 BUFFER_SIZE = 1300
 PIXEL_DEPTH = 256
 
 # Used by Tensorboard
-IMAGE_LOG_INTERVAL = 100
+IMAGE_LOG_INTERVAL = 1000
 
 # Rows we care about in each image
 START_ROW = 50

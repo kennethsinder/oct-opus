@@ -7,6 +7,8 @@ logs
 comparison_epoch*.png
 disc_losses.txt
 slurm*
+RUN*
+predicted-*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
