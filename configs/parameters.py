@@ -20,7 +20,6 @@ NUM_EPOCHS = 10
 # Used by generator
 OUTPUT_CHANNELS = 1
 LAMBDA = 100
-EXPERIMENT.log_parameter("lambda", LAMBDA)
 
 # Used in utils
 IMAGE_DIM = 512

@@ -1,15 +1,17 @@
-from src.train import train
-from src.utils import generate_inferred_images
-from configs.parameters import GPU, ALL_DATA_DIR
-from src.model_state import ModelState
-import tensorflow as tf
 import argparse
-
 # This is why we can't have nice things:
 # https://stackoverflow.com/questions/38073432/how-to-suppress-verbose-tensorflow-logging
 # (Also, this doesn't seem to be affecting the verbosity much if at all...)
 import os
-from os.path import join
+import time
+
+import tensorflow as tf
+
+from configs.parameters import GPU, NUM_EPOCHS
+from src.model_state import ModelState
+from src.train import train_epoch
+from src.utils import generate_inferred_images, generate_cross_section_comparison
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.get_logger().setLevel('WARNING')
 
@@ -43,13 +45,26 @@ if __name__ == '__main__':
     model_state = ModelState(args.datadir)
 
     if args.mode == 'train':
-        if args.restore:
-            # load from latest checkpoint
-            model_state.restore_from_checkpoint()
-        train(model_state, args.epoch, generate_inferred_images)
+        # main epoch loop
+        initial_epoch_num = args.epoch
+        for epoch_num in range(initial_epoch_num, NUM_EPOCHS + initial_epoch_num):
+            print('----- Starting epoch number {} -----'.format(epoch_num))
+            start = time.time()
+            train_epoch(model_state.train_dataset, model_state, epoch_num)
+            model_state.save_checkpoint()
+            print('Time taken for epoch {} is {} sec\n'.format(epoch_num, time.time() - start))
+
+            # cross-section image logging
+            for inp, tar in model_state.test_dataset.take(1):
+                generate_cross_section_comparison(model_state.generator, inp, tar, epoch_num)
+
+            # enface image logging
+            if epoch_num % 5 == 0:
+                generate_inferred_images(model_state, epoch_num)
+                print('Generated inferred images for epoch {}'.format(epoch_num))
+
     else:
         # load from latest checkpoint
         model_state.restore_from_checkpoint()
-
         # generate results based on prediction
         generate_inferred_images(model_state, args.epoch)

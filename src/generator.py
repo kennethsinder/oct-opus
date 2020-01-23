@@ -1,8 +1,10 @@
 import tensorflow as tf
+
+from configs.parameters import OUTPUT_CHANNELS
 from src.sampling import downsample, upsample
 
 
-def generator(OUTPUT_CHANNELS):
+def generator():
     down_stack = [
         downsample(64, 4, apply_batchnorm=False),  # (bs, 128, 128, 64)
         downsample(128, 4),  # (bs, 64, 64, 128)
