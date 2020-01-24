@@ -10,7 +10,7 @@ import time
 
 import tensorflow as tf
 
-from configs.parameters import GPU, NUM_EPOCHS
+from configs.parameters import GPU
 from src.model_state import ModelState
 from src.train import train_epoch
 from src.utils import generate_inferred_images, generate_cross_section_comparison
@@ -25,7 +25,8 @@ def get_args():
     parser.add_argument('hardware', choices=['cpu', 'gpu'], help='Specify whether script is being run on CPU or GPU')
     parser.add_argument('-l', '--logdir', metavar='PATH', help='Specify where to store the Tensorboard logs')
     parser.add_argument('-r', '--restore', action='store_true', help='Restore model state from latest checkpoint')
-    parser.add_argument('-e', '--epoch', type=int, help='Specify the (initial) epoch number', default=1)
+    parser.add_argument('-s', '--starting-epoch', type=int, help='Specify the initial epoch number', default=1)
+    parser.add_argument('-e', '--ending-epoch', type=int, help='Specify the final epoch number', default=10)
     parser.add_argument('-d', '--datadir', help='Specify the root directory to look for data')
     return parser.parse_args()
 
@@ -43,8 +44,7 @@ if __name__ == '__main__':
 
     if args.mode == 'train':
         # main epoch loop
-        initial_epoch_num = args.epoch
-        for epoch_num in range(initial_epoch_num, NUM_EPOCHS + initial_epoch_num):
+        for epoch_num in range(args.starting_epoch, args.ending_epoch):
             print('----- Starting epoch number {} -----'.format(epoch_num))
             start = time.time()
             train_epoch(model_state.train_dataset, model_state, epoch_num)
