@@ -1,26 +1,25 @@
 import os
-import tensorflow as tf
-from src.generator import generator
-from src.discriminator import discriminator
-from configs.parameters import OUTPUT_CHANNELS, ALL_DATA_DIR
-from src.utils import get_dataset
-from datasets.train_and_test import TRAINING_DATASETS, TESTING_DATASETS
 from os.path import join
+
+import tensorflow as tf
+
+from configs.parameters import ALL_DATA_DIR
+from datasets.train_and_test import TRAINING_DATASETS, TESTING_DATASETS
+from src.discriminator import discriminator
+from src.generator import generator
+from src.utils import get_dataset
 
 
 class ModelState:
 
     def __init__(self, root_data_dir):
-        self.discriminator_optimizer = tf.keras.optimizers.Adam(
-            5e-4, beta_1=0.5)
+        self.discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
-        self.generator = generator(OUTPUT_CHANNELS)
+        self.generator = generator()
         self.discriminator = discriminator()
         self.all_data_path = join(root_data_dir, ALL_DATA_DIR)
-        self.test_dataset = get_dataset(
-            self.all_data_path, dataset_list=TESTING_DATASETS)
-        self.train_dataset = get_dataset(
-            self.all_data_path, dataset_list=TRAINING_DATASETS)
+        self.test_dataset = get_dataset(self.all_data_path, dataset_list=TESTING_DATASETS)
+        self.train_dataset = get_dataset(self.all_data_path, dataset_list=TRAINING_DATASETS)
         self.checkpoint_dir = './training_checkpoints'
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, 'ckpt')
         self.checkpoint = tf.train.Checkpoint(

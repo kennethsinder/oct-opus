@@ -25,7 +25,6 @@ def discriminator():
 
     zero_pad2 = tf.keras.layers.ZeroPadding2D()(leaky_relu)  # (bs, 33, 33, 512)
 
-    last = tf.keras.layers.Conv2D(1, 4, strides=1,
-                                  kernel_initializer=initializer)(zero_pad2)  # (bs, 30, 30, 1)
+    last = tf.keras.layers.Conv2D(1, 4, strides=1, kernel_initializer=initializer)(zero_pad2)  # (bs, 30, 30, 1)
 
     return tf.keras.Model(inputs=[inp, tar], outputs=last)

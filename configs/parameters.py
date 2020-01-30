@@ -14,13 +14,9 @@ GPU = '/device:GPU:0'
 ALL_DATA_DIR = 'all_data_original'
 ENFACE_DATA_DIR = 'all_data_enface'
 
-# Number of epochs
-NUM_EPOCHS = 10
-
 # Used by generator
 OUTPUT_CHANNELS = 1
 LAMBDA = 100
-EXPERIMENT.log_parameter("lambda", LAMBDA)
 
 # Used in utils
 IMAGE_DIM = 512
