@@ -21,7 +21,8 @@ def discriminator_loss(disc_real_output, disc_generated_output):
 def generator_loss(disc_generated_output, gen_output, target):
     gan_loss = loss_object(tf.ones_like(disc_generated_output), disc_generated_output)
     # mean absolute error
-    l1_loss = tf.reduce_mean(tf.abs(target - gen_output))
+#    l1_loss = tf.reduce_mean(tf.abs(target - gen_output))
+    l1_loss = tf.reduce_mean(-tf.image.ssim(target, gen_output, max_val=1.0))
     total_gen_loss = gan_loss + (LAMBDA * l1_loss)
     return total_gen_loss
 
