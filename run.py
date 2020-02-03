@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     if args.mode == 'train':
         # main epoch loop
-        for epoch_num in range(args.starting_epoch, args.ending_epoch):
+        for epoch_num in range(args.starting_epoch, args.ending_epoch + 1):
             print('----- Starting epoch number {} -----'.format(epoch_num))
             start = time.time()
             train_epoch(model_state.train_dataset, model_state, epoch_num)
