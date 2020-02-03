@@ -1,5 +1,6 @@
 from configs.parameters import EXPERIMENT
-assert EXPERIMENT.alive  # Needed to due import dependency issues
+if EXPERIMENT:
+    assert EXPERIMENT.alive  # Needed to due import dependency issues
 
 import argparse
 # This is why we can't have nice things:
@@ -31,7 +32,7 @@ def get_args():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main():
     args = get_args()
 
     if args.hardware == "gpu":
@@ -65,3 +66,7 @@ if __name__ == '__main__':
         model_state.restore_from_checkpoint()
         # generate results based on prediction
         generate_inferred_images(model_state, args.epoch)
+
+
+if __name__ == '__main__':
+    main()

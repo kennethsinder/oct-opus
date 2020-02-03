@@ -1,11 +1,14 @@
+import os
 from comet_ml import OfflineExperiment
 
 # Comet Experiment
-EXPERIMENT = OfflineExperiment(
-    api_key="CnUAPYboS2Dbzv4j3qHkuxUev",
-    project_name="oct-opus",
-    offline_directory="./logs"
-)
+EXPERIMENT = None
+if not os.environ.get('UNITTEST'):
+    EXPERIMENT = OfflineExperiment(
+        api_key="CnUAPYboS2Dbzv4j3qHkuxUev",
+        project_name="oct-opus",
+        offline_directory="./logs"
+    )
 
 # GPU device
 GPU = '/device:GPU:0'
