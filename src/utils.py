@@ -10,7 +10,7 @@ import tensorflow as tf
 from PIL import Image, ImageEnhance
 
 from configs.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, EXPERIMENT
-from datasets.train_and_test import TESTING_DATASETS
+from datasets.train_and_test import train_and_test_sets
 from enface.enface import gen_enface_all_testing
 from src.random import resize, random_jitter, random_noise
 from src.train import discriminator_loss
@@ -117,7 +117,7 @@ def last_path_component(p: str) -> str:
     return basename(normpath(p))
 
 
-def generate_inferred_images(model_state, epoch_num):
+def generate_inferred_images(model_state, epoch_num, fold_num):
     """
     Generate full sets of inferred cross-section PNGs,
     save them to /predicted/<dataset_name>_1.png -> /predicted/<dataset_name>_<N>.png
@@ -129,7 +129,7 @@ def generate_inferred_images(model_state, epoch_num):
     predicted_dir = "./predicted-epoch-{}/".format(epoch_num)
     for dataset_path in glob.glob(join(test_data_dir, '*')):
         dataset_name = last_path_component(dataset_path)
-        if dataset_name not in TESTING_DATASETS:
+        if dataset_name not in train_and_test_sets(fold_num)[1]:
             # Keep iterating if this data folder isn't configured to be in the
             # test set.
             continue
@@ -167,7 +167,7 @@ def generate_inferred_images(model_state, epoch_num):
             makedirs(join(predicted_dir, dataset_name), exist_ok=True)
             tf.io.write_file('./{}/{}/{}.png'.format(predicted_dir, dataset_name, i // num_acquisitions + 1), img_to_save)
 
-    gen_enface_all_testing(predicted_dir, epoch_num)
+    gen_enface_all_testing(predicted_dir, epoch_num, train_and_test_sets(fold_num))
 
 
 def generate_cross_section_comparison(model, test_input, tar, epoch_num):

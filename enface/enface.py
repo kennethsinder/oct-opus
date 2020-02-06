@@ -1,7 +1,6 @@
 from os.path import join
 
 from configs.parameters import START_ROW, END_ROW, EXPERIMENT
-from datasets.train_and_test import TESTING_DATASETS
 from enface.image_io import ImageIO
 from enface.slicer import Slicer
 
@@ -32,8 +31,8 @@ def gen_single_enface(predicted_dir, dataset, epoch_num):
     )
 
 
-def gen_enface_all_testing(predicted_dir, epoch_num):
-    for test_dataset in TESTING_DATASETS:
+def gen_enface_all_testing(predicted_dir, epoch_num, datasets):
+    for test_dataset in datasets[1]:
         gen_single_enface(
             predicted_dir=predicted_dir,
             dataset=test_dataset,

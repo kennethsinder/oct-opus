@@ -11,6 +11,7 @@ import time
 import tensorflow as tf
 
 from configs.parameters import GPU
+from datasets.train_and_test import K
 from src.model_state import ModelState
 from src.train import train_epoch
 from src.utils import generate_inferred_images, generate_cross_section_comparison
@@ -40,28 +41,33 @@ if __name__ == '__main__':
             raise SystemError('GPU device not found')
         print('Found GPU at: {}'.format(device_name))
 
-    model_state = ModelState(args.datadir)
-
     if args.mode == 'train':
-        # main epoch loop
-        for epoch_num in range(args.starting_epoch, args.ending_epoch + 1):
-            print('----- Starting epoch number {} -----'.format(epoch_num))
-            start = time.time()
-            train_epoch(model_state.train_dataset, model_state, epoch_num)
-            model_state.save_checkpoint()
-            print('Time taken for epoch {} is {} sec\n'.format(epoch_num, time.time() - start))
+        num_epochs = args.ending_epoch - args.starting_epoch + 1
+        # go through each of K=5 folds
+        for fold_num in range(K):
+            print('----- Starting fold number {} -----'.format(fold_num))
+            model_state = ModelState(args.datadir, fold_num)    # Reset model
 
-            # cross-section image logging
-            for inp, tar in model_state.test_dataset.take(1):
-                generate_cross_section_comparison(model_state.generator, inp, tar, epoch_num)
+            # main epoch loop
+            for epoch_num in range(args.starting_epoch, args.ending_epoch + 1):
+                print('----- Starting epoch number {} -----'.format(epoch_num))
+                start = time.time()
+                train_epoch(model_state.train_dataset, model_state, epoch_num + fold_num * num_epochs)
+                model_state.save_checkpoint()
+                print('Time taken for epoch {} is {} sec\n'.format(epoch_num, time.time() - start))
 
-            # enface image logging
-            if epoch_num % 5 == 0:
-                generate_inferred_images(model_state, epoch_num)
-                print('Generated inferred images for epoch {}'.format(epoch_num))
+                # cross-section image logging
+                for inp, tar in model_state.test_dataset.take(1):
+                    generate_cross_section_comparison(model_state.generator, inp, tar, epoch_num + fold_num * num_epochs)
+
+                # enface image logging
+                if epoch_num % 5 == 0:
+                    generate_inferred_images(model_state, epoch_num + fold_num * num_epochs, fold_num)
+                    print('Generated inferred images for epoch {} (this # incorporates past folds of training)'.format(epoch_num + fold_num * num_epochs))
 
     else:
         # load from latest checkpoint
+        model_state = ModelState(args.datadir)
         model_state.restore_from_checkpoint()
         # generate results based on prediction
         generate_inferred_images(model_state, args.epoch)

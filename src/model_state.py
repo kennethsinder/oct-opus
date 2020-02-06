@@ -4,7 +4,7 @@ from os.path import join
 import tensorflow as tf
 
 from configs.parameters import ALL_DATA_DIR
-from datasets.train_and_test import TRAINING_DATASETS, TESTING_DATASETS
+from datasets.train_and_test import train_and_test_sets
 from src.discriminator import discriminator
 from src.generator import generator
 from src.utils import get_dataset
@@ -12,12 +12,13 @@ from src.utils import get_dataset
 
 class ModelState:
 
-    def __init__(self, root_data_dir):
+    def __init__(self, root_data_dir, fold_num=0):
         self.discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator = generator()
         self.discriminator = discriminator()
         self.all_data_path = join(root_data_dir, ALL_DATA_DIR)
+        TRAINING_DATASETS, TESTING_DATASETS = train_and_test_sets(fold_num)
         self.test_dataset = get_dataset(self.all_data_path, dataset_list=TESTING_DATASETS)
         self.train_dataset = get_dataset(self.all_data_path, dataset_list=TRAINING_DATASETS)
         self.checkpoint_dir = './training_checkpoints'
