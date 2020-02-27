@@ -3,6 +3,10 @@ from src.sampling import downsample
 
 
 def discriminator():
+    """
+    Discriminator and Generator expect inputs with dimensions
+    [batch size, IMAGE_DIM, IMAGE_DIM, LAYER_BATCH]
+    """
     initializer = tf.random_normal_initializer(0., 0.02)
 
     inp = tf.keras.layers.Input(shape=[None, None, 1], name='input_image')
