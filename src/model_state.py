@@ -12,15 +12,12 @@ from src.utils import get_dataset
 
 class ModelState:
 
-    def __init__(self, root_data_dir, fold_num=0):
+    def __init__(self, root_data_dir):
         self.discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator = generator()
         self.discriminator = discriminator()
         self.all_data_path = join(root_data_dir, ALL_DATA_DIR)
-        TRAINING_DATASETS, TESTING_DATASETS = train_and_test_sets(fold_num)
-        self.test_dataset = get_dataset(self.all_data_path, dataset_list=TESTING_DATASETS)
-        self.train_dataset = get_dataset(self.all_data_path, dataset_list=TRAINING_DATASETS)
         self.checkpoint_dir = './training_checkpoints'
         self.checkpoint_prefix = os.path.join(self.checkpoint_dir, 'ckpt')
         self.checkpoint = tf.train.Checkpoint(
@@ -29,6 +26,11 @@ class ModelState:
             generator=self.generator,
             discriminator=self.discriminator
         )
+
+    def get_datasets(self, fold_num=0):
+        TRAINING_DATASETS, TESTING_DATASETS = train_and_test_sets(fold_num)
+        self.test_dataset = get_dataset(self.all_data_path, dataset_list=TESTING_DATASETS)
+        self.train_dataset = get_dataset(self.all_data_path, dataset_list=TRAINING_DATASETS)
 
     def save_checkpoint(self):
         self.checkpoint.save(file_prefix=self.checkpoint_prefix)

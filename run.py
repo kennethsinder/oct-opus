@@ -42,11 +42,13 @@ if __name__ == '__main__':
         print('Found GPU at: {}'.format(device_name))
 
     if args.mode == 'train':
+        model_state = ModelState(args.datadir)
         num_epochs = args.ending_epoch - args.starting_epoch + 1
         # go through each of K=5 folds
         for fold_num in range(K):
             print('----- Starting fold number {} -----'.format(fold_num))
-            model_state = ModelState(args.datadir, fold_num)    # Reset model
+            tf.keras.backend.clear_session()
+            model_state.get_datasets(fold_num)
 
             # main epoch loop
             for epoch_num in range(args.starting_epoch, args.ending_epoch + 1):
