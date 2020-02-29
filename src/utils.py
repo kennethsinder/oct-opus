@@ -117,7 +117,7 @@ def last_path_component(p: str) -> str:
     return basename(normpath(p))
 
 
-def generate_inferred_images(model_state, epoch_num, fold_num):
+def generate_inferred_images(model_state, epoch_num, fold_num=0):
     """
     Generate full sets of inferred cross-section PNGs,
     save them to /predicted/<dataset_name>_1.png -> /predicted/<dataset_name>_<N>.png
@@ -142,7 +142,8 @@ def generate_inferred_images(model_state, epoch_num, fold_num):
                 # a prediction from.
                 continue
             # TODO: this is dumb, find a better way later (we have an issue open that includes this).
-            if not isfile(join(dataset_path, 'OMAG Bscans', '{}.png'.format(bscan_num_to_omag_num(i, num_acquisitions)))):
+            if not isfile(join(dataset_path, 'OMAG Bscans', '{}.png'.format(
+                    bscan_num_to_omag_num(i, num_acquisitions)))):
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
@@ -165,7 +166,8 @@ def generate_inferred_images(model_state, epoch_num, fold_num):
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
 
             makedirs(join(predicted_dir, dataset_name), exist_ok=True)
-            tf.io.write_file('./{}/{}/{}.png'.format(predicted_dir, dataset_name, i // num_acquisitions + 1), img_to_save)
+            tf.io.write_file('./{}/{}/{}.png'.format(predicted_dir, dataset_name, i // num_acquisitions + 1),
+                             img_to_save)
 
     gen_enface_all_testing(predicted_dir, epoch_num, train_and_test_sets(fold_num))
 

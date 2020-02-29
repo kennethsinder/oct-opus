@@ -44,10 +44,10 @@ if __name__ == '__main__':
     if args.mode == 'train':
         model_state = ModelState(args.datadir)
         num_epochs = args.ending_epoch - args.starting_epoch + 1
-        # go through each of K=5 folds
+        # go through each of K=5 folds, goes from 0 to 4 inclusive
         for fold_num in range(K):
             print('----- Starting fold number {} -----'.format(fold_num))
-            tf.keras.backend.clear_session()
+            model_state.reset_weights()
             model_state.get_datasets(fold_num)
 
             # main epoch loop
@@ -60,12 +60,14 @@ if __name__ == '__main__':
 
                 # cross-section image logging
                 for inp, tar in model_state.test_dataset.take(1):
-                    generate_cross_section_comparison(model_state.generator, inp, tar, epoch_num + fold_num * num_epochs)
+                    generate_cross_section_comparison(model_state.generator, inp, tar,
+                                                      epoch_num + fold_num * num_epochs)
 
-                # enface image logging
+                # en-face image logging
                 if epoch_num % 5 == 0:
                     generate_inferred_images(model_state, epoch_num + fold_num * num_epochs, fold_num)
-                    print('Generated inferred images for epoch {} (this # incorporates past folds of training)'.format(epoch_num + fold_num * num_epochs))
+                    print('Generated inferred images for epoch {} (this # incorporates past folds of training)'.format(
+                        epoch_num + fold_num * num_epochs))
 
     else:
         # load from latest checkpoint
