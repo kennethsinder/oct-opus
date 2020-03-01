@@ -36,6 +36,7 @@ class ModelState:
         self.discriminator_weights_file = 'discriminator_weights.h5'
         self.generator.save_weights(self.generator_weights_file)
         self.discriminator.save_weights(self.discriminator_weights_file)
+        self.current_training_step = 0
 
     def reset_weights(self):
         """

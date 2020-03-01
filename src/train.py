@@ -47,15 +47,15 @@ def train_step(model_state, input_image, target):
 
 
 def train_epoch(train_dataset, model_state, epoch_num):
-    index = 0
     gen_loss_sum = 0
     disc_loss_sum = 0
     for input_image, target in train_dataset:
         gen_loss, disc_loss = train_step(model_state, input_image, target)
         gen_loss_sum += gen_loss
         disc_loss_sum += disc_loss
-        index += 1
+        model_state.current_training_step += 1
 
         # log info to Comet ML
+        index = model_state.current_training_step
         EXPERIMENT.log_metric("avg_gen_loss", gen_loss_sum / index, epoch=epoch_num, step=index)
         EXPERIMENT.log_metric("avg_disc_loss", disc_loss_sum / index, epoch=epoch_num, step=index)
