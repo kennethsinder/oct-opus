@@ -5,6 +5,7 @@ import os.path
 import sys
 import re
 
+
 def score_for_test_results(results_folder, run_num):
     print('-------------{}--------------'.format(results_folder))
     num_datasets = 0
@@ -23,6 +24,8 @@ def score_for_test_results(results_folder, run_num):
         num_datasets += 1
     for score_type in scores:
         print('Average {} for RUN_{} = {}'.format(score_type, run_num, scores[score_type] / num_datasets))
+    return scores
+
 
 if __name__ == '__main__':
     print([x for x in sys.argv])
@@ -32,9 +35,27 @@ if __name__ == '__main__':
         run_num = int(re.search(r'RUN_(\d+)', run_path).group(1))
         print('-------------{}--------------'.format(run_path))
         epoch_nums_glob = 'predicted-epoch-*' if k_folds_mode else 'predicted-epoch-5'
+        all_epoch_scores = {}
         for results_folder in glob.glob(os.path.join(run_path, epoch_nums_glob)):
-            if not k_folds_mode and ('predicted-epoch-5' not in results_folder or 'predicted-epoch-50' in results_folder):
+            if not k_folds_mode and (
+                    'predicted-epoch-5' not in results_folder or 'predicted-epoch-50' in results_folder):
                 continue
-            score_for_test_results(results_folder, run_num)
+            epoch_num = int(re.search(r'epoch-(\d+)', results_folder).group(1))
+            if k_folds_mode:
+                all_epoch_scores[epoch_num] = score_for_test_results(results_folder, run_num)
 
+        if k_folds_mode:
+            # First row is the string "Score Types" (since the 1st column will be the score types
+            # for every subsequent row) and then the fold numbers in order.
+            rows = [['Score Types'] + list(str(1 + x / 5) for x in sorted(all_epoch_scores.keys()))]
+            for score_type in all_epoch_scores[list(all_epoch_scores.keys())[0]]:
+                row = [score_type]
+                for epoch_num in sorted(all_epoch_scores.keys()):
+                    row.append(all_epoch_scores[epoch_num][score_type])
+                rows.append(row)
 
+            import csv
+            with open('comparison.csv', 'w') as f:
+                writer = csv.writer(f)
+                for row in rows:
+                    writer.writerow(row)

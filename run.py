@@ -1,10 +1,7 @@
 from configs.parameters import EXPERIMENT
-assert EXPERIMENT.alive  # Needed to due import dependency issues
+assert EXPERIMENT.alive  # Needed due to import dependency issues
 
 import argparse
-# This is why we can't have nice things:
-# https://stackoverflow.com/questions/38073432/how-to-suppress-verbose-tensorflow-logging
-# (Also, this doesn't seem to be affecting the verbosity much if at all...)
 import os
 import time
 
@@ -16,6 +13,9 @@ from src.model_state import ModelState
 from src.train import train_epoch
 from src.utils import generate_inferred_images, generate_cross_section_comparison
 
+# This is why we can't have nice things:
+# https://stackoverflow.com/questions/38073432/how-to-suppress-verbose-tensorflow-logging
+# (Also, this doesn't seem to be affecting the verbosity much if at all...)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.get_logger().setLevel('WARNING')
 

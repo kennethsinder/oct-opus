@@ -195,3 +195,4 @@ def generate_cross_section_comparison(model, test_input, tar, epoch_num):
     plt.savefig(figure_name)
     EXPERIMENT.log_figure(figure_name=figure_name)
     EXPERIMENT.log_asset(file_data=figure_name, step=epoch_num)
+    plt.clf()
