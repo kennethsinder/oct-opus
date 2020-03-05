@@ -2,6 +2,11 @@ import tensorflow as tf
 
 
 def downsample(filters, size, apply_batchnorm=True):
+    """
+    From Conv2D documentation
+    filters: Integer, the dimensionality of the output space (i.e. the number of output filters in the convolution).
+    kernel_size: An integer or tuple/list of a single integer, specifying the length of the 1D convolution window.
+    """
     initializer = tf.random_normal_initializer(0., 0.02)
 
     result = tf.keras.Sequential()

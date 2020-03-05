@@ -7,21 +7,53 @@ matplotlib.use('Agg')
 plt.gray()
 
 
-# TODO: remove global variables
+# The cGAN loss function L_cGAN is maximized when the discriminator correctly
+# predicts D(x,y) = 1 and D(x,G(x,z)) = 0.
+# It is simply binary cross-entropy loss, negated to become a max function:
+#
+# L_cGAN(G, D) = E_{x,y}[log(D(x,y))] + E_{x,z}[log(1-D(x,G(x,z)))]
+# where:
+# x: BScan input
+# y: true OMAG
+# z: random noise
+
+# The discriminator seeks to maximize L_cGAN.
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 
+# Discriminator should minimize discriminator_loss, which is a negation of
+# L_cGAN.
+#
+# disc_real_output: D(x,y)
+# disc_generated_output: D(x,G(x,z))
 def discriminator_loss(disc_real_output, disc_generated_output):
+    # "true values" part of the binary cross-entropy loss
+    # -log(D(x,y))
     real_loss = loss_object(tf.ones_like(disc_real_output), disc_real_output)
+
+    # "false values" part of the binary cross-entropy loss
+    # -log(1-D(x,G(x,z)))
     generated_loss = loss_object(tf.zeros_like(disc_generated_output), disc_generated_output)
+
+    # -log(D(x,y)) - log(1-D(x,G(x,z)))
     total_disc_loss = real_loss + generated_loss
     return total_disc_loss
 
 
+# The generator seeks to maximize log(D(G(x,z))), a non-saturating re-framing
+# of minimize log(1-D(G(x,z))).
+# (see https://arxiv.org/abs/1711.10337 for a discussion of non-saturated
+# generator loss)
+#
+# To minimize the Euclidean distance between the real and generated images,
+# we add a weighted L1 loss (pix2pix found that L2 leads to more blurring).
 def generator_loss(disc_generated_output, gen_output, target):
+    # -log(D(G(x,z)))
     gan_loss = loss_object(tf.ones_like(disc_generated_output), disc_generated_output)
-    # mean absolute error
+
+    # |y - G(x,z)|
     l1_loss = tf.reduce_mean(tf.abs(target - gen_output))
+
     total_gen_loss = gan_loss + (LAMBDA * l1_loss)
     return total_gen_loss
 
