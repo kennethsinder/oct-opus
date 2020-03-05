@@ -69,6 +69,8 @@ class ModelState:
         and testing; this method loads those datasets.
         """
         training_datasets, testing_datasets = train_and_test_sets(fold_num)
+        print(training_datasets)
+        print(testing_datasets)
         self.train_dataset = get_dataset(self.all_data_path, dataset_list=training_datasets)
         self.test_dataset = get_dataset(self.all_data_path, dataset_list=testing_datasets)
 

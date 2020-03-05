@@ -76,13 +76,15 @@ K = 5
 folds = []
 for i in range(K - 1):
     folds.append(set(sample(usable_datasets_copy,
-        min(len(usable_datasets_copy), int(len(USABLE_DATASETS) / K)))))
+                            min(len(usable_datasets_copy), int(len(USABLE_DATASETS) / K)))))
     usable_datasets_copy = usable_datasets_copy - folds[i]
 folds.append(usable_datasets_copy)
+
 
 def train_and_test_sets(i):
     test_sets = folds[i]
     train_sets = USABLE_DATASETS - test_sets
     return train_sets, test_sets
+
 
 assert USABLE_DATASETS.issubset(ALL_DATASETS)

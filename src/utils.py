@@ -124,12 +124,11 @@ def generate_inferred_images(model_state, epoch_num, fold_num=0):
     where N is the number of input B-scans
     (i.e. 4 times the number of OMAGs we'd have for each test set).
     """
-    test_data_dir = model_state.all_data_path
-    disc_losses = []
-    predicted_dir = "./predicted-epoch-{}/".format(epoch_num)
-    for dataset_path in glob.glob(join(test_data_dir, '*')):
+    test_folders = train_and_test_sets(fold_num)[1]
+    predicted_dir = './predicted-epoch-{}/'.format(epoch_num)
+    for dataset_path in glob.glob(join(model_state.all_data_path, '*')):
         dataset_name = last_path_component(dataset_path)
-        if dataset_name not in train_and_test_sets(fold_num)[1]:
+        if dataset_name not in test_folders:
             # Keep iterating if this data folder isn't configured to be in the
             # test set.
             continue
@@ -159,7 +158,6 @@ def generate_inferred_images(model_state, epoch_num, fold_num=0):
             # Compute the loss.
             disc_generated_output = model_state.discriminator([inp, prediction], training=True)
             disc_real_output = model_state.discriminator([inp, tar], training=True)
-            disc_losses.append(discriminator_loss(disc_real_output, disc_generated_output))
 
             # Save the prediction to disk under a sub-directory.
             predicted_img = prediction[0]

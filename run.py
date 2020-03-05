@@ -25,7 +25,6 @@ def get_args():
     parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the mode')
     parser.add_argument('hardware', choices=['cpu', 'gpu'], help='Specify whether script is being run on CPU or GPU')
     parser.add_argument('-l', '--logdir', metavar='PATH', help='Specify where to store the Tensorboard logs')
-    parser.add_argument('-r', '--restore', action='store_true', help='Restore model state from latest checkpoint')
     parser.add_argument('-s', '--starting-epoch', type=int, help='Specify the initial epoch number', default=1)
     parser.add_argument('-e', '--ending-epoch', type=int, help='Specify the final epoch number', default=10)
     parser.add_argument('-d', '--datadir', help='Specify the root directory to look for data')
@@ -70,8 +69,9 @@ if __name__ == '__main__':
                         epoch_num + fold_num * num_epochs))
 
     else:
-        # load from latest checkpoint
+        # Load from latest checkpoint
         model_state = ModelState(args.datadir)
         model_state.restore_from_checkpoint()
-        # generate results based on prediction
+
+        # Generate results based on prediction
         generate_inferred_images(model_state, args.epoch)

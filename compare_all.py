@@ -46,12 +46,15 @@ if __name__ == '__main__':
 
         if k_folds_mode:
             # First row is the string "Score Types" (since the 1st column will be the score types
-            # for every subsequent row) and then the fold numbers in order.
-            rows = [['Score Types'] + list(str(1 + x / 5) for x in sorted(all_epoch_scores.keys()))]
+            # for every subsequent row) and then the fold numbers in order, and finally the column heading
+            # "Average", since the last column will have averages for every row so we can get a summary value
+            # for each type of scoring (e.g. SSIM) since each scoring type is one row.
+            rows = [['Score Types'] + list(str(int(x / 5)) for x in sorted(all_epoch_scores.keys())) + ['Average']]
             for score_type in all_epoch_scores[list(all_epoch_scores.keys())[0]]:
-                row = [score_type]
+                row = [score_type]  # Add a string representing the type of score (e.g. "psnr_score")
                 for epoch_num in sorted(all_epoch_scores.keys()):
-                    row.append(all_epoch_scores[epoch_num][score_type])
+                    row.append(all_epoch_scores[epoch_num][score_type])     # Add fold-by-fold values to the row
+                row.append(sum(row[1:]) / len(row[1:]))     # Add the row average
                 rows.append(row)
 
             import csv
