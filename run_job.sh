@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --account=def-vengu
-#SBATCH --time=01-00:00
+#SBATCH --time=03-00:00
 #SBATCH --mem=127000M
 #SBATCH --ntasks-per-node=32
 #SBATCH --gres=gpu:2
