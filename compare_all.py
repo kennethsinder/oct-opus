@@ -23,7 +23,8 @@ def score_for_test_results(results_folder, run_num):
                 scores[score_type] += current_scores.get(score_type, 0)
         num_datasets += 1
     for score_type in scores:
-        print('Average {} for RUN_{} = {}'.format(score_type, run_num, scores[score_type] / num_datasets))
+        scores[score_type] /= float(num_datasets)
+        print('Average {} for RUN_{} = {}'.format(score_type, run_num, scores[score_type]))
     return scores
 
 
