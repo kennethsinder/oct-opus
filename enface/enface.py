@@ -27,7 +27,7 @@ def gen_single_enface(predicted_dir, dataset, epoch_num):
     image_io.save_enface_image(enface=multi_slice_sum, filepath=work_dir, filename=MULTI_SLICE_SUM)
     EXPERIMENT.log_asset(
         file_data=join(work_dir, MULTI_SLICE_SUM),
-        file_name="{}_epoch{}_{}".format(dataset, epoch_num, MULTI_SLICE_MAX_NORM),
+        file_name="{}_epoch{}_{}".format(dataset, epoch_num, MULTI_SLICE_SUM),
         step=epoch_num
     )
 
