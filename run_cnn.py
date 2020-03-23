@@ -1,3 +1,6 @@
+from configs.parameters import EXPERIMENT
+assert EXPERIMENT.alive  # Needed to due import dependency issues
+
 import argparse
 from datetime import datetime
 from os.path import join
@@ -9,6 +12,7 @@ from PIL import Image
 import cnn.utils as utils
 from cnn.model import CNN
 from configs.parameters import GPU
+from configs.cnn_parameters import PREDICTION_IMAGES
 
 def main():
     parser = argparse.ArgumentParser()
@@ -40,9 +44,14 @@ def main():
 
             print('Test')
             testing_loss = model.test()
+
+            print('Saving Predictions')
+            model.predict(PREDICTION_IMAGES)
+
+            model.increment_epoch()
         return
 
-    model.predict()
+    model.predict(PREDICTION_IMAGES)
 
 if __name__ == '__main__':
     main()

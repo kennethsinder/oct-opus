@@ -10,6 +10,7 @@ from configs.parameters import (
     IMAGE_DIM
 )
 from configs.cnn_parameters import (
+    DATASET_BLACKLIST,
     BATCH_SIZE,
     NUM_SLICES,
     SLICE_WIDTH
@@ -20,9 +21,10 @@ def get_bscan_paths(data_dir, dataset_list):
     """ (str, list) -> list
     """
     bscan_paths = []
+
     for path in glob.glob(join(data_dir, '*', 'xzIntensity', '*.png')):
         dataset_name = get_dataset_name(path)
-        if dataset_name in dataset_list:
+        if dataset_name in dataset_list and dataset_name not in DATASET_BLACKLIST:
             bscan_paths.append(path)
 
     if not bscan_paths:
@@ -36,6 +38,7 @@ def load_dataset(bscan_paths, batch_size, repeat=True, shuffle=True):
     Returns a generator dataset & the number of batches. Number of batches does
     not include batches with size less than batch_size.
     """
+
     output_shape = tf.TensorShape((NUM_SLICES, IMAGE_DIM, SLICE_WIDTH, 1))
     dataset = tf.data.Dataset.from_generator(
         lambda: map(get_slices, bscan_paths),
@@ -56,7 +59,6 @@ def load_dataset(bscan_paths, batch_size, repeat=True, shuffle=True):
     # re-batch the images into the appropriate batch size
     dataset = dataset.batch(batch_size)
 
-
     return dataset, (len(bscan_paths) * NUM_SLICES) // batch_size
 
 
@@ -67,8 +69,10 @@ def shuffle(dataset, batch_size):
     return dataset.unbatch().shuffle(BUFFER_SIZE).batch(batch_size)
 
 
-def get_dataset_name(p: str) -> str:
-    return basename(normpath(join(p, '..', '..')))
+def get_dataset_name(bscan_path):
+    """ (str) -> str
+    """
+    return basename(normpath(join(bscan_path, '..', '..')))
 
 
 def resize(image, height, width):
