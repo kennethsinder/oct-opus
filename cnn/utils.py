@@ -5,13 +5,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
-from configs.parameters import (
-    BUFFER_SIZE,
-    IMAGE_DIM
-)
-from configs.cnn_parameters import (
-    DATASET_BLACKLIST,
+from cnn.parameters import (
     BATCH_SIZE,
+    BUFFER_SIZE,
+    DATASET_BLACKLIST,
+    IMAGE_DIM,
     NUM_SLICES,
     SLICE_WIDTH
 )

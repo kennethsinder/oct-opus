@@ -1,9 +1,11 @@
-from configs.parameters import EXPERIMENT
-assert EXPERIMENT.alive  # Needed to due import dependency issues
+from cnn.parameters import EXPERIMENT
+assert EXPERIMENT.alive
 
 import argparse
+import glob
 from datetime import datetime
-from os.path import join
+from os import makedirs
+from os.path import basename, isfile, join, splitext
 
 import numpy as np
 import tensorflow as tf
@@ -11,12 +13,99 @@ from PIL import Image
 
 import cnn.utils as utils
 from cnn.model import CNN
-from configs.parameters import GPU
-from configs.cnn_parameters import PREDICTION_IMAGES
+from cnn.parameters import (
+    GPU,
+    MULTI_SLICE_MAX_NORM,
+    MULTI_SLICE_SUM,
+    PREDICTIONS_BASE_DIR
+)
+
+from datasets.train_and_test import TESTING_DATASETS
+from enface.image_io import ImageIO
+from enface.slicer import Slicer
+
+def generate_enfaces(model, data_dir):
+    predictions_dir = join(
+        PREDICTIONS_BASE_DIR,
+        basename(model.checkpoints_dir),
+        str(model.epoch_num())
+    )
+
+    for idx, dataset_name in enumerate(TESTING_DATASETS):
+        print('({}/{}) Generating enface images for {}'.format(
+                idx + 1,
+                len(TESTING_DATASETS),
+                dataset_name
+            )
+        )
+
+        dataset_predictions_dir = join(predictions_dir, dataset_name)
+        dataset_dir = join(data_dir, dataset_name)
+        num_acquisitions = utils.get_num_acquisitions(dataset_dir)
+        
+        makedirs(dataset_predictions_dir, exist_ok=True)
+
+        for bscan_path in glob.glob(join(dataset_dir, 'xzIntensity', '*.png')):
+            bscan_num = int(splitext(basename(bscan_path))[0])
+            if bscan_num % num_acquisitions:
+                continue
+
+            omag_num = utils.bscan_num_to_omag_num(bscan_num, num_acquisitions)
+
+            omag_path = join(
+                dataset_dir,
+                'OMAG Bscans',
+                '{}.png'.format(omag_num)
+            )
+            if not isfile(omag_path):
+                continue
+
+            model.predict(
+                bscan_path,
+                join(dataset_predictions_dir, '{}.png'.format(omag_num))
+            )
+
+        image_io = ImageIO()
+        slicer = Slicer()
+        eye = image_io.load_single_eye(dataset_predictions_dir)
+
+        multi_slice_max_norm = slicer.multi_slice_max_norm(
+            eye=eye,
+            lower=START_ROW,
+            upper=END_ROW
+        )
+        multi_slice_sum = slicer.multi_slice_sum(
+            eye=eye,
+            lower=START_ROW,
+            upper=END_ROW
+        )
+
+        image_io.save_enface_image(
+            enface=multi_slice_sum,
+            filepath=dataset_predictions_dir,
+            filename=MULTI_SLICE_SUM
+        )
+        image_io.save_enface_image(
+            enface=multi_slice_max_norm,
+            filepath=dataset_predictions_dir,
+            filename=MULTI_SLICE_MAX_NORM
+        )
+
+        EXPERIMENT.log_asset(
+            file_data=join(dataset_predictions_dir, MULTI_SLICE_MAX_NORM),
+            file_name="{}_epoch{}_{}".format(dataset_name, model.epoch_num(), MULTI_SLICE_MAX_NORM),
+            step=model.epoch_num()
+        )
+        EXPERIMENT.log_asset(
+            file_data=join(dataset_predictions_dir, MULTI_SLICE_SUM),
+            file_name="{}_epoch{}_{}".format(dataset_name, model.epoch_num(), MULTI_SLICE_MAX_SUM),
+            step=model.epoch_num()
+        )
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', choices=['train', 'predict'])
+    parser.add_argument('mode', choices=['train', 'enface'])
     parser.add_argument('hardware', choices=['cpu', 'gpu'])
     parser.add_argument('-d', '--data-dir', required=True, metavar='<path>')
     parser.add_argument(
@@ -36,22 +125,32 @@ def main():
     model = CNN(args.data_dir, args.checkpoints_dir)
 
     if args.mode == 'train':
-        print('Saving checkpoints to {}'.format(args.checkpoints_dir))
+        print('Saving checkpoints to {}'.format(model.checkpoints_dir))
         for _ in range(args.num_epochs):
-            print('----------------- Epoch {} -----------------'.format(model.epoch.numpy()))
+            print('----------------- Epoch {} -----------------'.format(model.epoch_num()))
             training_loss = model.train_one_epoch()
+            EXPERIMENT.log_metric(
+                'training_loss',
+                training_loss,
+                epoch=model.epoch_num()
+            )
             model.save_checkpoint()
 
             print('Test')
             testing_loss = model.test()
+            EXPERIMENT.log_metric(
+                'testing_loss',
+                testing_loss,
+                epoch=model.epoch_num()
+            )
 
-            print('Saving Predictions')
-            model.predict(PREDICTION_IMAGES)
-
-            model.increment_epoch()
+            #if model.epoch_num() % 5 == 0:
+            if True: # do this for all epochs for now
+                generate_enfaces(model, args.data_dir)
         return
 
-    model.predict(PREDICTION_IMAGES)
+    generate_enfaces(model, args.data_dir)
+
 
 if __name__ == '__main__':
     main()

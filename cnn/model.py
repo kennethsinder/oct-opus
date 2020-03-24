@@ -7,8 +7,8 @@ from PIL import Image
 from tensorflow.keras import layers, models, losses
 
 import cnn.utils as utils
-from configs.parameters import IMAGE_DIM
-from configs.cnn_parameters import BATCH_SIZE, SLICE_WIDTH
+from cnn.parameters import IMAGE_DIM, BATCH_SIZE, SLICE_WIDTH
+
 from datasets.train_and_test import TRAINING_DATASETS, TESTING_DATASETS
 
 
@@ -54,7 +54,7 @@ class CNN:
             loss=losses.MeanAbsoluteError()
         )
 
-        self.epoch = tf.Variable(1)
+        self.epoch = tf.Variable(0)
 
         # set up checkpoints
         self.checkpoints_dir = checkpoints_dir
@@ -98,6 +98,7 @@ class CNN:
             #use_multiprocessing=True,
             #workers=16
         )
+        self.epoch.assign_add(1)
         self.training_data = utils.shuffle(self.training_data, BATCH_SIZE)
         return history.history['loss']
 
@@ -113,68 +114,27 @@ class CNN:
             #workers=16
         )
 
-    def predict(self, paths):
+    def predict(self, input_path, output_path):
         """ (dict) -> None
-        Predicts the corresponding omag for each given bscan.
-        Saves the predictions in ./predicted-images.
+        Predicts the corresponding omag for given bscan.
+        Saves the predictions in output_path.
         """
-        for idx, path in enumerate(paths):
-            bscan_path = join(self.data_dir, path)
+        dataset, num_batches = utils.load_dataset([input_path], 1, shuffle=False)
+        
+        predicted_slices = self.model.predict(dataset, steps=num_batches)
+        if self.restore_status:
+            self.restore_status.expect_partial()
 
-            print('({}/{}) Running prediction on {}'.format((idx + 1), len(paths), bscan_path))
+        # format image
+        image = utils.connect_slices(predicted_slices)
+        image = np.reshape(image, [image.shape[0], image.shape[1]])
+        image *= 255 # scale image from [0,1] to [0, 255]
 
-            # example dir path = ./predicted-images/20-03-2020_06h48m45s/1
-            images_dir = join(
-                './predicted-images',
-                basename(self.checkpoints_dir),
-                str(self.epoch.numpy())
-            )
-            makedirs(images_dir, exist_ok=True)
+        # save image
+        Image.fromarray(image).convert('RGB').save(output_path)
 
-            dataset, num_batches = utils.load_dataset(
-                [bscan_path],
-                1,
-                shuffle=False
-            )
-            predicted_slices = self.model.predict(dataset, steps=num_batches)
-
-            if self.restore_status:
-                self.restore_status.expect_partial()
-
-            # format image
-            image = utils.connect_slices(predicted_slices)
-            image = np.reshape(image, [image.shape[0], image.shape[1]])
-            image *= 255 # scale image from [0,1] to [0, 255]
-
-            # save image
-            # example file name = 2015-10-22___512_2048_Horizontal_Images2_119.png
-            image_file_name = '{}_{}'.format(utils.get_dataset_name(bscan_path), basename(bscan_path))
-            Image.fromarray(image).convert('RGB').save(join(images_dir, image_file_name))
-
-    def increment_epoch(self):
-        """ () -> None
-        Increases epoch counter by one
-        """
-        self.epoch.assign_add(1)
-
-#    def predict(self, bscan_path, save_path):
-#        """ (str, str) -> None
-#        Predicts the corresponding omag for the given bscan.
-#        Saves the prediction to the given save_path.
-#        """
-#        dataset, num_batches = utils.load_dataset([bscan_path], 1, shuffle=False)
-#        predicted_slices = self.model.predict(dataset, steps=num_batches)
-#
-#        if self.restore_status:
-#            self.restore_status.expect_partial()
-#
-#        # format image
-#        image = utils.connect_slices(predicted_slices)
-#        image = np.reshape(image, [image.shape[0], image.shape[1]])
-#        image *= 255 # scale image from [0,1] to [0, 255]
-#
-#        # save image
-#        Image.fromarray(image).convert('RGB').save(save_path)
+    def epoch_num(self):
+        return self.epoch.numpy()
 
     def summary(self):
         """ () -> None
