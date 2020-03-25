@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from PIL import Image, ImageEnhance
 
-from cgan.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, BSCAN_DIRNAME, OMAG_DIRNAME
+from cgan.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, BSCAN_DIRNAME, OMAG_DIRNAME, LAYER_BATCH
 from cgan.random import resize, random_jitter, random_noise
 from enface.enface import gen_single_enface
 
@@ -49,10 +49,10 @@ def load_image(file_name, angle=0, contrast_factor=1.0, sharpness_factor=1.0):
 
 
 def get_num_acquisitions(data_folder_path: str) -> int:
-    """ (str) -> int	
-    Auto-detect the number of acquisitions used for the data set in the	
-    folder identified by `data_folder_path`. Usually this will return	
-    the integer 1 or 4 (4 acquisitions is normal for OMAG).	
+    """ (str) -> int
+    Auto-detect the number of acquisitions used for the data set in the
+    folder identified by `data_folder_path`. Usually this will return
+    the integer 1 or 4 (4 acquisitions is normal for OMAG).
     """
     bscan_paths = glob.glob(join(data_folder_path, 'xzIntensity', '*'))
     omag_paths = glob.glob(join(data_folder_path, 'OMAG Bscans', '*'))
@@ -80,29 +80,80 @@ def bscan_num_to_omag_num(bscan_num: int, num_acquisitions: int) -> int:
 
 def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     """
-    Returns a pair of tensors containing the given B-scan and its corresponding OMAG.
-    Parameter `bscan_path` should be in directory 'xzIntensity' and its parent directory should contain 'OMAG Bscans'.
-    Scan files should be named <num>.png (no leading 0s), with a 1-to-1 ratio of B-scans to OMAGs.
-    """
+    Returns a pair of tensors containing the given B-scan and its
+    corresponding OMAG. |bscan_path| should be in directory 'xzIntensity'
+    and its parent directory should contain 'OMAG Bscans'. Scan files
+    should be named <num>.png (no leading 0s), with a 4-to-1 ratio of
+    B-scans to OMAGs.
+    (OMAG Bscans/1.png corresponds to xzIntensity/{1,2,3,4}.png.)
 
+    """
     # random jitter angle
     angle = 0
     if use_random_jitter and tf.random.uniform(()) > 0.8:
         angle = randint(0, 45)
 
-    # bscan image
-    bscan_img = load_image(bscan_path, angle, contrast_factor=1.85)
+    path_components = re.search(r'^(.*)xzIntensity/(\d+)\.png$', bscan_path)
+
+    dir_path = path_components.group(1)
+    bscan_num = int(path_components.group(2))
+
+    num_acquisitions = get_num_acquisitions(dir_path)
+
+    omag_num = bscan_num_to_omag_num(bscan_num, num_acquisitions)
+
+
+    # Construct a list of LAYER_BATCH BScans, where the central BScan
+    # is the one found at bscan_path, and the others are a successive step away from
+    # the central one. For instance, if LAYER_BATCH = 5, then bscans will take the form
+    # [
+    # <scan corresponding to omag_num - 2>
+    # <scan corresponding to omag_num - 1>
+    # <scan at bscan_path>,
+    # <scan corresponding to omag_num + 1>
+    # <scan corresponding to omag_num + 2>
+    # ]
+    bscans = []
+
+    def omag_num_to_bscan(n):
+        """ Return a random one of the num_acquisitions BScans
+        corresponding to the nth OMAG """
+        bn = (n - 1) # convet to 0-index
+        bn = bn * num_acquisitions  # convert to 0-indexed bscan num
+        bn = bn + 1  # convert to 1-index
+
+        # add a random offset corresponding to same OMAG
+        return bn + randint(0, num_acquisitions - 1)
+
+    for i in range(LAYER_BATCH):
+        # If LAYER_BATCH = 3, then offset will range [-1, 0, 1],
+        # if LAYER_BATCH = 5, then [-2, -1, 0, 1, 2], etc.
+        offset = (i - LAYER_BATCH//2)
+
+        if offset == 0:  # central BScan
+            curr_bscan = bscan_num
+        else:
+            curr_omag = omag_num + offset
+            curr_bscan = omag_num_to_bscan(curr_omag)
+
+        curr_bscan_path = join(dir_path, 'xzIntensity', f'{curr_bscan}.png')
+
+
+        try:
+            bscans.append(load_image(
+                curr_bscan_path, angle, contrast_factor=1.85)[:,:,0])
+        except FileNotFoundError:
+            # We allow missing adjacent BScans; default value is instead all zeros.
+            if offset == 0:
+                throw
+            bscans.append(tf.zeros((IMAGE_DIM, IMAGE_DIM), dtype=float))
+
+    bscans = [tf.cast(b, tf.float32) for b in bscans]
+    bscan_img = tf.stack(bscans, axis=2)
     bscan_img = tf.cast(bscan_img, tf.float32)
     bscan_img = (bscan_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
 
-    # path and image number
-    path_components = re.search(r'^(.*)xzIntensity/(\d+)\.png$', bscan_path)
-    dir_path = path_components.group(1)
-    bscan_num = int(path_components.group(2))
-    omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
-
-    # omag image
-    omag_img = load_image(join(dir_path, OMAG_DIRNAME, '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
+    omag_img = load_image(join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
     omag_img = tf.cast(omag_img, tf.float32)
     omag_img = (omag_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
 
@@ -116,6 +167,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     if use_random_noise:
         # don't add noise to the omag image
         bscan_img = random_noise(bscan_img)
+
     return bscan_img, omag_img
 
 
@@ -157,10 +209,10 @@ def generate_inferred_images(EXP_DIR, model_state):
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
-            bscan_img = load_image(bscan_file_path, angle=0, contrast_factor=1.85)
-            bscan_img = (tf.cast(bscan_img, tf.float32) / ((PIXEL_DEPTH - 1) / 2.0)) - 1
-            prediction = model_state.generator(bscan_img[tf.newaxis, ...], training=True)
-            assert len(prediction) == 1
+            bscan_img, _ = get_images(bscan_file_path, use_random_jitter=False, use_random_noise=False)
+            gen_output = model_state.generator(bscan_img[tf.newaxis, ...], training=True)
+            prediction = gen_output[:,:,:,LAYER_BATCH//2, tf.newaxis]  # (1, IMAGE_DIM, IMAGE_DIM, 1)
+            assert len(prediction) == 1  # assert first dimension is 1
 
             # Encode the prediction as PNG image data.
             predicted_img = prediction[0]
@@ -181,7 +233,10 @@ def generate_cross_section_comparison(EXP_DIR, TBD_WRITER, model, test_input, ta
     # on the test dataset. If we use training=False, we will get
     # the accumulated statistics learned from the training dataset
     # (which we don't want)
-    prediction = model(test_input, training=True)
+    prediction = model(test_input, training=True)  # (1, IMAGE_DIM, IMAGE_DIM, LAYER_BATCH)
+    test_input = test_input[:,:,:,LAYER_BATCH//2, tf.newaxis]  # (1, IMAGE_DIM, IMAGE_DIM, 1)
+    prediction = prediction[:,:,:,LAYER_BATCH//2, tf.newaxis]  # (1, IMAGE_DIM, IMAGE_DIM, 1)
+
     plt.figure(figsize=(15, 15))
 
     assert len(test_input) == 1 and len(tar) == 1 and len(prediction) == 1
@@ -192,15 +247,15 @@ def generate_cross_section_comparison(EXP_DIR, TBD_WRITER, model, test_input, ta
         plt.subplot(1, 3, i + 1)
         plt.title(title[i])
         # getting the pixel values between [0, 1] to plot it.
-        plt.imshow(tf.squeeze(display_list[i]) * 0.5 + 0.5)
+        plt.imshow(tf.squeeze(display_list[i]) * 0.5 + 0.5, cmap='gray')
         plt.axis('off')
 
     # write images to tensorboard
     # note: needed to expand dimensions due to API, see https://www.tensorflow.org/api_docs/python/tf/summary/image
     with TBD_WRITER.as_default():
-        tf.summary.image("Input Image", data=tf.expand_dims(test_input[0], 0), step=epoch_num)
-        tf.summary.image("Ground Truth", data=tf.expand_dims(tar[0], 0), step=epoch_num)
-        tf.summary.image("Predicted Image", data=tf.expand_dims(prediction[0], 0), step=epoch_num)
+        tf.summary.image("Input Image", data=test_input, step=epoch_num)
+        tf.summary.image("Ground Truth", data=tar, step=epoch_num)
+        tf.summary.image("Predicted Image", data=prediction, step=epoch_num)
 
     # also save side by side image in experiment directory
     figure_path = join(EXP_DIR, 'comparison_epoch_{}.png'.format(epoch_num))

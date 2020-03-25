@@ -2,8 +2,8 @@
 GPU = '/device:GPU:0'
 
 # Used by generator
-NUM_CHANNELS = 1
 LAMBDA = 100
+LAYER_BATCH = 1  # must be an odd number
 
 # Used in utils
 IMAGE_DIM = 512
