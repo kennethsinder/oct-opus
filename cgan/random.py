@@ -12,10 +12,13 @@ def resize(input_image, real_image, height, width):
 
 
 def random_crop(input_image, real_image):
-    stacked_image = tf.stack([input_image, real_image], axis=0)
-    cropped_image = tf.image.random_crop(stacked_image, size=[2, IMAGE_DIM, IMAGE_DIM, 1])
-    return cropped_image[0], cropped_image[1]
-
+    stacked_image = tf.concat([input_image, real_image], axis=2)
+    cropped_image = tf.image.random_crop(
+        stacked_image,
+        size=[IMAGE_DIM, IMAGE_DIM, input_image.shape[-1]+real_image.shape[-1]]
+    )
+    return (cropped_image[...,:input_image.shape[-1]],
+            cropped_image[...,input_image.shape[-1]:])
 
 def random_noise(input_image):
     if tf.random.uniform(()) > 0.5:
