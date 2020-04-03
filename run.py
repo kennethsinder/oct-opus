@@ -22,7 +22,7 @@ tf.get_logger().setLevel('WARNING')
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the mode')
+    parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the program')
     parser.add_argument('hardware', choices=['cpu', 'gpu'], help='Specify whether script is being run on CPU or GPU')
     parser.add_argument('-l', '--logdir', metavar='PATH', help='Specify where to store the Tensorboard logs')
     parser.add_argument('-s', '--starting-epoch', type=int, help='Specify the initial epoch number', default=1)
@@ -69,9 +69,5 @@ if __name__ == '__main__':
                         epoch_num + fold_num * num_epochs))
 
     else:
-        # Load from latest checkpoint
-        model_state = ModelState(args.datadir)
-        model_state.restore_from_checkpoint()
+        raise NotImplementedException('Predict mode is not supported with k-folds mode.')
 
-        # Generate results based on prediction
-        generate_inferred_images(model_state, args.epoch)

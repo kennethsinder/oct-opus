@@ -11,7 +11,8 @@ EXPERIMENT = OfflineExperiment(
 GPU = '/device:GPU:0'
 
 # Training and testing data set locations
-ALL_DATA_DIR = 'all_data_original'
+USE_FLATTENED = True
+ALL_DATA_DIR = 'all_data_flattened' if USE_FLATTENED else 'all_data_original'
 ENFACE_DATA_DIR = 'all_data_enface'
 
 # Used by generator

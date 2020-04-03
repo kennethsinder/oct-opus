@@ -57,8 +57,8 @@ def compare_all(image_a, image_b):
 
 
 def main(image_a_path, image_b_path):
-    image_a_obj = Image.open(image_a_path)
-    image_b_obj = Image.open(image_b_path)
+    image_a_obj = Image.open(image_a_path).convert('LA')
+    image_b_obj = Image.open(image_b_path).convert('LA')
     assert image_a_obj.size == image_b_obj.size
 
     print("Both images are " + str(image_a_obj.size), end="\n\n")
