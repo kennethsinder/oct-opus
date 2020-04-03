@@ -20,7 +20,7 @@ def gen_single_enface(predicted_dir, dataset, epoch_num):
         # images from which we can create an enface. In this case
         # just don't create the multi_slice_max_norm.png and
         # multi_slice_sum.png enfaces and silently continue.
-        traceback.print_exc() # So we can diaagnose why it's empty
+        traceback.print_exc()  # So we can diagnose why it's empty
         return
     slicer = Slicer()
 
@@ -49,6 +49,7 @@ def gen_enface_all_testing(predicted_dir, epoch_num, datasets):
             epoch_num=epoch_num
         )
 
+
 if __name__ == '__main__':
     """
     Executing this file directly via CLI will generate enfaces
@@ -59,6 +60,6 @@ if __name__ == '__main__':
     """
     import sys
     from glob import glob
+
     for f in glob(join(sys.argv[1], sys.argv[2], '*')):
         gen_single_enface(f, 'OMAG Bscans', 0)
-

@@ -10,6 +10,9 @@ EXPERIMENT = OfflineExperiment(
 # GPU device
 GPU = '/device:GPU:0'
 
+# Cross-validation modes
+USE_K_FOLDS = True
+
 # Training and testing data set locations
 USE_FLATTENED = True
 ALL_DATA_DIR = 'all_data_flattened' if USE_FLATTENED else 'all_data_original'

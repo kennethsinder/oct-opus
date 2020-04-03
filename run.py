@@ -1,4 +1,4 @@
-from configs.parameters import EXPERIMENT
+from configs.parameters import EXPERIMENT, USE_K_FOLDS
 assert EXPERIMENT.alive  # Needed due to import dependency issues
 
 import argparse
@@ -34,7 +34,7 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    if args.hardware == "gpu":
+    if args.hardware == 'gpu':
         device_name = tf.test.gpu_device_name()
         if device_name != GPU:
             raise SystemError('GPU device not found')
@@ -44,8 +44,9 @@ if __name__ == '__main__':
         model_state = ModelState(args.datadir)
         num_epochs = args.ending_epoch - args.starting_epoch + 1
         # go through each of K=5 folds, goes from 0 to 4 inclusive
-        for fold_num in range(K):
-            print('----- Starting fold number {} -----'.format(fold_num))
+        for fold_num in range(K if USE_K_FOLDS else 1):
+            if USE_K_FOLDS:
+                print('----- Starting fold number {} -----'.format(fold_num))
             model_state.reset_weights()
             model_state.get_datasets(fold_num)
 
@@ -65,9 +66,15 @@ if __name__ == '__main__':
                 # en-face image logging
                 if epoch_num % 5 == 0:
                     generate_inferred_images(model_state, epoch_num + fold_num * num_epochs, fold_num)
-                    print('Generated inferred images for epoch {} (this # incorporates past folds of training)'.format(
-                        epoch_num + fold_num * num_epochs))
-
+                    print('Generated inferred images for epoch'
+                          ' {} (this # incorporates past folds of training)'.format(
+                            epoch_num + fold_num * num_epochs))
     else:
-        raise NotImplementedException('Predict mode is not supported with k-folds mode.')
+        # load from latest checkpoint and load data for just 1 of 5 folds
+        model_state = ModelState(args.datadir)
+        model_state.restore_from_checkpoint()
+        model_state.get_datasets(0)
+
+        # generate results based on prediction
+        generate_inferred_images(model_state, args.epoch)
 
