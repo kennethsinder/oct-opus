@@ -141,8 +141,8 @@ def generate_inferred_images(model_state, epoch_num, fold_num=0):
                 # a prediction from.
                 continue
             # TODO: this is dumb, find a better way later (we have an issue open that includes this).
-            if not isfile(join(dataset_path, 'OMAG Bscans', '{}.png'.format(
-                    bscan_num_to_omag_num(i, num_acquisitions)))):
+            omag_num = bscan_num_to_omag_num(i, num_acquisitions)
+            if not isfile(join(dataset_path, 'OMAG Bscans', '{}.png'.format(omag_num))):
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
@@ -155,17 +155,12 @@ def generate_inferred_images(model_state, epoch_num, fold_num=0):
                 pass
             prediction = model_state.generator(inp, training=True)
 
-            # Compute the loss.
-            disc_generated_output = model_state.discriminator([inp, prediction], training=True)
-            disc_real_output = model_state.discriminator([inp, tar], training=True)
-
             # Save the prediction to disk under a sub-directory.
             predicted_img = prediction[0]
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
 
             makedirs(join(predicted_dir, dataset_name), exist_ok=True)
-            tf.io.write_file('./{}/{}/{}.png'.format(predicted_dir, dataset_name, i // num_acquisitions + 1),
-                             img_to_save)
+            tf.io.write_file('./{}/{}/{}.png'.format(predicted_dir, dataset_name, omag_num), img_to_save)
 
     gen_enface_all_testing(predicted_dir, epoch_num, train_and_test_sets(fold_num))
 
