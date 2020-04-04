@@ -69,6 +69,7 @@ if __name__ == '__main__':
                     print('Generated inferred images for epoch'
                           ' {} (this # incorporates past folds of training)'.format(
                             epoch_num + fold_num * num_epochs))
+        model_state.cleanup()   # Delete .h5 files for scrambled-weight models
     else:
         # load from latest checkpoint and load data for just 1 of 5 folds
         model_state = ModelState(args.datadir)
