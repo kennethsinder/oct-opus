@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from PIL import Image, ImageEnhance
 
-from cgan.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, EXPERIMENT
+from cgan.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH
 from datasets.train_and_test import train_and_test_sets
 from enface.enface import gen_enface_all_testing
 from cgan.random import resize, random_jitter, random_noise
@@ -174,6 +174,7 @@ def generate_cross_section_comparison(model, test_input, tar, epoch_num):
 
     figure_name = 'comparison_epoch_{}.png'.format(epoch_num)
     plt.savefig(figure_name)
-    EXPERIMENT.log_figure(figure_name=figure_name)
-    EXPERIMENT.log_asset(file_data=figure_name, step=epoch_num)
+    # TODO: replace with tensorboard
+    # EXPERIMENT.log_figure(figure_name=figure_name)
+    # EXPERIMENT.log_asset(file_data=figure_name, step=epoch_num)
     plt.clf()

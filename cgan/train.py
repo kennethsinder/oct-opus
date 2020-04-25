@@ -1,4 +1,4 @@
-from cgan.parameters import LAMBDA, EXPERIMENT
+from cgan.parameters import LAMBDA
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
@@ -90,7 +90,8 @@ def train_epoch(train_dataset, model_state, epoch_num):
         index += 1
 
         # log info to Comet ML
-        EXPERIMENT.log_metric("avg_gen_loss", gen_loss_sum / index, epoch=epoch_num,
-                              step=model_state.current_training_step)
-        EXPERIMENT.log_metric("avg_disc_loss", disc_loss_sum / index, epoch=epoch_num,
-                              step=model_state.current_training_step)
+        # TODO: replace with tensorboard
+        # EXPERIMENT.log_metric("avg_gen_loss", gen_loss_sum / index, epoch=epoch_num,
+                              # step=model_state.current_training_step)
+        # EXPERIMENT.log_metric("avg_disc_loss", disc_loss_sum / index, epoch=epoch_num,
+                              # step=model_state.current_training_step)

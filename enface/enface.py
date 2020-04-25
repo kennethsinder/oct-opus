@@ -2,7 +2,7 @@ import traceback
 
 from os.path import join
 
-from cgan.parameters import START_ROW, END_ROW, EXPERIMENT
+from cgan.parameters import START_ROW, END_ROW
 from enface.image_io import ImageIO
 from enface.slicer import Slicer
 
@@ -26,19 +26,9 @@ def gen_single_enface(predicted_dir, dataset, epoch_num):
 
     multi_slice_max_norm = slicer.multi_slice_max_norm(eye=eye, lower=START_ROW, upper=END_ROW)
     image_io.save_enface_image(enface=multi_slice_max_norm, filepath=work_dir, filename=MULTI_SLICE_MAX_NORM)
-    EXPERIMENT.log_asset(
-        file_data=join(work_dir, MULTI_SLICE_MAX_NORM),
-        file_name="{}_epoch{}_{}".format(dataset, epoch_num, MULTI_SLICE_MAX_NORM),
-        step=epoch_num
-    )
 
     multi_slice_sum = slicer.multi_slice_sum(eye=eye, lower=START_ROW, upper=END_ROW)
     image_io.save_enface_image(enface=multi_slice_sum, filepath=work_dir, filename=MULTI_SLICE_SUM)
-    EXPERIMENT.log_asset(
-        file_data=join(work_dir, MULTI_SLICE_SUM),
-        file_name="{}_epoch{}_{}".format(dataset, epoch_num, MULTI_SLICE_SUM),
-        step=epoch_num
-    )
 
 
 def gen_enface_all_testing(predicted_dir, epoch_num, datasets):

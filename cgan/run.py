@@ -1,5 +1,4 @@
-from cgan.parameters import EXPERIMENT, USE_K_FOLDS
-assert EXPERIMENT.alive  # Needed due to import dependency issues
+from cgan.parameters import USE_K_FOLDS
 
 import argparse
 import os
