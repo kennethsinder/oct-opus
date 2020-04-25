@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 from skimage.transform import resize
 
-from configs.parameters import IMAGE_DIM
+from cgan.parameters import IMAGE_DIM
 
 
 class Slicer:

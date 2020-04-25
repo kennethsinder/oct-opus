@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image, ImageEnhance
 from matplotlib.image import imsave
 
-from configs.parameters import IMAGE_DIM
+from cgan.parameters import IMAGE_DIM
 
 
 class ImageIO:

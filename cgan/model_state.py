@@ -3,7 +3,7 @@ from os.path import join
 
 import tensorflow as tf
 
-from configs.parameters import ALL_DATA_DIR
+from cgan.parameters import ALL_DATA_DIR
 from datasets.train_and_test import train_and_test_sets
 from cgan.discriminator import discriminator
 from cgan.generator import generator

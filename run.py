@@ -1,4 +1,4 @@
-from configs.parameters import EXPERIMENT, USE_K_FOLDS
+from cgan.parameters import EXPERIMENT, USE_K_FOLDS
 assert EXPERIMENT.alive  # Needed due to import dependency issues
 
 import argparse
@@ -7,7 +7,7 @@ import time
 
 import tensorflow as tf
 
-from configs.parameters import GPU
+from cgan.parameters import GPU
 from datasets.train_and_test import K
 from cgan.model_state import ModelState
 from cgan.train import train_epoch

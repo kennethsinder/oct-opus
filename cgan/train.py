@@ -1,4 +1,4 @@
-from configs.parameters import LAMBDA, EXPERIMENT
+from cgan.parameters import LAMBDA, EXPERIMENT
 import tensorflow as tf
 import matplotlib.pyplot as plt
 

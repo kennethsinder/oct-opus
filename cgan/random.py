@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from configs.parameters import IMAGE_DIM
+from cgan.parameters import IMAGE_DIM
 
 
 def resize(input_image, real_image, height, width):

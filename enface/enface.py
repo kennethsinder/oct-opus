@@ -2,7 +2,7 @@ import traceback
 
 from os.path import join
 
-from configs.parameters import START_ROW, END_ROW, EXPERIMENT
+from cgan.parameters import START_ROW, END_ROW, EXPERIMENT
 from enface.image_io import ImageIO
 from enface.slicer import Slicer
 
