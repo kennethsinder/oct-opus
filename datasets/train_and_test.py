@@ -1,6 +1,7 @@
 from datasets.all_datasets import ALL_DATASETS
+from random import sample
 
-TRAINING_DATASETS = {
+USABLE_DATASETS = {
     "2015-10-21___512_2048_Horizontal_Images50",
     "2015-10-21___512_2048_Horizontal_Images58",
     "2015-10-21___512_2048_Horizontal_Images85",
@@ -52,9 +53,6 @@ TRAINING_DATASETS = {
     "2015-10-27___512_2048_Horizontal_Images67",
     "2015-10-27___512_2048_Horizontal_Images72",
     "2015-10-27___512_2048_Horizontal_Images73",
-}
-
-TESTING_DATASETS = {
     "2015-10-20___512_2048_Horizontal_Images15",
     "2015-10-20___512_2048_Horizontal_Images21",
     "2015-10-20___512_2048_Horizontal_Images27",
@@ -72,6 +70,21 @@ TESTING_DATASETS = {
     "2015-10-21___512_2048_Horizontal_Images41",
 }
 
-assert TRAINING_DATASETS.issubset(ALL_DATASETS)
-assert TESTING_DATASETS.issubset(ALL_DATASETS)
-assert TESTING_DATASETS.isdisjoint(TRAINING_DATASETS)
+usable_datasets_copy = set(USABLE_DATASETS)
+
+K = 5
+folds = []
+for i in range(K - 1):
+    folds.append(set(sample(usable_datasets_copy,
+                            min(len(usable_datasets_copy), int(len(USABLE_DATASETS) / K)))))
+    usable_datasets_copy = usable_datasets_copy - folds[i]
+folds.append(usable_datasets_copy)
+
+
+def train_and_test_sets(i):
+    test_sets = folds[i]
+    train_sets = USABLE_DATASETS - test_sets
+    return train_sets, test_sets
+
+
+assert USABLE_DATASETS.issubset(ALL_DATASETS)

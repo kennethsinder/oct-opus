@@ -10,6 +10,12 @@ slurm*
 RUN*
 predicted-*
 
+# Weights files (temp)
+*.h5
+
+*.out
+comparison.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
