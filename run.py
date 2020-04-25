@@ -9,9 +9,9 @@ import tensorflow as tf
 
 from configs.parameters import GPU
 from datasets.train_and_test import K
-from src.model_state import ModelState
-from src.train import train_epoch
-from src.utils import generate_inferred_images, generate_cross_section_comparison
+from cgan.model_state import ModelState
+from cgan.train import train_epoch
+from cgan.utils import generate_inferred_images, generate_cross_section_comparison
 
 # This is why we can't have nice things:
 # https://stackoverflow.com/questions/38073432/how-to-suppress-verbose-tensorflow-logging

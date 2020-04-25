@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from configs.parameters import OUTPUT_CHANNELS
-from src.sampling import downsample, upsample
+from cgan.sampling import downsample, upsample
 
 
 def generator():

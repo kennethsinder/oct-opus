@@ -1,5 +1,5 @@
 import tensorflow as tf
-from src.sampling import downsample
+from cgan.sampling import downsample
 
 
 def discriminator():

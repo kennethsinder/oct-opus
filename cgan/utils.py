@@ -12,7 +12,8 @@ from PIL import Image, ImageEnhance
 from configs.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, EXPERIMENT
 from datasets.train_and_test import train_and_test_sets
 from enface.enface import gen_enface_all_testing
-from src.random import resize, random_jitter, random_noise
+from cgan.random import resize, random_jitter, random_noise
+from cgan.train import discriminator_loss
 
 
 def get_dataset(data_dir: str, dataset_list):
