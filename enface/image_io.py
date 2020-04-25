@@ -6,10 +6,12 @@ import numpy as np
 from PIL import Image, ImageEnhance
 from matplotlib.image import imsave
 
-from cgan.parameters import IMAGE_DIM
-
 
 class ImageIO:
+
+    def __init__(self, IMAGE_DIM):
+        self.__IMAGE_DIM = IMAGE_DIM
+
     @staticmethod
     def save_enface_image(enface, filepath, filename):
         imsave(join(filepath, filename), enface, format="png", cmap="gray")
@@ -31,7 +33,7 @@ class ImageIO:
             raise ValueError('FoundZeroImages')
         print('Loading {} images from `{}` ...'.format(num_images, src_dir))
 
-        eye = np.ndarray(shape=(IMAGE_DIM, IMAGE_DIM, num_images), dtype=float)
+        eye = np.ndarray(shape=(self.__IMAGE_DIM, self.__IMAGE_DIM, num_images), dtype=float)
         j = 0
         for i in range(num_images):
             try:

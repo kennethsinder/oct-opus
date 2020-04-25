@@ -8,11 +8,12 @@ from enface.slicer import Slicer
 
 MULTI_SLICE_MAX_NORM = "multi_slice_max_norm.png"
 MULTI_SLICE_SUM = "multi_slice_sum.png"
+IMAGE_DIM = 512
 
 
 def gen_single_enface(predicted_dir, dataset, epoch_num):
     work_dir = join(predicted_dir, dataset)
-    image_io = ImageIO()
+    image_io = ImageIO(IMAGE_DIM=IMAGE_DIM)
     try:
         eye = image_io.load_single_eye(work_dir)
     except FileNotFoundError:
@@ -22,7 +23,7 @@ def gen_single_enface(predicted_dir, dataset, epoch_num):
         # multi_slice_sum.png enfaces and silently continue.
         traceback.print_exc()  # So we can diagnose why it's empty
         return
-    slicer = Slicer()
+    slicer = Slicer(IMAGE_DIM=IMAGE_DIM)
 
     multi_slice_max_norm = slicer.multi_slice_max_norm(eye=eye, lower=START_ROW, upper=END_ROW)
     image_io.save_enface_image(enface=multi_slice_max_norm, filepath=work_dir, filename=MULTI_SLICE_MAX_NORM)
