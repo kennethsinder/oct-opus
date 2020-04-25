@@ -1,5 +1,5 @@
 import glob
-from compare import main as compare_main
+from scripts.compare import main as compare_main
 import os
 import os.path
 import sys
