@@ -24,10 +24,6 @@ PIXEL_DEPTH = 256
 # Used by Tensorboard
 IMAGE_LOG_INTERVAL = 1000
 
-# Rows we care about in each image
-START_ROW = 50
-END_ROW = 256
-
 # Directory names for B-Scans and OMAGs
 BSCAN_DIRNAME = "xzIntensity"
 OMAG_DIRNAME = "OMAG Bscans"
