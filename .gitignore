@@ -7,7 +7,6 @@ logs
 comparison_epoch*.png
 disc_losses.txt
 slurm*
-RUN*
 predicted-*
 
 # Weights files (temp)
@@ -129,7 +128,6 @@ venv.bak/
 
 # tensorboard logging
 log
-logs
 
 # vscode
 .vscode
