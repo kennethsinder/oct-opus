@@ -2,7 +2,7 @@ import glob
 import io
 import re
 from os import makedirs
-from os.path import join, basename, normpath, isfile
+from os.path import join, basename, normpath
 from random import randint
 
 import matplotlib.pyplot as plt
@@ -13,7 +13,6 @@ from configs.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, EXPERIMENT
 from datasets.train_and_test import train_and_test_sets
 from enface.enface import gen_enface_all_testing
 from src.random import resize, random_jitter, random_noise
-from src.train import discriminator_loss
 
 
 def get_dataset(data_dir: str, dataset_list):
@@ -124,49 +123,42 @@ def generate_inferred_images(model_state, epoch_num, fold_num=0):
     where N is the number of input B-scans
     (i.e. 4 times the number of OMAGs we'd have for each test set).
     """
-    test_folders = train_and_test_sets(fold_num)[1]
+    train_and_test_folders = train_and_test_sets(fold_num)
+
+    # Stage 1: Generate sequence of inferred OMAG-like cross-section images.
+    test_folders = train_and_test_folders[1]
     predicted_dir = './predicted-epoch-{}/'.format(epoch_num)
-    for dataset_path in glob.glob(join(model_state.all_data_path, '*')):
-        dataset_name = last_path_component(dataset_path)
-        if dataset_name not in test_folders:
-            # Keep iterating if this data folder isn't configured to be in the
-            # test set.
-            continue
-        for fn in glob.glob(join(dataset_path, 'xzIntensity', '*.png')):
+    for dataset_path in [join(model_state.all_data_path, test_eye) for test_eye in test_folders]:
+        for bscan_file_path in glob.glob(join(dataset_path, 'xzIntensity', '*.png')):
             # Get number before '.png'
-            i = int(re.search(r'(\d+)\.png', fn).group(1))
+            bscan_id = int(re.search(r'(\d+)\.png', bscan_file_path).group(1))
             num_acquisitions = get_num_acquisitions(dataset_path)
-            if i % num_acquisitions:
-                # We only want 1 out of every num_acquisitions B-scans to gather
+            if bscan_id % num_acquisitions:
+                # We only want 1 out of every group of `num_acquisitions` B-scans to gather
                 # a prediction from.
-                continue
-            # TODO: this is dumb, find a better way later (we have an issue open that includes this).
-            omag_num = bscan_num_to_omag_num(i, num_acquisitions)
-            if not isfile(join(dataset_path, 'OMAG Bscans', '{}.png'.format(omag_num))):
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
-            dataset = tf.data.Dataset.from_generator(
-                lambda: map(get_images_no_jitter, [fn]),
-                output_types=(tf.float32, tf.float32)
-            )
-            dataset = dataset.batch(1)
-            for inp, tar in dataset.take(1):
-                pass
-            prediction = model_state.generator(inp, training=True)
+            bscan_img = load_image(bscan_file_path, angle=0, contrast_factor=1.85)
+            bscan_img = (tf.cast(bscan_img, tf.float32) / ((PIXEL_DEPTH - 1) / 2.0)) - 1
+            prediction = model_state.generator(bscan_img, training=True)
 
-            # Save the prediction to disk under a sub-directory.
+            # Encode the prediction as PNG image data.
             predicted_img = prediction[0]
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
 
+            # Save the prediction to disk under a sub-directory.
+            dataset_name = last_path_component(dataset_path)
             makedirs(join(predicted_dir, dataset_name), exist_ok=True)
+            omag_num = bscan_num_to_omag_num(bscan_id, num_acquisitions)
             tf.io.write_file('./{}/{}/{}.png'.format(predicted_dir, dataset_name, omag_num), img_to_save)
 
-    gen_enface_all_testing(predicted_dir, epoch_num, train_and_test_sets(fold_num))
+    # Stage 2: Collect those predicted OMAGs to make an en-face vascular map.
+    gen_enface_all_testing(predicted_dir, epoch_num, train_and_test_folders)
 
 
 def generate_cross_section_comparison(model, test_input, tar, epoch_num):
-    # the training=True is intentional here since
+    # the `training=True` is intentional here since
     # we want the batch statistics while running the model
     # on the test dataset. If we use training=False, we will get
     # the accumulated statistics learned from the training dataset
