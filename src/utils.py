@@ -137,7 +137,7 @@ def generate_inferred_images(model_state, epoch_num, fold_num=0):
             # Obtain a prediction of the image identified by filename `fn`.
             bscan_img = load_image(bscan_file_path, angle=0, contrast_factor=1.85)
             bscan_img = (tf.cast(bscan_img, tf.float32) / ((PIXEL_DEPTH - 1) / 2.0)) - 1
-            prediction = model_state.generator(bscan_img, training=True)
+            prediction = model_state.generator(bscan_img[tf.newaxis, ...], training=True)
 
             # Encode the prediction as PNG image data.
             predicted_img = prediction[0]
