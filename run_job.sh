@@ -8,6 +8,7 @@
 
 cd $SLURM_TMPDIR
 tar --use-compress-program=pigz -xf ~/projects/def-vengu/s2saberi/all_data_original.tar.gz
+unzip ~/projects/def-vengu/s2saberi/all_data_flattened.zip
 
 cd -
 module load cuda/10.0

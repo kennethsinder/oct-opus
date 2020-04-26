@@ -16,13 +16,9 @@ from src.random import resize, random_jitter, random_noise
 
 
 def get_dataset(data_dir: str, dataset_list):
-    image_files = glob.glob(join(data_dir, '*', 'xzIntensity', '*.png'))
-    temp_image_files = []
-    for image_path in image_files:
-        dataset_name = last_path_component(join(image_path, '..', '..'))
-        if dataset_name in dataset_list:
-            temp_image_files.append(image_path)
-    image_files = temp_image_files
+    image_files = []
+    for eye_path in [join(data_dir, eye_folder) for eye_folder in dataset_list]:
+        image_files.extend(glob.glob(join(eye_path, 'xzIntensity', '[0-9]*.png')))
 
     if not image_files:
         raise Exception('Check src/parameters.py, no B-scan images were found.')
