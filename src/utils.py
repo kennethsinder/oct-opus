@@ -129,7 +129,7 @@ def generate_inferred_images(model_state, epoch_num, fold_num=0):
     test_folders = train_and_test_folders[1]
     predicted_dir = './predicted-epoch-{}/'.format(epoch_num)
     for dataset_path in [join(model_state.all_data_path, test_eye) for test_eye in test_folders]:
-        for bscan_file_path in glob.glob(join(dataset_path, 'xzIntensity', '*.png')):
+        for bscan_file_path in glob.glob(join(dataset_path, 'xzIntensity', '[0-9]*.png')):
             # Get number before '.png'
             bscan_id = int(re.search(r'(\d+)\.png', bscan_file_path).group(1))
             num_acquisitions = get_num_acquisitions(dataset_path)
