@@ -1,7 +1,7 @@
 import glob
 import io
 import re
-from os import makedirs
+from os import makedirs, listdir
 from os.path import join, basename, normpath
 from random import randint
 
@@ -10,9 +10,8 @@ import tensorflow as tf
 from PIL import Image, ImageEnhance
 
 from cgan.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH
-from datasets.train_and_test import train_and_test_sets
-from enface.enface import gen_enface_all_testing
 from cgan.random import resize, random_jitter, random_noise
+from enface.enface import gen_single_enface
 
 
 def get_dataset(data_dir: str, dataset_list):
@@ -112,27 +111,29 @@ def last_path_component(p: str) -> str:
     return basename(normpath(p))
 
 
-def generate_inferred_images(model_state, epoch_num, fold_num=0):
+def generate_inferred_images(EXP_DIR, model_state):
     """
-    Generate full sets of inferred cross-section PNGs,
-    save them to /predicted/<dataset_name>_1.png -> /predicted/<dataset_name>_<N>.png
-    where N is the number of input B-scans
-    (i.e. 4 times the number of OMAGs we'd have for each test set).
+    Generate predicted images for all datasets listed under the `model_state.all_data_path` path.
+    Also generates the corresponding enface for each of the new datasets.
+    Images are saved under the `EXP_DIR`/<dataset_name> directory.
     """
-    train_and_test_folders = train_and_test_sets(fold_num)
 
-    # Stage 1: Generate sequence of inferred OMAG-like cross-section images.
-    test_folders = train_and_test_folders[1]
-    predicted_dir = './predicted-epoch-{}/'.format(epoch_num)
-    for dataset_path in [join(model_state.all_data_path, test_eye) for test_eye in test_folders]:
-        for bscan_file_path in glob.glob(join(dataset_path, 'xzIntensity', '[0-9]*.png')):
+    # lists the datasets found
+    datasets_base_path = model_state.all_data_path
+    datasets_list = listdir(datasets_base_path)
+    print("Found {} datasets under {}".format(len(datasets_list), datasets_base_path))
+
+    # loop over datasets
+    for dataset_name in datasets_list:
+        """ Stage 1: Generate sequence of inferred OMAG-like cross-section images. """
+        bscans_list = glob.glob(join(datasets_base_path, dataset_name, 'xzIntensity', '[0-9]*.png'))
+        print("Found {} scans belonging to {} dataset".format(len(bscans_list), dataset_name))
+        makedirs(join(EXP_DIR, dataset_name), exist_ok=True)
+
+        # loop over each scan and generate corresponding predicted image
+        for bscan_file_path in bscans_list:
             # Get number before '.png'
             bscan_id = int(re.search(r'(\d+)\.png', bscan_file_path).group(1))
-            num_acquisitions = get_num_acquisitions(dataset_path)
-            if bscan_id % num_acquisitions:
-                # We only want 1 out of every group of `num_acquisitions` B-scans to gather
-                # a prediction from.
-                continue
 
             # Obtain a prediction of the image identified by filename `fn`.
             bscan_img = load_image(bscan_file_path, angle=0, contrast_factor=1.85)
@@ -144,13 +145,11 @@ def generate_inferred_images(model_state, epoch_num, fold_num=0):
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
 
             # Save the prediction to disk under a sub-directory.
-            dataset_name = last_path_component(dataset_path)
-            makedirs(join(predicted_dir, dataset_name), exist_ok=True)
-            omag_num = bscan_num_to_omag_num(bscan_id, num_acquisitions)
-            tf.io.write_file('./{}/{}/{}.png'.format(predicted_dir, dataset_name, omag_num), img_to_save)
+            tf.io.write_file('./{}/{}/{}.png'.format(EXP_DIR, dataset_name, bscan_id), img_to_save)
 
-    # Stage 2: Collect those predicted OMAGs to make an en-face vascular map.
-    gen_enface_all_testing(predicted_dir, epoch_num, train_and_test_folders)
+        """ Stage 2: Collect those predicted OMAGs to make an en-face vascular map. """
+        path_to_predicted = join(EXP_DIR, dataset_name)
+        gen_single_enface(dataset_dir=path_to_predicted)
 
 
 def generate_cross_section_comparison(model, test_input, tar, epoch_num):

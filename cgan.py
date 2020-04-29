@@ -3,6 +3,7 @@ from cgan.parameters import USE_K_FOLDS
 import argparse
 import os
 import time
+import datetime
 
 import tensorflow as tf
 
@@ -31,6 +32,10 @@ def get_args():
 
 
 if __name__ == '__main__':
+    # main directory used to store output
+    EXP_DIR = "experiment-{}".format(datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S"))
+    os.makedirs(EXP_DIR, exist_ok=False)
+
     args = get_args()
 
     if args.hardware == 'gpu':
@@ -62,19 +67,13 @@ if __name__ == '__main__':
                     generate_cross_section_comparison(model_state.generator, inp, tar,
                                                       epoch_num + fold_num * num_epochs)
 
-                # en-face image logging
-                if epoch_num % 5 == 0:
-                    generate_inferred_images(model_state, epoch_num + fold_num * num_epochs, fold_num)
-                    print('Generated inferred images for epoch'
-                          ' {} (this # incorporates past folds of training)'.format(
-                            epoch_num + fold_num * num_epochs))
         model_state.cleanup()   # Delete .h5 files for scrambled-weight models
-    else:
-        # load from latest checkpoint and load data for just 1 of 5 folds
-        model_state = ModelState(args.datadir)
-        model_state.restore_from_checkpoint()
-        model_state.get_datasets(0)
 
-        # generate results based on prediction
-        generate_inferred_images(model_state, args.epoch)
+    """ Prediction/Testing Code. This is run either independently or after training has completed. """
 
+    # load from latest checkpoint and load data for just 1 of 5 folds
+    model_state = ModelState(args.datadir)
+    model_state.restore_from_checkpoint()
+
+    # generate results based on prediction
+    generate_inferred_images(EXP_DIR, model_state)
