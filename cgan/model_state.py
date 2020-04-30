@@ -87,32 +87,4 @@ class ModelState:
         self.checkpoint.save(file_prefix=self.checkpoint_prefix)
 
     def restore_from_checkpoint(self):
-        # cleanup old checkpoints to reduce memory footprint
-        self.__moving_window_checkpoint_cleanup()
-        self.checkpoint.restore(
-            tf.train.latest_checkpoint(self.checkpoint_dir))
-
-    @staticmethod
-    def __get_epoch_num(checkpoint_name):
-        return int(checkpoint_name.split(".")[0].split("-")[1])
-
-    def __moving_window_checkpoint_cleanup(self, window_size=5):
-        # list of all checkpoint files
-        os.makedirs(self.checkpoint_dir, exist_ok=True)
-        checkpoint_files = os.listdir(self.checkpoint_dir)
-        if 'checkpoint' in checkpoint_files:
-            # no need to consider this file
-            checkpoint_files.remove("checkpoint")
-
-        if len(checkpoint_files) == 0:
-            return
-
-        # sort by asc epoch numbers
-        checkpoint_files.sort(key=self.__get_epoch_num, reverse=False)
-
-        # cleanup old checkpoints
-        highest_epoch_num = self.__get_epoch_num(checkpoint_files[-1])
-        for checkpoint in checkpoint_files:
-            if self.__get_epoch_num(checkpoint) < (highest_epoch_num - window_size):
-                os.remove(self.checkpoint_dir + "/" + checkpoint)
-                print("cleaned up checkpoint ", checkpoint)
+        self.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir))
