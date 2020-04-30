@@ -24,10 +24,10 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the program')
     parser.add_argument('hardware', choices=['cpu', 'gpu'], help='Specify whether script is being run on CPU or GPU')
-    parser.add_argument('-l', '--logdir', metavar='PATH', help='Specify where to store the Tensorboard logs')
     parser.add_argument('-s', '--starting-epoch', type=int, help='Specify the initial epoch number', default=1)
     parser.add_argument('-e', '--ending-epoch', type=int, help='Specify the final epoch number', default=10)
     parser.add_argument('-d', '--datadir', help='Specify the root directory to look for data')
+    parser.add_argument('-c', '--ckptdir', help='Specify the location of the checkpoints for prediction', default=None)
     return parser.parse_args()
 
 
@@ -37,6 +37,7 @@ if __name__ == '__main__':
     os.makedirs(EXP_DIR, exist_ok=False)
 
     args = get_args()
+    assert args.datadir is not None
 
     if args.hardware == 'gpu':
         device_name = tf.test.gpu_device_name()
@@ -45,7 +46,7 @@ if __name__ == '__main__':
         print('Found GPU at: {}'.format(device_name))
 
     if args.mode == 'train':
-        model_state = ModelState(args.datadir)
+        model_state = ModelState(EXP_DIR, args.datadir, checkpoint_dir=os.path.join(EXP_DIR, "training_checkpoints"))
         num_epochs = args.ending_epoch - args.starting_epoch + 1
         # go through each of K=5 folds, goes from 0 to 4 inclusive
         for fold_num in range(K if USE_K_FOLDS else 1):
@@ -64,7 +65,7 @@ if __name__ == '__main__':
 
                 # cross-section image logging
                 for inp, tar in model_state.test_dataset.take(1):
-                    generate_cross_section_comparison(model_state.generator, inp, tar,
+                    generate_cross_section_comparison(EXP_DIR, model_state.generator, inp, tar,
                                                       epoch_num + fold_num * num_epochs)
 
         model_state.cleanup()   # Delete .h5 files for scrambled-weight models
@@ -72,7 +73,8 @@ if __name__ == '__main__':
     """ Prediction/Testing Code. This is run either independently or after training has completed. """
 
     # load from latest checkpoint and load data for just 1 of 5 folds
-    model_state = ModelState(args.datadir)
+    assert args.ckptdir is not None
+    model_state = ModelState(EXP_DIR, args.datadir, checkpoint_dir=args.ckptdir)
     model_state.restore_from_checkpoint()
 
     # generate results based on prediction

@@ -152,7 +152,7 @@ def generate_inferred_images(EXP_DIR, model_state):
         gen_single_enface(dataset_dir=path_to_predicted)
 
 
-def generate_cross_section_comparison(model, test_input, tar, epoch_num):
+def generate_cross_section_comparison(EXP_DIR, model, test_input, tar, epoch_num):
     # the `training=True` is intentional here since
     # we want the batch statistics while running the model
     # on the test dataset. If we use training=False, we will get
@@ -171,8 +171,8 @@ def generate_cross_section_comparison(model, test_input, tar, epoch_num):
         plt.imshow(tf.squeeze(display_list[i]) * 0.5 + 0.5)
         plt.axis('off')
 
-    figure_name = 'comparison_epoch_{}.png'.format(epoch_num)
-    plt.savefig(figure_name)
+    figure_path = join(EXP_DIR, 'comparison_epoch_{}.png'.format(epoch_num))
+    plt.savefig(figure_path)
     # TODO: replace with tensorboard
     # EXPERIMENT.log_figure(figure_name=figure_name)
     # EXPERIMENT.log_asset(file_data=figure_name, step=epoch_num)
