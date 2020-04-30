@@ -24,7 +24,7 @@ def train_step(model_state, input_image, target):
     return gen_loss, disc_loss
 
 
-def train_epoch(train_dataset, model_state, epoch_num):
+def train_epoch(TBD_WRITER, train_dataset, model_state, epoch_num):
     gen_loss_sum = 0
     disc_loss_sum = 0
     index = 0
@@ -35,9 +35,7 @@ def train_epoch(train_dataset, model_state, epoch_num):
         model_state.current_training_step += 1
         index += 1
 
-        # log info to Comet ML
-        # TODO: replace with tensorboard
-        # EXPERIMENT.log_metric("avg_gen_loss", gen_loss_sum / index, epoch=epoch_num,
-                              # step=model_state.current_training_step)
-        # EXPERIMENT.log_metric("avg_disc_loss", disc_loss_sum / index, epoch=epoch_num,
-                              # step=model_state.current_training_step)
+        # log info to tensorboard
+        with TBD_WRITER.as_default():
+            tf.summary.scalar('avg_gen_loss', gen_loss_sum / index, step=epoch_num)
+            tf.summary.scalar('avg_disc_loss', disc_loss_sum / index, step=epoch_num)

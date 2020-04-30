@@ -39,6 +39,9 @@ if __name__ == '__main__':
     args = get_args()
     assert args.datadir is not None
 
+    # tensorboard
+    TBD_WRITER = tf.summary.create_file_writer(os.path.join(EXP_DIR, "logs"))
+
     if args.hardware == 'gpu':
         device_name = tf.test.gpu_device_name()
         if device_name != GPU:
@@ -59,7 +62,7 @@ if __name__ == '__main__':
             for epoch_num in range(args.starting_epoch, args.ending_epoch + 1):
                 print('----- Starting epoch number {} -----'.format(epoch_num))
                 start = time.time()
-                train_epoch(model_state.train_dataset, model_state, epoch_num + fold_num * num_epochs)
+                train_epoch(TBD_WRITER, model_state.train_dataset, model_state, epoch_num + fold_num * num_epochs)
                 model_state.save_checkpoint()
                 print('Time taken for epoch {} is {} sec\n'.format(epoch_num, time.time() - start))
 
