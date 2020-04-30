@@ -32,3 +32,22 @@ def discriminator():
     last = tf.keras.layers.Conv2D(1, 4, strides=1, kernel_initializer=initializer)(zero_pad2)  # (bs, 30, 30, 1)
 
     return tf.keras.Model(inputs=[inp, tar], outputs=last)
+
+
+# Discriminator should minimize discriminator_loss, which is a negation of
+# L_cGAN.
+#
+# disc_real_output: D(x,y)
+# disc_generated_output: D(x,G(x,z))
+def discriminator_loss(loss_object, disc_real_output, disc_generated_output):
+    # "true values" part of the binary cross-entropy loss
+    # -log(D(x,y))
+    real_loss = loss_object(tf.ones_like(disc_real_output), disc_real_output)
+
+    # "false values" part of the binary cross-entropy loss
+    # -log(1-D(x,G(x,z)))
+    generated_loss = loss_object(tf.zeros_like(disc_generated_output), disc_generated_output)
+
+    # -log(D(x,y)) - log(1-D(x,G(x,z)))
+    total_disc_loss = real_loss + generated_loss
+    return total_disc_loss

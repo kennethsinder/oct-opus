@@ -1,13 +1,11 @@
 import os
-from os.path import join
 
 import tensorflow as tf
 
-from cgan.parameters import ALL_DATA_DIR
-from datasets.train_and_test import train_and_test_sets
 from cgan.discriminator import discriminator
 from cgan.generator import generator
 from cgan.utils import get_dataset
+from datasets.train_and_test import train_and_test_sets
 
 
 class ModelState:
@@ -37,6 +35,19 @@ class ModelState:
         self.generator.save_weights(self.generator_weights_file)
         self.discriminator.save_weights(self.discriminator_weights_file)
         self.current_training_step = 0
+
+        # The cGAN loss function L_cGAN is maximized when the discriminator correctly
+        # predicts D(x,y) = 1 and D(x,G(x,z)) = 0.
+        # It is simply binary cross-entropy loss, negated to become a max function:
+        #
+        # L_cGAN(G, D) = E_{x,y}[log(D(x,y))] + E_{x,z}[log(1-D(x,G(x,z)))]
+        # where:
+        # x: BScan input
+        # y: true OMAG
+        # z: random noise
+
+        # The discriminator seeks to maximize L_cGAN.
+        self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
     def reset_weights(self):
         """
