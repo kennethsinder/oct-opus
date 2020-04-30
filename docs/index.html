@@ -17,28 +17,97 @@
     <div class="bg-blue-100 border-t border-b border-blue-500 text-blue-700 px-4 py-3 mt-8" role="alert">
       <p class="font-bold">Catch us in California! &#127796;</p>
       <p class="text-sm">We are presenting our paper at
-        the <a href="https://spie.org/opo/conferencedetails/applications-of-machine-learning" class="no-underline hover:underline text-blue-500">Applications of Machine Learning</a>
-        conference of the SPIE Optics + Photonics event.<br />It'll be at the San Diego Convention Center on Wednesday 26 August 2020.</p>
+        the <a href="https://spie.org/opo/conferencedetails/applications-of-machine-learning"
+          class="no-underline hover:underline text-blue-500">Applications of Machine Learning</a>
+        conference of the SPIE Optics + Photonics event.<br />It'll be at the San Diego Convention Center on Wednesday
+        26 August 2020.</p>
     </div>
 
     <div class="mt-8">
       <span class="font-bold">Our goal: </span>
-      <span>Develop an algorithm that can be used to infer blood flow from <a href="https://en.wikipedia.org/wiki/Optical_coherence_tomography" class="no-underline hover:underline text-blue-500">OCT</a>
+      <span>Develop an algorithm that can be used to infer blood flow from <a
+          href="https://en.wikipedia.org/wiki/Optical_coherence_tomography"
+          class="no-underline hover:underline text-blue-500">OCT</a>
         cross-section images of human retinas, from only 1 cross-section per spot, captured by
-        <a href="https://uwaterloo.ca/physics-astronomy/people-profiles/kostadinka-bizheva" class="no-underline hover:underline text-blue-500">Prof. Bizheva</a>'s lab.
-        The sequence of inferred cross-sections can then be combined to form a vascular map of the retina, which empowers clinicians to perform diagnosis and monitoring of diseases affecting the eye.</span>
+        <a href="https://uwaterloo.ca/physics-astronomy/people-profiles/kostadinka-bizheva"
+          class="no-underline hover:underline text-blue-500">Prof. Bizheva</a>'s lab.
+        The sequence of inferred cross-sections can then be combined to form a vascular map of the retina, which
+        empowers clinicians to perform diagnosis and monitoring of diseases affecting the eye.</span>
     </div>
 
     <div class="mt-4">
       <span class="font-bold">Our solution: </span>
-      <span>A deep learning based image-to-image translation algorithm using the <a href="https://arxiv.org/abs/1611.07004" class="no-underline hover:underline text-blue-500">pix2pix cGAN</a>
-        architecture.</span>
+      <span>A deep learning based image-to-image translation algorithm using the <a
+          href="https://arxiv.org/abs/1611.07004" class="no-underline hover:underline text-blue-500">pix2pix cGAN</a>
+        architecture. The end result is that our predicted images result in vascular maps that resemble
+        ground truth images that were created using the optical microangiography (OMAG) algorithm
+        on multiple acquisitions of each spot. This visual success is mirrored by the quantitative comparison
+        with the ground truth using k-folds cross-validation (k=5, 65 eyes of data) on sedated rat images,
+        revealing a structural similarity index (SSIM) of 0.62.</span>
+    </div>
+
+    <div class="flex mt-4">
+      <div class="max-w-sm rounded overflow-hidden shadow-lg m-2">
+        <img class="w-full" src="sbs1_1.png" alt="B-scan example">
+        <div class="px-6 py-4">
+          <div class="font-bold text-xl mb-2">Structural cross-section (B-scan)</div>
+          <p class="text-gray-700 text-base">
+            An example of an input structural image.
+          </p>
+        </div>
+      </div>
+
+      <div class="max-w-sm rounded overflow-hidden shadow-lg m-2">
+        <img class="w-full" src="sbs1_2.png" alt="Inferred image example">
+        <div class="px-6 py-4">
+          <div class="font-bold text-xl mb-2">Predicted functional cross-section</div>
+          <p class="text-gray-700 text-base">
+            Our algorithm's corresponding output enhancing visibility of vasculature.
+          </p>
+        </div>
+      </div>
+
+      <div class="max-w-sm rounded overflow-hidden shadow-lg m-2">
+        <img class="w-full" src="sbs1_3.png" alt="Real OMAG example">
+        <div class="px-6 py-4">
+          <div class="font-bold text-xl mb-2">Functional cross-section from OMAG algorithm</div>
+          <p class="text-gray-700 text-base">
+            The ground truth image, obtained from the optical microangiography (OMAG) algorithm,
+            which performs temporal decorrelation of 4 adjacent B-scan images from repeated
+            acquisitions of the same spot.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex mt-4">
+      <div class="max-w-sm rounded overflow-hidden shadow-lg m-2">
+        <img class="w-full" src="sbs2_1.png" alt="B-scan example vascular map">
+        <div class="px-6 py-4">
+          <div class="font-bold text-xl mb-2">En-face vascular map from structural cross-sections (B-scans)</div>
+        </div>
+      </div>
+
+      <div class="max-w-sm rounded overflow-hidden shadow-lg m-2">
+        <img class="w-full" src="sbs2_2.png" alt="Inferred image example vascular map">
+        <div class="px-6 py-4">
+          <div class="font-bold text-xl mb-2">En-face vascular map from predicted functional cross-sections</div>
+        </div>
+      </div>
+
+      <div class="max-w-sm rounded overflow-hidden shadow-lg m-2">
+        <img class="w-full" src="sbs2_3.png" alt="Real OMAG example vascular map">
+        <div class="px-6 py-4">
+          <div class="font-bold text-xl mb-2">En-face vascular map from OMAG images</div>
+        </div>
+      </div>
     </div>
 
     <div class="mt-4">
       <div class="font-bold">Want to hear more?</div>
       <div>Take a look at our
-        <a target="_blank" href="slides.pdf" class="no-underline hover:underline text-blue-500">capstone symposium presentation slides</a>
+        <a target="_blank" href="slides.pdf" class="no-underline hover:underline text-blue-500">capstone symposium
+          presentation slides</a>
         and keep an eye on the 2020 SPIE O+P conference proceedings.</div>
     </div>
   </div>
