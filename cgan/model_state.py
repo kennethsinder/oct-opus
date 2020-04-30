@@ -17,7 +17,7 @@ class ModelState:
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator = generator()
         self.discriminator = discriminator()
-        self.all_data_path = join(root_data_dir, ALL_DATA_DIR)
+        self.all_data_path = root_data_dir
         self.train_dataset = None
         self.test_dataset = None
         self.checkpoint_dir = './training_checkpoints'
