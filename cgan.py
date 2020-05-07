@@ -13,6 +13,8 @@ from cgan.model_state import ModelState
 from cgan.train import train_epoch
 from cgan.utils import generate_inferred_images, generate_cross_section_comparison
 
+from cgan.dataset import Dataset
+
 # This is why we can't have nice things:
 # https://stackoverflow.com/questions/38073432/how-to-suppress-verbose-tensorflow-logging
 # (Also, this doesn't seem to be affecting the verbosity much if at all...)
@@ -32,12 +34,15 @@ def get_args():
 
 
 if __name__ == '__main__':
+    args = get_args()
+
+    # dataset
+    assert args.datadir is not None
+    ds = Dataset(root_data_path=args.datadir, num_folds=5)
+
     # main directory used to store output
     EXP_DIR = "experiment-{}".format(datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S"))
     os.makedirs(EXP_DIR, exist_ok=False)
-
-    args = get_args()
-    assert args.datadir is not None
 
     # tensorboard
     TBD_WRITER = tf.summary.create_file_writer(os.path.join(EXP_DIR, "logs"))
@@ -49,7 +54,9 @@ if __name__ == '__main__':
         print('Found GPU at: {}'.format(device_name))
 
     if args.mode == 'train':
-        model_state = ModelState(EXP_DIR, args.datadir, checkpoint_dir=os.path.join(EXP_DIR, "training_checkpoints"))
+        model_state = ModelState(EXP_DIR=EXP_DIR,
+                                 CKPT_DIR=os.path.join(EXP_DIR, "training_checkpoints"),
+                                 DATASET=ds)
         num_epochs = args.ending_epoch - args.starting_epoch + 1
         # go through each of K=5 folds, goes from 0 to 4 inclusive
         for fold_num in range(K if USE_K_FOLDS else 1):
@@ -77,7 +84,7 @@ if __name__ == '__main__':
 
     # load from latest checkpoint and load data for just 1 of 5 folds
     assert args.ckptdir is not None
-    model_state = ModelState(EXP_DIR, args.datadir, checkpoint_dir=args.ckptdir)
+    model_state = ModelState(EXP_DIR=EXP_DIR, CKPT_DIR=args.ckptdir, DATASET=ds)
     model_state.restore_from_checkpoint()
 
     # generate results based on prediction

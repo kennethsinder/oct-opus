@@ -3,15 +3,15 @@ from os.path import join
 
 import tensorflow as tf
 
+from cgan.dataset import Dataset
 from cgan.discriminator import discriminator
 from cgan.generator import generator
 from cgan.utils import get_dataset
-from datasets.train_and_test import train_and_test_sets
 
 
 class ModelState:
 
-    def __init__(self, EXP_DIR, all_data_path, checkpoint_dir):
+    def __init__(self, EXP_DIR: str, CKPT_DIR: str, DATASET: Dataset):
         # optimizers
         self.discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
@@ -21,15 +21,17 @@ class ModelState:
         self.discriminator = discriminator()
 
         # paths
-        self.all_data_path = all_data_path
-        self.checkpoint_dir = checkpoint_dir
+        self.CKPT_DIR = CKPT_DIR
+
+        # dataset
+        self.DATASET = DATASET
 
         # datasets
         self.train_dataset = None
         self.test_dataset = None
 
         # checkpoints
-        self.checkpoint_prefix = os.path.join(self.checkpoint_dir, 'ckpt')
+        self.checkpoint_prefix = os.path.join(self.CKPT_DIR, 'ckpt')
         self.checkpoint = tf.train.Checkpoint(
             generator_optimizer=self.generator_optimizer,
             discriminator_optimizer=self.discriminator_optimizer,
@@ -89,12 +91,12 @@ class ModelState:
         training with corresponds to a particular split of data into training
         and testing; this method loads those datasets.
         """
-        training_datasets, testing_datasets = train_and_test_sets(fold_num)
-        self.train_dataset = get_dataset(self.all_data_path, dataset_list=training_datasets)
-        self.test_dataset = get_dataset(self.all_data_path, dataset_list=testing_datasets)
+        training_datasets, testing_datasets = self.DATASET.get_train_and_test_by_fold_id(fold_num)
+        self.train_dataset = get_dataset(dataset_iterable=training_datasets)
+        self.test_dataset = get_dataset(dataset_iterable=testing_datasets)
 
     def save_checkpoint(self):
         self.checkpoint.save(file_prefix=self.checkpoint_prefix)
 
     def restore_from_checkpoint(self):
-        self.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir))
+        self.checkpoint.restore(tf.train.latest_checkpoint(self.CKPT_DIR))

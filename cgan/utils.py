@@ -4,6 +4,7 @@ import re
 from os import makedirs, listdir
 from os.path import join, basename, normpath
 from random import randint
+from typing import Set
 
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -14,9 +15,9 @@ from cgan.random import resize, random_jitter, random_noise
 from enface.enface import gen_single_enface
 
 
-def get_dataset(data_dir: str, dataset_list):
+def get_dataset(dataset_iterable: Set):
     image_files = []
-    for eye_path in [join(data_dir, eye_folder) for eye_folder in dataset_list]:
+    for eye_path in dataset_iterable:
         image_files.extend(glob.glob(join(eye_path, 'xzIntensity', '[0-9]*.png')))
 
     if not image_files:
