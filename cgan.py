@@ -1,19 +1,15 @@
-from cgan.parameters import USE_K_FOLDS
-
 import argparse
+import datetime
 import os
 import time
-import datetime
 
 import tensorflow as tf
 
-from cgan.parameters import GPU
-from datasets.train_and_test import K
+from cgan.dataset import Dataset
 from cgan.model_state import ModelState
+from cgan.parameters import GPU, K_FOLDS_COUNT
 from cgan.train import train_epoch
 from cgan.utils import generate_inferred_images, generate_cross_section_comparison
-
-from cgan.dataset import Dataset
 
 # This is why we can't have nice things:
 # https://stackoverflow.com/questions/38073432/how-to-suppress-verbose-tensorflow-logging
@@ -59,9 +55,8 @@ if __name__ == '__main__':
                                  DATASET=ds)
         num_epochs = args.ending_epoch - args.starting_epoch + 1
         # go through each of K=5 folds, goes from 0 to 4 inclusive
-        for fold_num in range(K if USE_K_FOLDS else 1):
-            if USE_K_FOLDS:
-                print('----- Starting fold number {} -----'.format(fold_num))
+        for fold_num in range(K_FOLDS_COUNT):
+            print('----- Starting fold number {} -----'.format(fold_num))
             model_state.reset_weights()
             model_state.get_datasets(fold_num)
 
@@ -75,8 +70,11 @@ if __name__ == '__main__':
 
                 # cross-section image logging
                 for inp, tar in model_state.test_dataset.take(1):
-                    generate_cross_section_comparison(EXP_DIR, model_state.generator, inp, tar,
-                                                      epoch_num + fold_num * num_epochs)
+                    generate_cross_section_comparison(EXP_DIR=EXP_DIR,
+                                                      model=model_state.generator,
+                                                      test_input=inp,
+                                                      tar=tar,
+                                                      epoch_num=epoch_num + fold_num * num_epochs)
 
         model_state.cleanup()   # Delete .h5 files for scrambled-weight models
 

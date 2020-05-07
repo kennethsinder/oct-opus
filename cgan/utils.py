@@ -1,7 +1,7 @@
 import glob
 import io
 import re
-from os import makedirs, listdir
+from os import makedirs
 from os.path import join, basename, normpath
 from random import randint
 from typing import Set
@@ -119,15 +119,10 @@ def generate_inferred_images(EXP_DIR, model_state):
     Images are saved under the `EXP_DIR`/<dataset_name> directory.
     """
 
-    # lists the datasets found
-    datasets_base_path = model_state.all_data_path
-    datasets_list = listdir(datasets_base_path)
-    print("Found {} datasets under {}".format(len(datasets_list), datasets_base_path))
-
     # loop over datasets
-    for dataset_name in datasets_list:
+    for dataset_name in model_state.DATASET.get_all_datasets():
         """ Stage 1: Generate sequence of inferred OMAG-like cross-section images. """
-        bscans_list = glob.glob(join(datasets_base_path, dataset_name, 'xzIntensity', '[0-9]*.png'))
+        bscans_list = glob.glob(join(dataset_name, 'xzIntensity', '[0-9]*.png'))
         print("Found {} scans belonging to {} dataset".format(len(bscans_list), dataset_name))
         makedirs(join(EXP_DIR, dataset_name), exist_ok=True)
 

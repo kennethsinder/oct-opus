@@ -3,7 +3,7 @@
 GPU = '/device:GPU:0'
 
 # Cross-validation modes
-USE_K_FOLDS = True
+K_FOLDS_COUNT = 5
 
 # Training and testing data set locations
 USE_FLATTENED = True

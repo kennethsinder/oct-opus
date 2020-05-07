@@ -16,6 +16,7 @@ class Dataset:
         # save only the directories
         self.__all_datasets: Set = set(filter(lambda x: isdir(join(root_data_path, x)), ls))
         assert len(self.__all_datasets) > 0
+        print("Found {} datasets under {}".format(len(self.__all_datasets), root_data_path))
 
         # sets the seed for random
         random.seed(seed)
