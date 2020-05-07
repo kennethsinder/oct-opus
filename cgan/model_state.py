@@ -92,8 +92,8 @@ class ModelState:
         and testing; this method loads those datasets.
         """
         training_datasets, testing_datasets = self.DATASET.get_train_and_test_by_fold_id(fold_num)
-        self.train_dataset = get_dataset(dataset_iterable=training_datasets)
-        self.test_dataset = get_dataset(dataset_iterable=testing_datasets)
+        self.train_dataset = get_dataset(self.DATASET.root_data_path, dataset_iterable=training_datasets)
+        self.test_dataset = get_dataset(self.DATASET.root_data_path, dataset_iterable=testing_datasets)
 
     def save_checkpoint(self):
         self.checkpoint.save(file_prefix=self.checkpoint_prefix)

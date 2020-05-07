@@ -15,10 +15,10 @@ from cgan.random import resize, random_jitter, random_noise
 from enface.enface import gen_single_enface
 
 
-def get_dataset(dataset_iterable: Set):
+def get_dataset(root_data_path: str, dataset_iterable: Set):
     image_files = []
-    for eye_path in dataset_iterable:
-        image_files.extend(glob.glob(join(eye_path, 'xzIntensity', '[0-9]*.png')))
+    for dataset_name in dataset_iterable:
+        image_files.extend(glob.glob(join(root_data_path, dataset_name, 'xzIntensity', '[0-9]*.png')))
 
     if not image_files:
         raise Exception('Check src/parameters.py, no B-scan images were found.')
@@ -122,7 +122,7 @@ def generate_inferred_images(EXP_DIR, model_state):
     # loop over datasets
     for dataset_name in model_state.DATASET.get_all_datasets():
         """ Stage 1: Generate sequence of inferred OMAG-like cross-section images. """
-        bscans_list = glob.glob(join(dataset_name, 'xzIntensity', '[0-9]*.png'))
+        bscans_list = glob.glob(join(model_state.DATASET.root_data_path, dataset_name, 'xzIntensity', '[0-9]*.png'))
         print("Found {} scans belonging to {} dataset".format(len(bscans_list), dataset_name))
         makedirs(join(EXP_DIR, dataset_name), exist_ok=True)
 
