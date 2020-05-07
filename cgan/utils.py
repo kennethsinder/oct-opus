@@ -2,7 +2,7 @@ import glob
 import io
 import re
 from os import makedirs
-from os.path import join, basename, normpath
+from os.path import join
 from random import randint
 from typing import Set
 
@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from PIL import Image, ImageEnhance
 
-from cgan.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH
+from cgan.parameters import BUFFER_SIZE, IMAGE_DIM, PIXEL_DEPTH, BSCAN_DIRNAME, OMAG_DIRNAME
 from cgan.random import resize, random_jitter, random_noise
 from enface.enface import gen_single_enface
 
@@ -18,7 +18,7 @@ from enface.enface import gen_single_enface
 def get_dataset(root_data_path: str, dataset_iterable: Set):
     image_files = []
     for dataset_name in dataset_iterable:
-        image_files.extend(glob.glob(join(root_data_path, dataset_name, 'xzIntensity', '[0-9]*.png')))
+        image_files.extend(glob.glob(join(root_data_path, dataset_name, BSCAN_DIRNAME, '[0-9]*.png')))
 
     if not image_files:
         raise Exception('Check src/parameters.py, no B-scan images were found.')
@@ -48,68 +48,44 @@ def load_image(file_name, angle=0, contrast_factor=1.0, sharpness_factor=1.0):
     return tf.image.decode_png(output.getvalue(), channels=1)
 
 
-def get_num_acquisitions(data_folder_path):
-    """ (str) -> int
-    Auto-detect the number of acquisitions used for the data set in the
-    folder identified by `data_folder_path`. Usually this will return
-    the integer 1 or 4 (4 acquisitions is normal for OMAG).
-    """
-    bscan_paths = glob.glob(join(data_folder_path, 'xzIntensity', '*'))
-    omag_paths = glob.glob(join(data_folder_path, 'OMAG Bscans', '*'))
-    return int(round(len(bscan_paths) / float(len(omag_paths))))
-
-
-def bscan_num_to_omag_num(bscan_num: int, num_acquisitions: int) -> int:
-    return ((bscan_num - 1) // num_acquisitions) + 1
-
-
 def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     """
-    Returns a pair of tensors containing the given B-scan and its
-    corresponding OMAG. |bscan_path| should be in directory 'xzIntensity'
-    and its parent directory should contain 'OMAG Bscans'. Scan files
-    should be named <num>.png (no leading 0s), with a 4-to-1 ratio of
-    B-scans to OMAGs.
-    (OMAG Bscans/1.png corresponds to xzIntensity/{1,2,3,4}.png.)
+    Returns a pair of tensors containing the given B-scan and its corresponding OMAG.
+    Parameter `bscan_path` should be in directory 'xzIntensity' and its parent directory should contain 'OMAG Bscans'.
+    Scan files should be named <num>.png (no leading 0s), with a 1-to-1 ratio of B-scans to OMAGs.
     """
+
+    # random jitter angle
     angle = 0
     if use_random_jitter and tf.random.uniform(()) > 0.8:
         angle = randint(0, 45)
+
+    # bscan image
     bscan_img = load_image(bscan_path, angle, contrast_factor=1.85)
-
-    path_components = re.search(r'^(.*)xzIntensity/(\d+)\.png$', bscan_path)
-
-    dir_path = path_components.group(1)
-    bscan_num = int(path_components.group(2))
-
-    omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
-
-    omag_img = load_image(join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
-
     bscan_img = tf.cast(bscan_img, tf.float32)
-    omag_img = tf.cast(omag_img, tf.float32)
-
     bscan_img = (bscan_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
+
+    # path and image number
+    path_components = re.search(r'^(.*)xzIntensity/(\d+)\.png$', bscan_path)
+    dir_path = path_components.group(1)
+    image_num = int(path_components.group(2))
+
+    # omag image
+    omag_img = load_image(join(dir_path, OMAG_DIRNAME, '{}.png'.format(image_num)), angle, contrast_factor=1.85)
+    omag_img = tf.cast(omag_img, tf.float32)
     omag_img = (omag_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
 
+    # random jitter
     if use_random_jitter:
         bscan_img, omag_img = random_jitter(bscan_img, omag_img)
     else:
         bscan_img, omag_img = resize(bscan_img, omag_img, IMAGE_DIM, IMAGE_DIM)
 
+    # random noise
     if use_random_noise:
         # don't add noise to the omag image
         bscan_img = random_noise(bscan_img)
-
     return bscan_img, omag_img
-
-
-def get_images_no_jitter(bscan_path):
-    return get_images(bscan_path, False)
-
-
-def last_path_component(p: str) -> str:
-    return basename(normpath(p))
 
 
 def generate_inferred_images(EXP_DIR, model_state):
@@ -122,7 +98,7 @@ def generate_inferred_images(EXP_DIR, model_state):
     # loop over datasets
     for dataset_name in model_state.DATASET.get_all_datasets():
         """ Stage 1: Generate sequence of inferred OMAG-like cross-section images. """
-        bscans_list = glob.glob(join(model_state.DATASET.root_data_path, dataset_name, 'xzIntensity', '[0-9]*.png'))
+        bscans_list = glob.glob(join(model_state.DATASET.root_data_path, dataset_name, BSCAN_DIRNAME, '[0-9]*.png'))
         print("Found {} scans belonging to {} dataset".format(len(bscans_list), dataset_name))
         makedirs(join(EXP_DIR, dataset_name), exist_ok=True)
 
