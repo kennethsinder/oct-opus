@@ -90,13 +90,22 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
 
 def generate_inferred_images(EXP_DIR, model_state):
     """
-    Generate predicted images for all datasets listed under the `model_state.all_data_path` path.
-    Also generates the corresponding enface for each of the new datasets.
+    Generate predicted images for all datasets listed under the `model_state.all_data_path` path
+    in test/predict mode, or for all *testing* datasets only when we're
+    in training mode.
+    Also generates the corresponding enface for each of the sets of predicted cross-sections
+    that are generated.
     Images are saved under the `EXP_DIR`/<dataset_name> directory.
     """
 
+    # determine which datasets we consider "testing" based on program mode
+    if model_state.is_training_mode:
+        dataset_names = model_state.test_folder_names
+    else:
+        dataset_names = model_state.DATASET.get_all_datasets()
+
     # loop over datasets
-    for dataset_name in model_state.DATASET.get_all_datasets():
+    for dataset_name in dataset_names:
         """ Stage 1: Generate sequence of inferred OMAG-like cross-section images. """
         bscans_list = glob.glob(join(model_state.DATASET.root_data_path, dataset_name, BSCAN_DIRNAME, '[0-9]*.png'))
         print("Found {} scans belonging to {} dataset".format(len(bscans_list), dataset_name))

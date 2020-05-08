@@ -95,6 +95,10 @@ class ModelState:
         self.train_dataset = get_dataset(self.DATASET.root_data_path, dataset_iterable=training_datasets)
         self.test_dataset = get_dataset(self.DATASET.root_data_path, dataset_iterable=testing_datasets)
 
+        # Also store which folders we're *not* training on,
+        # to use later for prediction.
+        self.test_folder_names = testing_datasets
+
     def save_checkpoint(self):
         self.checkpoint.save(file_prefix=self.checkpoint_prefix)
 
