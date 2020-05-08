@@ -20,8 +20,6 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', choices=[
                         'train', 'predict'], help='Specify the mode in which to run the program')
-    parser.add_argument('hardware', choices=[
-                        'cpu', 'gpu'], help='Specify whether script is being run on CPU or GPU')
     parser.add_argument('-s', '--starting-epoch', type=int,
                         help='Specify the initial epoch number', default=1)
     parser.add_argument('-e', '--ending-epoch', type=int,
@@ -49,16 +47,13 @@ if __name__ == '__main__':
         # documentation of the purpose of each experiment.
         readme_file.write('# {}\n'.format(EXP_DIR))
 
-    # tensorboard
+    # TensorBoard
     TBD_WRITER = tf.summary.create_file_writer(os.path.join(EXP_DIR, "logs"))
 
-    if args.hardware == 'gpu':
-        device_name = tf.test.gpu_device_name()
-        if device_name != GPU:
-            raise SystemError('GPU device not found')
-        print('Found GPU at: {}'.format(device_name))
-
-    ckpt_dir = args.ckptdir
+    device_name = tf.test.gpu_device_name()
+    if device_name != GPU:
+        raise SystemError('GPU device not found')
+    print('Found GPU at: {}'.format(device_name))
 
     if args.mode == 'train':
         ckpt_dir = os.path.join(EXP_DIR, 'training_checkpoints')
@@ -101,9 +96,9 @@ if __name__ == '__main__':
     else:   # Testing Mode (i.e. Just generate predicted images, no training)
 
         # load from latest checkpoint and load data for just 1 of 5 folds
-        assert ckpt_dir is not None
+        assert args.ckptdir is not None
         model_state = ModelState(
-            EXP_DIR=EXP_DIR, CKPT_DIR=ckpt_dir, DATASET=ds)
+            EXP_DIR=EXP_DIR, CKPT_DIR=args.ckptdir, DATASET=ds)
         model_state.is_training_mode = False
         model_state.restore_from_checkpoint()
 

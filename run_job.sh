@@ -6,6 +6,8 @@
 #SBATCH --ntasks-per-node=32
 #SBATCH --gres=gpu:2
 
+# Example Usage on Sharcnet: `sbatch run_job.sh 1 5` for 5 epochs per fold training * 5 folds
+
 cd $SLURM_TMPDIR
 # No longer using original (non-flattened) data for now:
 # tar --use-compress-program=pigz -xf ~/projects/def-vengu/s2saberi/all_data_original.tar.gz
