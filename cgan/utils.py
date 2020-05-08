@@ -70,6 +70,13 @@ def get_num_acquisitions(data_folder_path):
 
 
 def bscan_num_to_omag_num(bscan_num: int, num_acquisitions: int) -> int:
+    """ (int, int) -> int
+    Takes in a 1-indexed B-scan ID and outputs a 1-indexed OMAG ID for
+    the OMAG that would be paired with the B-scan in a dataset with a
+    `num_acquisitions` B-scan:OMAG ratio.
+    >>> print(bscan_num_to_omag_num(5, 4))
+    2
+    """
     return ((bscan_num - 1) // num_acquisitions) + 1
 
 
