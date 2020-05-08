@@ -7,8 +7,9 @@
 #SBATCH --gres=gpu:2
 
 cd $SLURM_TMPDIR
-tar --use-compress-program=pigz -xf ~/projects/def-vengu/s2saberi/all_data_original.tar.gz
-unzip ~/projects/def-vengu/s2saberi/all_data_flattened.zip
+# No longer using original (non-flattened) data for now:
+# tar --use-compress-program=pigz -xf ~/projects/def-vengu/s2saberi/all_data_original.tar.gz
+unzip ~/projects/def-vengu/s2saberi/all_data_flattened_2.zip
 
 cd -
 module load cuda/10.0

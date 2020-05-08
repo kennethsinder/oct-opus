@@ -11,9 +11,7 @@ from cgan.parameters import GPU, K_FOLDS_COUNT
 from cgan.train import train_epoch
 from cgan.utils import generate_inferred_images, generate_cross_section_comparison
 
-# This is why we can't have nice things:
 # https://stackoverflow.com/questions/38073432/how-to-suppress-verbose-tensorflow-logging
-# (Also, this doesn't seem to be affecting the verbosity much if at all...)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.get_logger().setLevel('WARNING')
 
@@ -49,9 +47,11 @@ if __name__ == '__main__':
             raise SystemError('GPU device not found')
         print('Found GPU at: {}'.format(device_name))
 
+    ckpt_dir = args.ckptdir
     if args.mode == 'train':
+        ckpt_dir = os.path.join(EXP_DIR, 'training_checkpoints')
         model_state = ModelState(EXP_DIR=EXP_DIR,
-                                 CKPT_DIR=os.path.join(EXP_DIR, "training_checkpoints"),
+                                 CKPT_DIR=ckpt_dir,
                                  DATASET=ds)
         num_epochs = args.ending_epoch - args.starting_epoch + 1
         # go through each of K=5 folds, goes from 0 to 4 inclusive
@@ -81,8 +81,8 @@ if __name__ == '__main__':
     """ Prediction/Testing Code. This is run either independently or after training has completed. """
 
     # load from latest checkpoint and load data for just 1 of 5 folds
-    assert args.ckptdir is not None
-    model_state = ModelState(EXP_DIR=EXP_DIR, CKPT_DIR=args.ckptdir, DATASET=ds)
+    assert ckpt_dir is not None
+    model_state = ModelState(EXP_DIR=EXP_DIR, CKPT_DIR=ckpt_dir, DATASET=ds)
     model_state.restore_from_checkpoint()
 
     # generate results based on prediction
