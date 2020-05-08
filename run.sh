@@ -24,8 +24,5 @@ else
     DATA_DIR=$4
 fi
 
-LOGDIR='logs/'$(date +"%d-%m-%Y_%H:%M:%S")
-
-echo "Logs are being sent to $LOGDIR..."
-python run.py --logdir $LOGDIR --starting-epoch $STARTING_EPOCH --ending-epoch $ENDING_EPOCH --datadir $DATA_DIR train $HARDWARE
+python cgan.py --starting-epoch $STARTING_EPOCH --ending-epoch $ENDING_EPOCH --datadir $DATA_DIR train $HARDWARE
 
