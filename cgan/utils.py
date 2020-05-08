@@ -58,6 +58,14 @@ def get_num_acquisitions(data_folder_path):
     """
     bscan_paths = glob.glob(join(data_folder_path, 'xzIntensity', '*'))
     omag_paths = glob.glob(join(data_folder_path, 'OMAG Bscans', '*'))
+    if not omag_paths:
+        # If we have no reference (ground truth) OMAGs available for this dataset,
+        # that means it's unsuitable for training but may be suitable for generating
+        # predictions from (e.g. a set of OCT images for a new eye for which OCTA/OMAG
+        # was not used). In this case, let's assume that every B-scan is relevant,
+        # returning 1 acquisition per spot. This also makes sure we don't divide
+        # by zero below :)
+        return 1
     return int(round(len(bscan_paths) / float(len(omag_paths))))
 
 
@@ -138,7 +146,9 @@ def generate_inferred_images(EXP_DIR, model_state):
             bscan_id = int(re.search(r'(\d+)\.png', bscan_file_path).group(1))
             if bscan_id % num_acquisitions:
                 # We only want 1 out of every group of `num_acquisitions` B-scans to gather
-                # a prediction from.
+                # a prediction from. In other words, if we have the OMAG ground truth folder,
+                # we'll want the number of predicted OMAG-like images to be the same as the
+                # number of real OMAGs.
                 continue
 
             # Obtain a prediction of the image identified by filename `fn`.
@@ -151,7 +161,8 @@ def generate_inferred_images(EXP_DIR, model_state):
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
 
             # Save the prediction to disk under a sub-directory.
-            tf.io.write_file('./{}/{}/{}.png'.format(EXP_DIR, dataset_name, bscan_id), img_to_save)
+            omag_id = bscan_num_to_omag_num(bscan_id, num_acquisitions)
+            tf.io.write_file('./{}/{}/{}.png'.format(EXP_DIR, dataset_name, omag_id), img_to_save)
 
         """ Stage 2: Collect those predicted OMAGs to make an en-face vascular map. """
         path_to_predicted = join(EXP_DIR, dataset_name)
