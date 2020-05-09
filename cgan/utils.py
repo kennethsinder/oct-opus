@@ -30,8 +30,10 @@ def get_dataset(root_data_path: str, dataset_iterable: Set):
     return dataset.apply(tf.data.experimental.ignore_errors()).shuffle(BUFFER_SIZE).batch(1)
 
 
-# Decodes a grayscale PNG, returns a 2D tensor.
 def load_image(file_name, angle=0, contrast_factor=1.0, sharpness_factor=1.0):
+    """
+    Decodes a grayscale PNG, returns a 2D tensor.
+    """
     original_image = Image.open(file_name).rotate(angle)
 
     # contrast
@@ -46,6 +48,36 @@ def load_image(file_name, angle=0, contrast_factor=1.0, sharpness_factor=1.0):
     output = io.BytesIO()
     sharpened_image.save(output, format='png')
     return tf.image.decode_png(output.getvalue(), channels=1)
+
+
+def get_num_acquisitions(data_folder_path: str) -> int:
+    """ (str) -> int	
+    Auto-detect the number of acquisitions used for the data set in the	
+    folder identified by `data_folder_path`. Usually this will return	
+    the integer 1 or 4 (4 acquisitions is normal for OMAG).	
+    """
+    bscan_paths = glob.glob(join(data_folder_path, 'xzIntensity', '*'))
+    omag_paths = glob.glob(join(data_folder_path, 'OMAG Bscans', '*'))
+    if not omag_paths:
+        # If we have no reference (ground truth) OMAGs available for this dataset,
+        # that means it's unsuitable for training but may be suitable for generating
+        # predictions from (e.g. a set of OCT images for a new eye for which OCTA/OMAG
+        # was not used). In this case, let's assume that every B-scan is relevant,
+        # returning 1 acquisition per spot. This also makes sure we don't divide
+        # by zero below :)
+        return 1
+    return int(round(len(bscan_paths) / float(len(omag_paths))))
+
+
+def bscan_num_to_omag_num(bscan_num: int, num_acquisitions: int) -> int:
+    """ (int, int) -> int
+    Takes in a 1-indexed B-scan ID and outputs a 1-indexed OMAG ID for
+    the OMAG that would be paired with the B-scan in a dataset with a
+    `num_acquisitions` B-scan:OMAG ratio.
+    >>> print(bscan_num_to_omag_num(5, 4))
+    2
+    """
+    return ((bscan_num - 1) // num_acquisitions) + 1
 
 
 def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
@@ -68,10 +100,11 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     # path and image number
     path_components = re.search(r'^(.*)xzIntensity/(\d+)\.png$', bscan_path)
     dir_path = path_components.group(1)
-    image_num = int(path_components.group(2))
+    bscan_num = int(path_components.group(2))
+    omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
 
     # omag image
-    omag_img = load_image(join(dir_path, OMAG_DIRNAME, '{}.png'.format(image_num)), angle, contrast_factor=1.85)
+    omag_img = load_image(join(dir_path, OMAG_DIRNAME, '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
     omag_img = tf.cast(omag_img, tf.float32)
     omag_img = (omag_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
 
@@ -107,7 +140,10 @@ def generate_inferred_images(EXP_DIR, model_state):
     # loop over datasets
     for dataset_name in dataset_names:
         """ Stage 1: Generate sequence of inferred OMAG-like cross-section images. """
-        bscans_list = glob.glob(join(model_state.DATASET.root_data_path, dataset_name, BSCAN_DIRNAME, '[0-9]*.png'))
+
+        dataset_path = join(model_state.DATASET.root_data_path, dataset_name)
+        num_acquisitions = get_num_acquisitions(dataset_path)
+        bscans_list = glob.glob(join(dataset_path, BSCAN_DIRNAME, '[0-9]*.png'))
         print("Found {} scans belonging to {} dataset".format(len(bscans_list), dataset_name))
         makedirs(join(EXP_DIR, dataset_name), exist_ok=True)
 
@@ -115,6 +151,12 @@ def generate_inferred_images(EXP_DIR, model_state):
         for bscan_file_path in bscans_list:
             # Get number before '.png'
             bscan_id = int(re.search(r'(\d+)\.png', bscan_file_path).group(1))
+            if bscan_id % num_acquisitions:
+                # We only want 1 out of every group of `num_acquisitions` B-scans to gather
+                # a prediction from. In other words, if we have the OMAG ground truth folder,
+                # we'll want the number of predicted OMAG-like images to be the same as the
+                # number of real OMAGs.
+                continue
 
             # Obtain a prediction of the image identified by filename `fn`.
             bscan_img = load_image(bscan_file_path, angle=0, contrast_factor=1.85)
@@ -126,7 +168,8 @@ def generate_inferred_images(EXP_DIR, model_state):
             img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
 
             # Save the prediction to disk under a sub-directory.
-            tf.io.write_file('./{}/{}/{}.png'.format(EXP_DIR, dataset_name, bscan_id), img_to_save)
+            omag_id = bscan_num_to_omag_num(bscan_id, num_acquisitions)
+            tf.io.write_file('./{}/{}/{}.png'.format(EXP_DIR, dataset_name, omag_id), img_to_save)
 
         """ Stage 2: Collect those predicted OMAGs to make an en-face vascular map. """
         path_to_predicted = join(EXP_DIR, dataset_name)

@@ -45,7 +45,7 @@ if __name__ == '__main__':
     with open(os.path.join(EXP_DIR, 'README.md'), 'w') as readme_file:
         # Create a mostly blank README file to encourage good
         # documentation of the purpose of each experiment.
-        readme_file.write('# {}\n'.format(EXP_DIR))
+        readme_file.write('# {}\n\n'.format(EXP_DIR))
 
     # TensorBoard
     TBD_WRITER = tf.summary.create_file_writer(os.path.join(EXP_DIR, "logs"))
