@@ -50,12 +50,13 @@ if __name__ == '__main__':
     # TensorBoard
     TBD_WRITER = tf.summary.create_file_writer(os.path.join(EXP_DIR, "logs"))
 
-    device_name = tf.test.gpu_device_name()
-    if device_name != GPU:
-        raise SystemError('GPU device not found')
-    print('Found GPU at: {}'.format(device_name))
-
     if args.mode == 'train':
+        # First check there's a GPU available
+        device_name = tf.test.gpu_device_name()
+        if device_name != GPU:
+            raise SystemError('GPU device not found')
+        print('Found GPU at: {}'.format(device_name))
+
         ckpt_dir = os.path.join(EXP_DIR, 'training_checkpoints')
         model_state = ModelState(EXP_DIR=EXP_DIR,
                                  CKPT_DIR=ckpt_dir,
