@@ -50,7 +50,7 @@ def load_image(file_name, angle=0, contrast_factor=1.0, sharpness_factor=1.0):
     return tf.image.decode_png(output.getvalue(), channels=1)
 
 
-def get_num_acquisitions(data_folder_path):
+def get_num_acquisitions(data_folder_path: str) -> int:
     """ (str) -> int	
     Auto-detect the number of acquisitions used for the data set in the	
     folder identified by `data_folder_path`. Usually this will return	
