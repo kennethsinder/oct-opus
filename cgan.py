@@ -40,7 +40,7 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    if args.k_folds:
+    if not args.k_folds:
         K_FOLDS_COUNT = 1
 
     # dataset
