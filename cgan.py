@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     # dataset
     assert args.datadir is not None
-    ds = Dataset(root_data_path=args.datadir, num_folds=5)
+    ds = Dataset(root_data_path=args.datadir, num_folds=K_FOLDS_COUNT)
 
     # main directory used to store output
     EXP_DIR = "experiment-{}".format(
