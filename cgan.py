@@ -102,9 +102,15 @@ if __name__ == '__main__':
                                                       tar=tar,
                                                       epoch_num=epoch_num + fold_num * num_epochs)
 
-            # Create predicted cross-section and enface images at the end of every fold.
-            generate_inferred_images(EXP_DIR, model_state)
-            print('Generated inferred images for fold {}'.format(fold_num))
+            if args.k_folds:
+                # Create predicted cross-section and enface images at the end of every fold.
+                generate_inferred_images(EXP_DIR, model_state)
+                print('Generated inferred images for fold {}'.format(fold_num))
+            else:
+                # The user can run our program separately in test/predict mode
+                # with their testing eye sets if they wish to see the predicted en-face.
+                print('Used full input data set for training. '
+                      'No predictions generated.')
 
         model_state.cleanup()   # Delete .h5 files for scrambled-weight models
 
