@@ -75,6 +75,7 @@ if __name__ == '__main__':
             # Allow training to start off from an existing checkpoint,
             # say, from a different experiment or elsewhere if the
             # `ckptdir` command-line argument is supplied.
+            print('Restoring from checkpoint at {}'.format(args.ckptdir))
             model_state.restore_from_checkpoint(args.ckptdir)
         num_epochs = args.ending_epoch - args.starting_epoch + 1
 
@@ -121,6 +122,7 @@ if __name__ == '__main__':
         model_state = ModelState(
             exp_dir=EXP_DIR, ckpt_dir=args.ckptdir, dataset=ds)
         model_state.is_training_mode = False
+        print('Restoring from checkpoint at {}'.format(args.ckptdir))
         model_state.restore_from_checkpoint()
 
         # generate results based on prediction
