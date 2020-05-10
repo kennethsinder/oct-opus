@@ -26,13 +26,22 @@ def get_args():
                         help='Specify the final epoch number', default=10)
     parser.add_argument('-d', '--datadir',
                         help='Specify the root directory to look for data')
-    parser.add_argument(
-        '-c', '--ckptdir', help='Specify the location of the checkpoints for prediction', default=None)
+    parser.add_argument('-c', '--ckptdir',
+                        help='Optionally specify the location of the '
+                             'checkpoints for prediction or to start off '
+                             'the training', default=None)
+    parser.add_argument('-k', '--k-folds', action='store_true',
+                        help='Whether to use k-folds cross-validation '
+                             'instead of treating all of the input '
+                             'data as training data')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_args()
+
+    if args.k_folds:
+        K_FOLDS_COUNT = 1
 
     # dataset
     assert args.datadir is not None
@@ -58,10 +67,15 @@ if __name__ == '__main__':
         print('Found GPU at: {}'.format(device_name))
 
         ckpt_dir = os.path.join(EXP_DIR, 'training_checkpoints')
-        model_state = ModelState(EXP_DIR=EXP_DIR,
-                                 CKPT_DIR=ckpt_dir,
-                                 DATASET=ds)
+        model_state = ModelState(exp_dir=EXP_DIR,
+                                 ckpt_dir=ckpt_dir,
+                                 dataset=ds)
         model_state.is_training_mode = True
+        if args.ckptdir is not None:
+            # Allow training to start off from an existing checkpoint,
+            # say, from a different experiment or elsewhere if the
+            # `ckptdir` command-line argument is supplied.
+            model_state.restore_from_checkpoint(args.ckptdir)
         num_epochs = args.ending_epoch - args.starting_epoch + 1
 
         # go through each of K=5 folds, goes from 0 to 4 inclusive
@@ -99,7 +113,7 @@ if __name__ == '__main__':
         # load from latest checkpoint and load data for just 1 of 5 folds
         assert args.ckptdir is not None
         model_state = ModelState(
-            EXP_DIR=EXP_DIR, CKPT_DIR=args.ckptdir, DATASET=ds)
+            exp_dir=EXP_DIR, ckpt_dir=args.ckptdir, dataset=ds)
         model_state.is_training_mode = False
         model_state.restore_from_checkpoint()
 

@@ -11,6 +11,8 @@ class Dataset:
 
     def __init__(self, root_data_path, num_folds=1, seed=42):
         self.root_data_path: str = root_data_path
+        self.num_folds: int = num_folds
+
         ls = set(listdir(root_data_path))
         # save only the directories
         self.__all_datasets: Set = set(filter(lambda x: isdir(join(root_data_path, x)), ls))
@@ -34,6 +36,9 @@ class Dataset:
         self.__folds.append(usable_datasets_copy)
 
     def get_train_and_test_by_fold_id(self, fold_id) -> Tuple[Set, Set]:
+        if self.num_folds == 1:
+            return self.__all_datasets, set()
+
         test_sets = self.__folds[fold_id]
         train_sets = self.__all_datasets - test_sets
         return train_sets, test_sets
