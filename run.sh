@@ -14,5 +14,5 @@ fi
 
 DATA_DIR=$3
 
-python cgan.py --starting-epoch $STARTING_EPOCH --ending-epoch $ENDING_EPOCH --datadir $DATA_DIR train
+python cgan.py --starting-epoch $STARTING_EPOCH --ending-epoch $ENDING_EPOCH --datadir $DATA_DIR "$@" train
 
