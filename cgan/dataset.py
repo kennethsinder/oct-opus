@@ -40,20 +40,3 @@ class Dataset:
 
     def get_all_datasets(self) -> Set:
         return self.__all_datasets.copy()
-
-    def get_all_folds(self) -> List[Set]:
-        return self.__folds.copy()
-
-    def get_all_bscans(self) -> List:
-        __image_files = []
-        for dataset_path in self.__all_datasets:
-            __image_files.extend(glob.glob(join(self.root_data_path, dataset_path, BSCAN_DIRNAME, '[0-9]*.png')))
-        assert len(__image_files) > 0
-        return __image_files
-
-    def get_all_omags(self) -> List:
-        __image_files = []
-        for dataset_path in self.__all_datasets:
-            __image_files.extend(glob.glob(join(self.root_data_path, dataset_path, OMAG_DIRNAME, '[0-9]*.png')))
-        assert len(__image_files) > 0
-        return __image_files
