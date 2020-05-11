@@ -12,20 +12,7 @@ else
     ENDING_EPOCH=$2
 fi
 
-if [ "$3" = "" ];then
-    HARDWARE="gpu"
-else
-    HARDWARE=$3
-fi
+DATA_DIR=$3
 
-if [ "$4" = "" ];then
-    DATA_DIR="~/projects/def-vengu/s2saberi"
-else
-    DATA_DIR=$4
-fi
-
-LOGDIR='logs/'$(date +"%d-%m-%Y_%H:%M:%S")
-
-echo "Logs are being sent to $LOGDIR..."
-python run.py --restore --logdir $LOGDIR --starting-epoch $STARTING_EPOCH --ending-epoch $ENDING_EPOCH --datadir $DATA_DIR train $HARDWARE
+python cgan.py --starting-epoch $STARTING_EPOCH --ending-epoch $ENDING_EPOCH --datadir $DATA_DIR train
 

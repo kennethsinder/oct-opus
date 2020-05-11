@@ -1,41 +1,33 @@
-from os.path import join
+import traceback
 
-from configs.parameters import START_ROW, END_ROW, EXPERIMENT
-from datasets.train_and_test import TESTING_DATASETS
-from enface.image_io import ImageIO
+from enface.image_io import ImageIO, MULTI_SLICE_SUM, MULTI_SLICE_MAX_NORM
 from enface.slicer import Slicer
 
-MULTI_SLICE_MAX_NORM = "multi_slice_max_norm.png"
-MULTI_SLICE_SUM = "multi_slice_sum.png"
 
+def gen_single_enface(dataset_dir):
+    # image constants
+    IMAGE_DIM = 512
+    START_ROW = 50
+    END_ROW = 256
 
-def gen_single_enface(predicted_dir, dataset, epoch_num):
-    work_dir = join(predicted_dir, dataset)
-    image_io = ImageIO()
-    eye = image_io.load_single_eye(work_dir)
-    slicer = Slicer()
+    try:
+        image_io = ImageIO(IMAGE_DIM=IMAGE_DIM)
+        eye = image_io.load_single_eye(dataset_dir)
 
-    multi_slice_max_norm = slicer.multi_slice_max_norm(eye=eye, lower=START_ROW, upper=END_ROW)
-    image_io.save_enface_image(enface=multi_slice_max_norm, filepath=work_dir, filename=MULTI_SLICE_MAX_NORM)
-    EXPERIMENT.log_asset(
-        file_data=join(work_dir, MULTI_SLICE_MAX_NORM),
-        file_name="{}_epoch{}_{}".format(dataset, epoch_num, MULTI_SLICE_MAX_NORM),
-        step=epoch_num
-    )
+        slicer = Slicer(IMAGE_DIM=IMAGE_DIM)
 
-    multi_slice_sum = slicer.multi_slice_sum(eye=eye, lower=START_ROW, upper=END_ROW)
-    image_io.save_enface_image(enface=multi_slice_sum, filepath=work_dir, filename=MULTI_SLICE_SUM)
-    EXPERIMENT.log_asset(
-        file_data=join(work_dir, MULTI_SLICE_SUM),
-        file_name="{}_epoch{}_{}".format(dataset, epoch_num, MULTI_SLICE_MAX_NORM),
-        step=epoch_num
-    )
+        # max norm
+        multi_slice_max_norm = slicer.multi_slice_max_norm(eye=eye, lower=START_ROW, upper=END_ROW)
+        image_io.save_enface_image(enface=multi_slice_max_norm, filepath=dataset_dir, filename=MULTI_SLICE_MAX_NORM)
+        print("Generated", MULTI_SLICE_MAX_NORM)
 
+        # sum
+        multi_slice_sum = slicer.multi_slice_sum(eye=eye, lower=START_ROW, upper=END_ROW)
+        image_io.save_enface_image(enface=multi_slice_sum, filepath=dataset_dir, filename=MULTI_SLICE_SUM)
+        print("Generated", MULTI_SLICE_SUM)
 
-def gen_enface_all_testing(predicted_dir, epoch_num):
-    for test_dataset in TESTING_DATASETS:
-        gen_single_enface(
-            predicted_dir=predicted_dir,
-            dataset=test_dataset,
-            epoch_num=epoch_num
-        )
+    except FileNotFoundError:
+        # Case where `dataset_dir` does not contain any images from which we can create an enface.
+        # In this case, multi_slice_max_norm.png and multi_slice_sum.png are not generated.
+        traceback.print_exc()  # debugging purposes
+        exit(1)
