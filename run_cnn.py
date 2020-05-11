@@ -1,6 +1,3 @@
-from cnn.parameters import EXPERIMENT
-assert EXPERIMENT.alive
-
 import argparse
 import glob
 from datetime import datetime
@@ -42,7 +39,7 @@ def generate_enfaces(model, data_dir):
         dataset_predictions_dir = join(predictions_dir, dataset_name)
         dataset_dir = join(data_dir, dataset_name)
         num_acquisitions = utils.get_num_acquisitions(dataset_dir)
-        
+
         makedirs(dataset_predictions_dir, exist_ok=True)
 
         for bscan_path in glob.glob(join(dataset_dir, 'xzIntensity', '*.png')):
@@ -91,16 +88,7 @@ def generate_enfaces(model, data_dir):
             filename=MULTI_SLICE_MAX_NORM
         )
 
-        EXPERIMENT.log_asset(
-            file_data=join(dataset_predictions_dir, MULTI_SLICE_MAX_NORM),
-            file_name="{}_epoch{}_{}".format(dataset_name, model.epoch_num(), MULTI_SLICE_MAX_NORM),
-            step=model.epoch_num()
-        )
-        EXPERIMENT.log_asset(
-            file_data=join(dataset_predictions_dir, MULTI_SLICE_SUM),
-            file_name="{}_epoch{}_{}".format(dataset_name, model.epoch_num(), MULTI_SLICE_MAX_SUM),
-            step=model.epoch_num()
-        )
+        #TODO: log images to tensorboard
 
 
 def main():
@@ -124,25 +112,20 @@ def main():
 
     model = CNN(args.data_dir, args.checkpoints_dir)
 
+    print('here')
+    return
+
     if args.mode == 'train':
         print('Saving checkpoints to {}'.format(model.checkpoints_dir))
         for _ in range(args.num_epochs):
             print('----------------- Epoch {} -----------------'.format(model.epoch_num()))
             training_loss = model.train_one_epoch()
-            EXPERIMENT.log_metric(
-                'training_loss',
-                training_loss,
-                epoch=model.epoch_num()
-            )
+            # TODO: log training loss
             model.save_checkpoint()
 
             print('Test')
             testing_loss = model.test()
-            EXPERIMENT.log_metric(
-                'testing_loss',
-                testing_loss,
-                epoch=model.epoch_num()
-            )
+            # TODO: log testing loss
 
             #if model.epoch_num() % 5 == 0:
             if True: # do this for all epochs for now

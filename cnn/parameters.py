@@ -1,14 +1,6 @@
-from comet_ml import OfflineExperiment
-
 from datasets.train_and_test import TESTING_DATASETS
 
 GPU = '/device:GPU:0'
-
-EXPERIMENT = OfflineExperiment(
-    api_key="CnUAPYboS2Dbzv4j3qHkuxUev",
-    project_name="oct-opus-cnn",
-    offline_directory="./logs-cnn"
-)
 
 IMAGE_DIM = 512
 BUFFER_SIZE = 1300
