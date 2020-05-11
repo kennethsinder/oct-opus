@@ -20,8 +20,6 @@ def get_dataset(root_data_path: str, dataset_iterable: Set):
     for dataset_name in dataset_iterable:
         image_files.extend(glob.glob(join(root_data_path, dataset_name, BSCAN_DIRNAME, '[0-9]*.png')))
 
-    if not image_files:
-        raise Exception('Check src/parameters.py, no B-scan images were found.')
     dataset = tf.data.Dataset.from_generator(
         lambda: map(get_images, image_files),
         output_types=(tf.float32, tf.float32),
