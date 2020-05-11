@@ -6,27 +6,25 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 from cnn.parameters import (
-    BATCH_SIZE,
     BUFFER_SIZE,
-    DATASET_BLACKLIST,
     IMAGE_DIM,
     NUM_SLICES,
     SLICE_WIDTH
 )
 
 
-def get_bscan_paths(data_dir, dataset_list):
-    """ (str, list) -> list
+def get_bscan_paths(dataset_dirs):
+    """ (list) -> list
     """
     bscan_paths = []
 
-    for path in glob.glob(join(data_dir, '*', 'xzIntensity', '*.png')):
-        dataset_name = get_dataset_name(path)
-        if dataset_name in dataset_list and dataset_name not in DATASET_BLACKLIST:
-            bscan_paths.append(path)
+    for dataset_dir in dataset_dirs:
+        bscan_paths.extend(glob.glob(join(dataset_dir,  'xzIntensity', '*.png')))
+        # for path in glob.glob(join(dataset_dir,  'xzIntensity', '*.png')):
+        #     bscan_paths.append(path)
 
     if not bscan_paths:
-        raise Exception('Check src/parameters.py, no B-scan images were found.')
+        raise Exception('No B-scan images were found.')
     return bscan_paths
 
 
@@ -57,7 +55,12 @@ def load_dataset(bscan_paths, batch_size, repeat=True, shuffle=True):
     # re-batch the images into the appropriate batch size
     dataset = dataset.batch(batch_size)
 
-    return dataset, (len(bscan_paths) * NUM_SLICES) // batch_size
+    # it's possible the last batch has a size less than batch_size, then it will
+    # need to be removed
+    num_batches = (len(bscan_paths) * NUM_SLICES) // batch_size
+    dataset = dataset.take(num_batches)
+
+    return dataset, num_batches
 
 
 def shuffle(dataset, batch_size):

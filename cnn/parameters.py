@@ -1,5 +1,3 @@
-from datasets.train_and_test import TESTING_DATASETS
-
 GPU = '/device:GPU:0'
 
 IMAGE_DIM = 512
@@ -9,6 +7,7 @@ DATASET_BLACKLIST = {
     '2015-10-21___512_2048_Horizontal_Images26',
     '2015-10-26___512_2048_Horizontal_Images43',
 }
+DATA_SPLIT = 0.8
 
 BATCH_SIZE = 50 #400
 NUM_SLICES = 4

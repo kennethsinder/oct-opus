@@ -1,4 +1,5 @@
-from os import makedirs
+import glob
+import random
 from os.path import basename, join
 
 import numpy as np
@@ -7,9 +8,7 @@ from PIL import Image
 from tensorflow.keras import layers, models, losses
 
 import cnn.utils as utils
-from cnn.parameters import IMAGE_DIM, BATCH_SIZE, SLICE_WIDTH
-
-from datasets.train_and_test import TRAINING_DATASETS, TESTING_DATASETS
+from cnn.parameters import IMAGE_DIM, DATASET_BLACKLIST, SLICE_WIDTH
 
 
 def downsample(input, filters):
@@ -30,7 +29,12 @@ def upsample(input, concat_input, filters):
 
 
 class CNN:
-    def __init__(self, data_dir, checkpoints_dir):
+    def __init__(self, root_data_dir, split, batch_size, checkpoints_dir):
+        self.root_data_dir = root_data_dir
+        self.split = split
+        self.batch_size = batch_size
+        self.checkpoints_dir = checkpoints_dir
+
         input = layers.Input(shape=(IMAGE_DIM, SLICE_WIDTH, 1), name='input')
 
         concat_input_1, downsample_1 = downsample(input, 32)
@@ -56,9 +60,44 @@ class CNN:
 
         self.epoch = tf.Variable(0)
 
+        # split data into training and testing sets
+        data_dirs = []
+        for data_dir in glob.glob(join(self.root_data_dir, '*')):
+            data_name = basename(data_dir)
+            if data_name not in DATASET_BLACKLIST:
+                data_dirs.append(data_dir)
+        self.training_data_dirs = random.sample(data_dirs, int(self.split * len(data_dirs)))
+        self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
+        # convert into tf Variables
+        self.training_data_dirs = tf.Variable(self.training_data_dirs)
+        self.testing_data_dirs = tf.Variable(self.testing_data_dirs)
+
+        # load the training and testing data
+        training_data_paths = utils.get_bscan_paths([path.decode('utf-8') for path in self.training_data_dirs.numpy()])
+        self.training_data, self.training_num_batches = utils.load_dataset(
+            training_data_paths,
+            self.batch_size
+        )
+        testing_data_paths = utils.get_bscan_paths([path.decode('utf-8') for path in self.testing_data_dirs.numpy()])
+        self.testing_data, self.testing_num_batches = utils.load_dataset(
+            testing_data_paths,
+            self.batch_size
+        )
+        # convert ints to tf Variables
+        self.training_num_batches = tf.Variable(self.training_num_batches)
+        self.testing_num_batches = tf.Variable(self.testing_num_batches)
+
         # set up checkpoints
-        self.checkpoints_dir = checkpoints_dir
-        self.checkpoint = tf.train.Checkpoint(model=self.model, epoch=self.epoch)
+        self.checkpoint = tf.train.Checkpoint(
+            model=self.model,
+            epoch=self.epoch,
+            training_data_dirs=self.training_data_dirs,
+            training_data=self.training_data,
+            training_num_batches=self.training_num_batches,
+            testing_data_dirs=self.testing_data_dirs,
+            testing_data=self.testing_data,
+            testing_num_batches=self.testing_num_batches,
+        )
         self.manager = tf.train.CheckpointManager(
             self.checkpoint,
             directory=self.checkpoints_dir,
@@ -70,49 +109,31 @@ class CNN:
         else:
             self.restore_status = None
 
-        # load the training and testing data
-        self.data_dir = data_dir
-        print('Loading training data')
-        bscan_paths = utils.get_bscan_paths(self.data_dir, TRAINING_DATASETS)
-        self.training_data, self.training_num_batches = utils.load_dataset(
-            bscan_paths,
-            BATCH_SIZE
-        )
-        print('Loading testing data')
-        bscan_paths = utils.get_bscan_paths(self.data_dir, TESTING_DATASETS)
-        self.testing_data, self.testing_num_batches = utils.load_dataset(
-            bscan_paths,
-            BATCH_SIZE
-        )
 
-    def train_one_epoch(self):
-        """ () -> float
-        Trains the model for one epoch. After the epoch is finished,
-        the training data is shuffled. Returns the loss over all the
-        training samples.
+    def train(self, num_epochs):
+        """ (num) -> float
+        Trains the model for the specified number of epochs.
+        Return history
         """
+        # TODO: add callbacks to:
+        #   - save checkpoints
+        #   - generate enfaces
+        #   - increment self.epoch
+        # after every epoch
         history = self.model.fit(
-            self.training_data,
-            epochs=1,
-            steps_per_epoch=self.training_num_batches,
+            self.training_data.repeat(num_epochs),
+            initial_epoch=self.epoch_num(),
+            epochs=num_epochs,
+            steps_per_epoch=self.training_num_batches.numpy(),
+            validation_data=self.testing_data,
+            validation_steps=self.testing_num_batches.numpy(),
+            verbose=2,
             #use_multiprocessing=True,
             #workers=16
         )
-        self.epoch.assign_add(1)
-        self.training_data = utils.shuffle(self.training_data, BATCH_SIZE)
-        return history.history['loss']
+        self.epoch.assign_add(num_epochs)
+        return history
 
-    def test(self):
-        """ () -> float
-        Tests the performance of the model. Returns the loss over
-        all the testing samples.
-        """
-        return self.model.evaluate(
-            self.testing_data,
-            steps=self.testing_num_batches,
-            #use_multiprocessing=True,
-            #workers=16
-        )
 
     def predict(self, input_path, output_path):
         """ (dict) -> None
@@ -120,7 +141,7 @@ class CNN:
         Saves the predictions in output_path.
         """
         dataset, num_batches = utils.load_dataset([input_path], 1, shuffle=False)
-        
+
         predicted_slices = self.model.predict(dataset, steps=num_batches)
         if self.restore_status:
             self.restore_status.expect_partial()

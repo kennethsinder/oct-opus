@@ -11,13 +11,13 @@ from PIL import Image
 import cnn.utils as utils
 from cnn.model import CNN
 from cnn.parameters import (
+    BATCH_SIZE,
     GPU,
     MULTI_SLICE_MAX_NORM,
     MULTI_SLICE_SUM,
     PREDICTIONS_BASE_DIR
 )
 
-from datasets.train_and_test import TESTING_DATASETS
 from enface.image_io import ImageIO
 from enface.slicer import Slicer
 
@@ -96,6 +96,8 @@ def main():
     parser.add_argument('mode', choices=['train', 'enface'])
     parser.add_argument('hardware', choices=['cpu', 'gpu'])
     parser.add_argument('-d', '--data-dir', required=True, metavar='<path>')
+    parser.add_argument('-s', '--split', type=float, default=0.8, metavar='<float>')
+    parser.add_argument('-b', '--batch', type=int, default=BATCH_SIZE, metavar='<int>')
     parser.add_argument(
         '-c', '--checkpoints-dir',
         default=join('./checkpoints', datetime.now().strftime('%d-%m-%Y_%Hh%Mm%Ss')),
@@ -110,26 +112,13 @@ def main():
             raise SystemError('GPU device not found')
         print('Found GPU at: {}'.format(device_name))
 
-    model = CNN(args.data_dir, args.checkpoints_dir)
-
-    print('here')
-    return
+    model = CNN(args.data_dir, args.split, args.batch, args.checkpoints_dir)
 
     if args.mode == 'train':
         print('Saving checkpoints to {}'.format(model.checkpoints_dir))
-        for _ in range(args.num_epochs):
-            print('----------------- Epoch {} -----------------'.format(model.epoch_num()))
-            training_loss = model.train_one_epoch()
-            # TODO: log training loss
-            model.save_checkpoint()
-
-            print('Test')
-            testing_loss = model.test()
-            # TODO: log testing loss
-
-            #if model.epoch_num() % 5 == 0:
-            if True: # do this for all epochs for now
-                generate_enfaces(model, args.data_dir)
+        if args.num_epochs < 1:
+            raise('Number of epochs must be at least one.')
+        history = model.train(args.num_epochs)
         return
 
     generate_enfaces(model, args.data_dir)
