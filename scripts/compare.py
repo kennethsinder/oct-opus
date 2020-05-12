@@ -4,10 +4,6 @@ from PIL import Image
 import sys
 
 
-def fsim(image_a, image_b):
-    pass
-
-
 def pae(image_a, image_b):
     # note: this isn't actually particularly well defined or commonly used metric, but including it just in case
     return np.max(np.absolute((image_a.astype("float") - image_b.astype("float"))))
@@ -70,7 +66,7 @@ def main(image_a_path, image_b_path):
 
 if __name__ == '__main__':
     try:
-        main(sys.argv[1], sys.argv[2])
+        print(main(sys.argv[1], sys.argv[2]))
     except:
         raise Exception(
             'Usage: {} <file 1 path> <file 2 path>'.format(sys.argv[0]))
