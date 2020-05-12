@@ -32,4 +32,4 @@ else
 	CHECKPOINTS_FLAG="-c $3"
 fi
 
-python run_cnn.py $MODE gpu -d $DATA_DIR $EPOCHS_FLAG $CHECKPOINTS_FLAG
+python cnn.py $MODE gpu -d $DATA_DIR $EPOCHS_FLAG $CHECKPOINTS_FLAG

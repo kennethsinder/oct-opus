@@ -1,18 +1,19 @@
 import glob
 import random
-from os.path import basename, join
+from os import makedirs
+from os.path import basename, isfile, join, splitext
 
-import numpy as np
 import tensorflow as tf
-from PIL import Image
 from tensorflow.keras import layers, models, losses
 
 import cnn.utils as utils
+import cnn.image as image
 from cnn.parameters import (
     IMAGE_DIM,
     DATASET_BLACKLIST,
     SLICE_WIDTH,
-    PIXEL_DEPTH
+    PIXEL_DEPTH,
+    ROOT_ENFACE_DIR,
 )
 
 
@@ -40,6 +41,7 @@ class CNN:
         self.batch_size = batch_size
         self.checkpoints_dir = checkpoints_dir
 
+        # build model layers
         input = layers.Input(shape=(IMAGE_DIM, SLICE_WIDTH, 1), name='input')
 
         concat_input_1, downsample_1 = downsample(input, 32)
@@ -68,27 +70,24 @@ class CNN:
         # split data into training and testing sets
         data_dirs = []
         for data_dir in glob.glob(join(self.root_data_dir, '*')):
-            data_name = basename(data_dir)
-            if data_name not in DATASET_BLACKLIST:
+            if basename(data_dir) not in DATASET_BLACKLIST:
                 data_dirs.append(data_dir)
         self.training_data_dirs = random.sample(data_dirs, int(self.split * len(data_dirs)))
         self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
-        # convert into tf Variables
-        self.training_data_dirs = tf.Variable(self.training_data_dirs)
-        self.testing_data_dirs = tf.Variable(self.testing_data_dirs)
 
         # load the training and testing data
-        training_data_paths = utils.get_bscan_paths([path.decode('utf-8') for path in self.training_data_dirs.numpy()])
         self.training_data, self.training_num_batches = utils.load_dataset(
-            training_data_paths,
+            self.training_data_dirs,
             self.batch_size
         )
-        testing_data_paths = utils.get_bscan_paths([path.decode('utf-8') for path in self.testing_data_dirs.numpy()])
         self.testing_data, self.testing_num_batches = utils.load_dataset(
-            testing_data_paths,
+            self.testing_data_dirs,
             self.batch_size
         )
-        # convert ints to tf Variables
+
+        # convert to tf Variables
+        self.training_data_dirs = tf.Variable(self.training_data_dirs)
+        self.testing_data_dirs = tf.Variable(self.testing_data_dirs)
         self.training_num_batches = tf.Variable(self.training_num_batches)
         self.testing_num_batches = tf.Variable(self.testing_num_batches)
 
@@ -139,11 +138,9 @@ class CNN:
         self.epoch.assign_add(num_epochs)
         return history
 
-
-    def predict(self, input_path, output_path):
-        """ (str, str) -> None
-        Predicts the corresponding omag for given bscan located in input_path.
-        Saves the predictions in output_path.
+    def predict(self, input_path):
+        """ (str, str) -> numpy.ndarray
+        Returns the predicted omag for given bscan located in input_path.
         """
         dataset, num_batches = utils.load_dataset([input_path], 1, shuffle=False)
 
@@ -152,13 +149,7 @@ class CNN:
         if self.restore_status:
             self.restore_status.expect_partial()
 
-        # format image
-        image = utils.connect_slices(predicted_slices)
-        image *= PIXEL_DEPTH - 1
-
-        # save image
-        encoded_image = tf.image.encode_png(tf.dtypes.cast(image, tf.uint8))
-        tf.io.write_file(output_path, encoded_image)
+        return image.connect(predicted_slices)
 
     def epoch_num(self):
         return self.epoch.numpy()
