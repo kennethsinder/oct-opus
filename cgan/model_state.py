@@ -65,10 +65,14 @@ class ModelState:
         """
         Reload the weights for the generator and discriminator Keras models
         that were previously saved before any training started, so this effectively
-        resets the models.
+        resets the models. Also resets the generator & discriminator Adam optimizers.
         """
         self.generator.load_weights(self.generator_weights_file)
         self.discriminator.load_weights(self.discriminator_weights_file)
+        for var in self.generator_optimizer.variables():
+            var.assign(tf.zeros_like(var))
+        for var in self.discriminator_optimizer.variables():
+            var.assign(tf.zeros_like(var))
 
     def cleanup(self):
         """
