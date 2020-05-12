@@ -6,7 +6,8 @@
 #SBATCH --ntasks-per-node=32
 #SBATCH --gres=gpu:2
 
-# Example Usage on Sharcnet: `sbatch run_job.sh 1 2` for 2 epochs per fold training * 5 folds
+# Example Usage on Sharcnet: `sbatch run_job.sh 1 2 -k` for 2 epochs per fold training * 5 folds
+# (K-folds cross validation)
 # Any command-line arguments after the start and end epoch numbers are passed along faithfully
 # to the `cgan.py` script.
 
