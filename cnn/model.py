@@ -8,7 +8,12 @@ from PIL import Image
 from tensorflow.keras import layers, models, losses
 
 import cnn.utils as utils
-from cnn.parameters import IMAGE_DIM, DATASET_BLACKLIST, SLICE_WIDTH
+from cnn.parameters import (
+    IMAGE_DIM,
+    DATASET_BLACKLIST,
+    SLICE_WIDTH,
+    PIXEL_DEPTH
+)
 
 
 def downsample(input, filters):
@@ -136,23 +141,24 @@ class CNN:
 
 
     def predict(self, input_path, output_path):
-        """ (dict) -> None
-        Predicts the corresponding omag for given bscan.
+        """ (str, str) -> None
+        Predicts the corresponding omag for given bscan located in input_path.
         Saves the predictions in output_path.
         """
         dataset, num_batches = utils.load_dataset([input_path], 1, shuffle=False)
 
+        # get slices
         predicted_slices = self.model.predict(dataset, steps=num_batches)
         if self.restore_status:
             self.restore_status.expect_partial()
 
         # format image
         image = utils.connect_slices(predicted_slices)
-        image = np.reshape(image, [image.shape[0], image.shape[1]])
-        image *= 255 # scale image from [0,1] to [0, 255]
+        image *= PIXEL_DEPTH - 1
 
         # save image
-        Image.fromarray(image).convert('RGB').save(output_path)
+        encoded_image = tf.image.encode_png(tf.dtypes.cast(image, tf.uint8))
+        tf.io.write_file(output_path, encoded_image)
 
     def epoch_num(self):
         return self.epoch.numpy()

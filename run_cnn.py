@@ -12,83 +12,50 @@ import cnn.utils as utils
 from cnn.model import CNN
 from cnn.parameters import (
     BATCH_SIZE,
+    IMAGE_DIM,
     GPU,
     MULTI_SLICE_MAX_NORM,
     MULTI_SLICE_SUM,
-    PREDICTIONS_BASE_DIR
+    ROOT_ENFACE_DIR
 )
 
-from enface.image_io import ImageIO
-from enface.slicer import Slicer
+from enface.enface import gen_single_enface
 
-def generate_enfaces(model, data_dir):
-    predictions_dir = join(
-        PREDICTIONS_BASE_DIR,
+
+def generate_enface(model, data_dir):
+    data_name = basename(data_dir)
+    enface_dir = join(
+        ROOT_ENFACE_DIR,
         basename(model.checkpoints_dir),
-        str(model.epoch_num())
+        str(model.epoch_num()),
+        data_name,
     )
+    num_acquisitions = utils.get_num_acquisitions(data_dir)
+    makedirs(enface_dir, exist_ok=True)
 
-    for idx, dataset_name in enumerate(TESTING_DATASETS):
-        print('({}/{}) Generating enface images for {}'.format(
-                idx + 1,
-                len(TESTING_DATASETS),
-                dataset_name
-            )
+    for bscan_path in glob.glob(join(data_dir, 'xzIntensity', '*.png')):
+        bscan_num = int(splitext(basename(bscan_path))[0])
+        if bscan_num % num_acquisitions:
+            continue
+
+        omag_num = utils.bscan_num_to_omag_num(bscan_num, num_acquisitions)
+
+        omag_path = join(
+            data_dir,
+            'OMAG Bscans',
+            '{}.png'.format(omag_num)
+        )
+        if not isfile(omag_path):
+            continue
+
+        model.predict(
+            bscan_path,
+            join(enface_dir, '{}.png'.format(omag_num))
         )
 
-        dataset_predictions_dir = join(predictions_dir, dataset_name)
-        dataset_dir = join(data_dir, dataset_name)
-        num_acquisitions = utils.get_num_acquisitions(dataset_dir)
+    gen_single_enface(enface_dir)
 
-        makedirs(dataset_predictions_dir, exist_ok=True)
-
-        for bscan_path in glob.glob(join(dataset_dir, 'xzIntensity', '*.png')):
-            bscan_num = int(splitext(basename(bscan_path))[0])
-            if bscan_num % num_acquisitions:
-                continue
-
-            omag_num = utils.bscan_num_to_omag_num(bscan_num, num_acquisitions)
-
-            omag_path = join(
-                dataset_dir,
-                'OMAG Bscans',
-                '{}.png'.format(omag_num)
-            )
-            if not isfile(omag_path):
-                continue
-
-            model.predict(
-                bscan_path,
-                join(dataset_predictions_dir, '{}.png'.format(omag_num))
-            )
-
-        image_io = ImageIO()
-        slicer = Slicer()
-        eye = image_io.load_single_eye(dataset_predictions_dir)
-
-        multi_slice_max_norm = slicer.multi_slice_max_norm(
-            eye=eye,
-            lower=START_ROW,
-            upper=END_ROW
-        )
-        multi_slice_sum = slicer.multi_slice_sum(
-            eye=eye,
-            lower=START_ROW,
-            upper=END_ROW
-        )
-
-        image_io.save_enface_image(
-            enface=multi_slice_sum,
-            filepath=dataset_predictions_dir,
-            filename=MULTI_SLICE_SUM
-        )
-        image_io.save_enface_image(
-            enface=multi_slice_max_norm,
-            filepath=dataset_predictions_dir,
-            filename=MULTI_SLICE_MAX_NORM
-        )
-
-        #TODO: log images to tensorboard
+    #TODO: log images to tensorboard
 
 
 def main():
@@ -104,6 +71,7 @@ def main():
         metavar='<path>'
     )
     parser.add_argument('-e', '--num-epochs', type=int, default=1, metavar='<int>')
+    parser.add_argument('-ef', '--enface-dir', required=True, metavar='<path>')
     args = parser.parse_args()
 
     if args.hardware == 'gpu':
@@ -119,9 +87,8 @@ def main():
         if args.num_epochs < 1:
             raise('Number of epochs must be at least one.')
         history = model.train(args.num_epochs)
-        return
-
-    generate_enfaces(model, args.data_dir)
+    else:
+        generate_enface(model, args.enface_dir)
 
 
 if __name__ == '__main__':
