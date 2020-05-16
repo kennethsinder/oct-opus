@@ -14,7 +14,7 @@ and then feeding that location into this script as the
 <data_dir>
 """
 
-from scripts.compare import main as compare_main
+from compare import main as compare_main
 import os
 import os.path
 import sys
@@ -45,7 +45,11 @@ def score_for_test_results(experiment_dir: str, data_dir: str):
         for dataset_path in [f.path for f in os.scandir(experiment_dir) if f.is_dir()]:
             dataset_name = os.path.basename(os.path.normpath(dataset_path))
             f_1 = os.path.join(data_dir, dataset_name, 'OMAG Bscans', enface_type[0])
+            if not os.path.isfile(f_1):
+                # Eye doesn't have a corresponding ground truth, nothing we can do.
+                continue
             f_2 = os.path.join(dataset_path, enface_type[0])
+
             current_scores = compare_main(f_1, f_2)
             if not enface_type[1]:
                 enface_type[1].update(current_scores)
