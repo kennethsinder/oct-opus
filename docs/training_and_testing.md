@@ -6,7 +6,7 @@ TDB
 
 ## Testing / Prediction
 
-To be able to generate predicted B-Scans using a trained model simply call `cgan.py` via the following options.
+To be able to generate predicted OMAG-like cross-sections from B-scans using a trained model, simply call `cgan.py` via the following command-line options.
 
 ```
 python cgan.py predict -d {top_level_data_directory} -c {checkpoint_directory}
