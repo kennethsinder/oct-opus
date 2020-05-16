@@ -1,10 +1,8 @@
-import cv2
-import numpy as np
-
 import glob
-import os
 import os.path
 import sys
+
+import cv2
 
 for f in glob.glob(os.path.join(sys.argv[1], '*.png')):
     img = cv2.imread(f, 0)

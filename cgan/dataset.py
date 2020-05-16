@@ -1,10 +1,7 @@
-import glob
 import random
 from os import listdir
 from os.path import join, isdir
 from typing import List, Tuple, Set
-
-from cgan.parameters import OMAG_DIRNAME, BSCAN_DIRNAME
 
 
 class Dataset:
