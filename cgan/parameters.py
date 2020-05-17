@@ -1,9 +1,6 @@
 # GPU device
 GPU = '/device:GPU:0'
 
-# Cross-validation modes
-K_FOLDS_COUNT = 5
-
 # Used by generator
 OUTPUT_CHANNELS = 1
 LAMBDA = 100

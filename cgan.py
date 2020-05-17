@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from cgan.dataset import Dataset
 from cgan.model_state import ModelState
-from cgan.parameters import GPU, K_FOLDS_COUNT
+from cgan.parameters import GPU
 from cgan.train import train_epoch
 from cgan.utils import generate_inferred_images, generate_cross_section_comparison
 
@@ -18,34 +18,24 @@ tf.get_logger().setLevel('WARNING')
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', choices=[
-                        'train', 'predict'], help='Specify the mode in which to run the program')
-    parser.add_argument('-s', '--starting-epoch', type=int,
-                        help='Specify the initial epoch number', default=1)
-    parser.add_argument('-e', '--ending-epoch', type=int,
-                        help='Specify the final epoch number', default=10)
-    parser.add_argument('-d', '--datadir',
-                        help='Specify the root directory to look for data')
-    parser.add_argument('-c', '--ckptdir',
-                        help='Optionally specify the location of the '
-                             'checkpoints for prediction or to start off '
-                             'the training', default=None)
-    parser.add_argument('-k', '--k-folds', action='store_true',
-                        help='Whether to use k-folds cross-validation '
-                             'instead of treating all of the input '
-                             'data as training data')
+    parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the program')
+    parser.add_argument('-s', '--starting-epoch', type=int, help='Specify the initial epoch number', default=1)
+    parser.add_argument('-e', '--ending-epoch', type=int, help='Specify the final epoch number', default=10)
+    parser.add_argument('-d', '--datadir', help='Specify the root directory to look for data')
+    parser.add_argument('-c', '--ckptdir', help='Optionally specify the location of the '
+                                                'checkpoints for prediction or to start off '
+                                                'the training', default=None)
+    parser.add_argument('-k', '--k-folds', type=int, help='Specify the number of folds to divide the data '
+                                                          'into as part of K-Folds Cross-Validation', default=1)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_args()
 
-    if not args.k_folds:
-        K_FOLDS_COUNT = 1
-
     # dataset
     assert args.datadir is not None
-    ds = Dataset(root_data_path=args.datadir, num_folds=K_FOLDS_COUNT)
+    ds = Dataset(root_data_path=args.datadir, num_folds=args.k_folds)
 
     # main directory used to store output
     EXP_DIR = "experiment-{}".format(
@@ -80,7 +70,7 @@ if __name__ == '__main__':
         num_epochs = args.ending_epoch - args.starting_epoch + 1
 
         # go through each of K=5 folds, goes from 0 to 4 inclusive
-        for fold_num in range(K_FOLDS_COUNT):
+        for fold_num in range(args.k_folds):
             print('----- Starting fold number {} -----'.format(fold_num))
             model_state.reset_weights()
             model_state.get_datasets(fold_num)
