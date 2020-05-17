@@ -113,8 +113,6 @@ if __name__ == '__main__':
                 print('Used full input data set for training. '
                       'No predictions generated.')
 
-        model_state.cleanup()   # Delete .h5 files for scrambled-weight models
-
     else:   # Testing Mode (i.e. Just generate predicted images, no training)
 
         # load from latest checkpoint and load data for just 1 of 5 folds
