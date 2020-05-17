@@ -88,6 +88,7 @@ if __name__ == '__main__':
                 # cross-section image logging
                 for inp, tar in model_state.test_dataset.take(1):
                     generate_cross_section_comparison(EXP_DIR=EXP_DIR,
+                                                      TBD_WRITER=TBD_WRITER,
                                                       model=model_state.generator,
                                                       test_input=inp,
                                                       tar=tar,
