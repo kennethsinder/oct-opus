@@ -160,6 +160,7 @@ def generate_inferred_images(EXP_DIR, model_state):
             bscan_img = load_image(bscan_file_path, angle=0, contrast_factor=1.85)
             bscan_img = (tf.cast(bscan_img, tf.float32) / ((PIXEL_DEPTH - 1) / 2.0)) - 1
             prediction = model_state.generator(bscan_img[tf.newaxis, ...], training=True)
+            assert len(prediction) == 1
 
             # Encode the prediction as PNG image data.
             predicted_img = prediction[0]
@@ -183,6 +184,7 @@ def generate_cross_section_comparison(EXP_DIR, TBD_WRITER, model, test_input, ta
     prediction = model(test_input, training=True)
     plt.figure(figsize=(15, 15))
 
+    assert len(test_input) == 1 and len(tar) == 1 and len(prediction) == 1
     display_list = [test_input[0], tar[0], prediction[0]]
     title = ['Input Image', 'Ground Truth', 'Predicted Image']
 
