@@ -13,8 +13,8 @@ class ModelState:
 
     def __init__(self, exp_dir: str, ckpt_dir: str, dataset: Dataset):
         # optimizers
-        self.discriminator_optimizer = None
-        self.generator_optimizer = None
+        self.discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
+        self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
 
         # generator and discriminator
         self.generator = generator()
@@ -65,13 +65,14 @@ class ModelState:
         """
         Reload the weights for the generator and discriminator Keras models
         that were previously saved before any training started, so this effectively
-        resets the models. Also (re-)initializes the generator & discriminator
-        Adam optimizers, so must be called before training.
+        resets the models. Also resets the generator & discriminator Adam optimizers.
         """
         self.generator.load_weights(self.generator_weights_file)
         self.discriminator.load_weights(self.discriminator_weights_file)
-        self.discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
-        self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
+        for var in self.generator_optimizer.variables():
+            var.assign(tf.zeros_like(var))
+        for var in self.discriminator_optimizer.variables():
+            var.assign(tf.zeros_like(var))
 
     def cleanup(self):
         """
