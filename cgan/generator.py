@@ -72,4 +72,4 @@ def generator_loss(loss_object, disc_generated_output, gen_output, target):
     l1_loss = tf.reduce_mean(tf.abs(target - gen_output))
 
     total_gen_loss = gan_loss + (LAMBDA * l1_loss)
-    return total_gen_loss
+    return total_gen_loss, gan_loss, l1_loss
