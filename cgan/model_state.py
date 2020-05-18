@@ -39,13 +39,11 @@ class ModelState:
             discriminator=self.discriminator
         )
 
-        # Save scrambled weights before we do any training temporarily
+        # Save initial, scrambled weights before we do any training
         # so that we can reload them with model_state.reset_weights()
-        # below between folds for k-folds cross-validation.
-        self.generator_weights_file = join(exp_dir, 'generator_weights.h5')
-        self.discriminator_weights_file = join(exp_dir, 'discriminator_weights.h5')
-        self.generator.save_weights(self.generator_weights_file)
-        self.discriminator.save_weights(self.discriminator_weights_file)
+        # below between folds when doing k-folds cross-validation.
+        self.save_checkpoint()
+        self.initial_checkpoint = tf.train.latest_checkpoint(self.CKPT_DIR)
         self.current_training_step = 0
 
         # The cGAN loss function L_cGAN is maximized when the discriminator correctly
@@ -65,25 +63,9 @@ class ModelState:
         """
         Reload the weights for the generator and discriminator Keras models
         that were previously saved before any training started, so this effectively
-        resets the models.
+        resets the models. Also resets the generator & discriminator Adam optimizers.
         """
-        self.generator.load_weights(self.generator_weights_file)
-        self.discriminator.load_weights(self.discriminator_weights_file)
-
-    def cleanup(self):
-        """
-        Perform cleanup of files before terminating the program.
-        """
-        try:
-            os.remove(self.generator_weights_file)
-        except OSError:
-            # Not a big deal if these files fail to be deleted. They'll
-            # get overwritten anyway during the next training run.
-            print("Error while deleting generator weights file.")
-        try:
-            os.remove(self.discriminator_weights_file)
-        except OSError:
-            print("Error while deleting discriminator weights file.")
+        self.checkpoint.restore(self.initial_checkpoint)
 
     def get_datasets(self, fold_num=0):
         """ ([int]) -> None
