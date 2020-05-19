@@ -6,7 +6,6 @@ as the only additional command line argument:
 """
 
 import cv2
-import numpy as np
 
 
 def histogram(file_path):

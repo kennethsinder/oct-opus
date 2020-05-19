@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from cgan.parameters import LAMBDA
-from cgan.parameters import OUTPUT_CHANNELS
+from cgan.parameters import NUM_CHANNELS
 from cgan.sampling import downsample, upsample
 
 
@@ -28,7 +28,7 @@ def generator():
     ]
 
     initializer = tf.random_normal_initializer(0., 0.02)
-    last = tf.keras.layers.Conv2DTranspose(OUTPUT_CHANNELS, 4,
+    last = tf.keras.layers.Conv2DTranspose(NUM_CHANNELS, 4,
                                            strides=2,
                                            padding='same',
                                            kernel_initializer=initializer,
@@ -36,7 +36,7 @@ def generator():
 
     concat = tf.keras.layers.Concatenate()
 
-    inputs = tf.keras.layers.Input(shape=[None, None, 1])
+    inputs = tf.keras.layers.Input(shape=[None, None, NUM_CHANNELS])
     x = inputs
 
     # Downsampling through the model
