@@ -2,7 +2,7 @@
 GPU = '/device:GPU:0'
 
 # Used by generator
-OUTPUT_CHANNELS = 1
+NUM_CHANNELS = 1
 LAMBDA = 100
 
 # Used in utils
