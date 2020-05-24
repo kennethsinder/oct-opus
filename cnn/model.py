@@ -4,7 +4,7 @@ from os import makedirs
 from os.path import basename, isfile, join, splitext
 
 import tensorflow as tf
-from tensorflow.keras import layers, models, losses
+from tensorflow.keras import layers, models, losses, callbacks
 
 import cnn.utils as utils
 import cnn.image as image
@@ -35,11 +35,11 @@ def upsample(input, concat_input, filters):
 
 
 class CNN:
-    def __init__(self, root_data_dir, split, batch_size, checkpoints_dir):
+    def __init__(self, root_data_dir, split, batch_size, experiment_dir):
         self.root_data_dir = root_data_dir
         self.split = split
         self.batch_size = batch_size
-        self.checkpoints_dir = checkpoints_dir
+        self.experiment_dir = experiment_dir
 
         # build model layers
         input = layers.Input(shape=(IMAGE_DIM, SLICE_WIDTH, 1), name='input')
@@ -60,12 +60,12 @@ class CNN:
         output = layers.Conv2D(1, (1,1), activation='linear', padding='same')(upsample_4)
 
         self.model = tf.keras.Model(inputs=input, outputs=output)
+        self.optimizer = tf.keras.optimizers.Adam()
+        self.epoch = tf.Variable(0)
         self.model.compile(
-            optimizer='Adam',
+            optimizer=self.optimizer,
             loss=losses.MeanAbsoluteError()
         )
-
-        self.epoch = tf.Variable(0)
 
         # split data into training and testing sets
         data_dirs = []
@@ -92,8 +92,11 @@ class CNN:
         self.testing_num_batches = tf.Variable(self.testing_num_batches)
 
         # set up checkpoints
+        self.checkpoints_dir = join(self.experiment_dir, 'checkpoints')
+        self.log_dir = join(self.experiment_dir, 'log')
         self.checkpoint = tf.train.Checkpoint(
             model=self.model,
+            optimizer=self.optimizer,
             epoch=self.epoch,
             training_data_dirs=self.training_data_dirs,
             training_data=self.training_data,
@@ -113,7 +116,6 @@ class CNN:
         else:
             self.restore_status = None
 
-
     def train(self, num_epochs):
         """ (num) -> float
         Trains the model for the specified number of epochs.
@@ -124,18 +126,39 @@ class CNN:
         #   - generate enfaces
         #   - increment self.epoch
         # after every epoch
+
+        class ManagerCallback(callbacks.Callback):
+            def __init__(self, manager, epoch_counter):
+                super().__init__()
+                self.manager = manager
+                self.epoch_counter = epoch_counter
+
+            def on_epoch_end(self, epoch, logs=None):
+                self.epoch_counter.assign_add(1)
+                self.manager.save()
+
+        tensorboard_callback = callbacks.TensorBoard(
+            log_dir=self.log_dir,
+            update_freq='batch',
+            profile_batch=0     # need to disable profile batching: https://github.com/tensorflow/tensorflow/issues/34276
+        )
+        manager_callback = ManagerCallback(self.manager, self.epoch)
+
         history = self.model.fit(
             self.training_data.repeat(num_epochs),
-            initial_epoch=self.epoch_num(),
-            epochs=num_epochs,
+            initial_epoch=self.epoch.numpy(),
+            epochs=self.epoch.numpy() + num_epochs,
             steps_per_epoch=self.training_num_batches.numpy(),
             validation_data=self.testing_data,
             validation_steps=self.testing_num_batches.numpy(),
             verbose=2,
+            callbacks=[
+                tensorboard_callback,
+                manager_callback
+            ]
             #use_multiprocessing=True,
             #workers=16
         )
-        self.epoch.assign_add(num_epochs)
         return history
 
     def predict(self, input_path):
@@ -150,9 +173,6 @@ class CNN:
             self.restore_status.expect_partial()
 
         return image.connect(predicted_slices)
-
-    def epoch_num(self):
-        return self.epoch.numpy()
 
     def summary(self):
         """ () -> None
