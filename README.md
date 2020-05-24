@@ -9,7 +9,7 @@ We are also working on implementing a CNN-based baseline under the `/cnn` direct
 
 **Official project webpage**: [kennethsinder.github.io/oct-opus](https://kennethsinder.github.io/oct-opus/) (brought to you by the HTML in the `/docs` directory)
 
-Information on how our software came about and how to use it, including to generate inferred OMAG-like images and to update the model with additional training data (more images), can be found in our [**official manual**](https://docs.google.com/document/d/1kIQ93V5Y-wmiLAy-IjhyLocZaWY7mGQE2tBXcIRTTXM/edit?usp=sharing).
+Information on how our software came about and how to use it, including to generate inferred OMAG-like images and to update the model with additional training data (more images), can be found in our [**official manual**](https://docs.google.com/document/d/1kIQ93V5Y-wmiLAy-IjhyLocZaWY7mGQE2tBXcIRTTXM/edit?usp=sharing). There is additional documentation available in each of the Markdown (`.md`) files (including code snippets) in the `docs/` folder. To best view Markdown files with all of the appropriate formatting, a code editor like VS Code or PyCharm is recommended. Clicking into the file on the GitHub website works too.
 
 ## Other Resources
 
