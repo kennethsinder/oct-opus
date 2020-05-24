@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     if mode == "single":
         gen_single_enface(data_path)
-    elif mode == "all":
+    elif mode == "multi":
         ds = Dataset(root_data_path=data_path)
         for dataset_name in ds.get_all_datasets():
             for scan_type in {OMAG_DIRNAME, BSCAN_DIRNAME}:
