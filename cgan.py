@@ -46,6 +46,14 @@ if __name__ == '__main__':
         # documentation of the purpose of each experiment.
         readme_file.write('# {}\n\n'.format(EXP_DIR))
 
+    if args.k_folds > 1:
+        # If training with k-folds, save the dataset partitions configuration
+        # to a JSON file so we know which predicted eye came from which fold.
+        import json
+        fold_config = {i: ds.get_train_and_test_by_fold_id(i) for i in range(args.k_folds)}
+        with open('fold_config.json', 'w') as outfile:
+            json.dump(fold_config, outfile)
+
     # TensorBoard
     TBD_WRITER = tf.summary.create_file_writer(os.path.join(EXP_DIR, "logs"))
 
