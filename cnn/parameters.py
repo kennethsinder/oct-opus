@@ -1,24 +1,18 @@
 GPU = '/device:GPU:0'
 
-IMAGE_DIM = 512
-PIXEL_DEPTH = 256
-BUFFER_SIZE = 1300
-
 DATASET_BLACKLIST = {
     '2015-10-21___512_2048_Horizontal_Images26',
     '2015-10-26___512_2048_Horizontal_Images43',
 }
 DATA_SPLIT = 0.8
+SEED = 42
 
 BATCH_SIZE = 50 #400
 NUM_SLICES = 4
 
+IMAGE_DIM = 512
+PIXEL_DEPTH = 256
+BUFFER_SIZE = 1300
+
 assert IMAGE_DIM % NUM_SLICES == 0
 SLICE_WIDTH = IMAGE_DIM // NUM_SLICES
-
-ROOT_ENFACE_DIR = './enface'
-
-START_ROW = 50
-END_ROW = 256
-MULTI_SLICE_MAX_NORM = "multi_slice_max_norm.png"
-MULTI_SLICE_SUM = "multi_slice_sum.png"
