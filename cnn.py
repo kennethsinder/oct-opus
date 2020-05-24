@@ -25,6 +25,7 @@ def main():
         metavar='<path>')
     parser.add_argument('-s', '--split', type=float, default=0.8, metavar='<float>')
     parser.add_argument('-b', '--batch', type=int, default=BATCH_SIZE, metavar='<int>')
+    parser.add_argument('-sd', '--seed', type=int, default=42, metavar='<int>')
     parser.add_argument('-e', '--num-epochs', type=int, default=1, metavar='<int>')
     args = parser.parse_args()
 
@@ -34,7 +35,7 @@ def main():
             raise SystemError('GPU device not found')
         print('Found GPU at: {}'.format(device_name))
 
-    model = CNN(args.data_dir, args.split, args.batch, args.experiment_dir)
+    model = CNN(args.data_dir, args.split, args.batch, args.seed, args.experiment_dir)
 
     if args.mode == 'train':
         if args.num_epochs < 1:

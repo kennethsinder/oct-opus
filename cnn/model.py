@@ -35,11 +35,10 @@ def upsample(input, concat_input, filters):
 
 
 class CNN:
-    def __init__(self, root_data_dir, split, batch_size, experiment_dir):
-        self.root_data_dir = root_data_dir
-        self.split = split
-        self.batch_size = batch_size
+    def __init__(self, root_data_dir, split, batch_size, seed, experiment_dir):
         self.experiment_dir = experiment_dir
+        self.checkpoints_dir = join(self.experiment_dir, 'checkpoints')
+        self.log_dir = join(self.experiment_dir, 'log')
 
         # build model layers
         input = layers.Input(shape=(IMAGE_DIM, SLICE_WIDTH, 1), name='input')
@@ -61,49 +60,26 @@ class CNN:
 
         self.model = tf.keras.Model(inputs=input, outputs=output)
         self.optimizer = tf.keras.optimizers.Adam()
-        self.epoch = tf.Variable(0)
         self.model.compile(
             optimizer=self.optimizer,
             loss=losses.MeanAbsoluteError()
         )
 
-        # split data into training and testing sets
-        data_dirs = []
-        for data_dir in glob.glob(join(self.root_data_dir, '*')):
-            if basename(data_dir) not in DATASET_BLACKLIST:
-                data_dirs.append(data_dir)
-        self.training_data_dirs = random.sample(data_dirs, int(self.split * len(data_dirs)))
-        self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
-
-        # load the training and testing data
-        self.training_data, self.training_num_batches = utils.load_dataset(
-            self.training_data_dirs,
-            self.batch_size
-        )
-        self.testing_data, self.testing_num_batches = utils.load_dataset(
-            self.testing_data_dirs,
-            self.batch_size
-        )
-
-        # convert to tf Variables
-        self.training_data_dirs = tf.Variable(self.training_data_dirs)
-        self.testing_data_dirs = tf.Variable(self.testing_data_dirs)
-        self.training_num_batches = tf.Variable(self.training_num_batches)
-        self.testing_num_batches = tf.Variable(self.testing_num_batches)
-
         # set up checkpoints
-        self.checkpoints_dir = join(self.experiment_dir, 'checkpoints')
-        self.log_dir = join(self.experiment_dir, 'log')
+        self.epoch = tf.Variable(0)
+        self.root_data_dir = tf.Variable(root_data_dir)
+        self.split = tf.Variable(split)
+        self.batch_size = tf.Variable(batch_size)
+        self.seed = tf.Variable(seed)
+
         self.checkpoint = tf.train.Checkpoint(
             model=self.model,
             optimizer=self.optimizer,
             epoch=self.epoch,
-            training_data_dirs=self.training_data_dirs,
-            training_data=self.training_data,
-            training_num_batches=self.training_num_batches,
-            testing_data_dirs=self.testing_data_dirs,
-            testing_data=self.testing_data,
-            testing_num_batches=self.testing_num_batches,
+            batch_size=self.batch_size,
+            root_data_dir=self.root_data_dir,
+            split=self.split,
+            seed=self.seed,
         )
         self.manager = tf.train.CheckpointManager(
             self.checkpoint,
@@ -115,6 +91,25 @@ class CNN:
             self.restore_status = self.checkpoint.restore(self.manager.latest_checkpoint)
         else:
             self.restore_status = None
+
+        # split data into training and testing sets
+        random.seed(self.seed.numpy())
+        data_dirs = []
+        for data_dir in glob.glob(join(self.root_data_dir.numpy().decode('utf-8'), '*')):
+            if basename(data_dir) not in DATASET_BLACKLIST:
+                data_dirs.append(data_dir)
+        self.training_data_dirs = random.sample(data_dirs, int(self.split.numpy() * len(data_dirs)))
+        self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
+
+        # load the training and testing data
+        self.training_dataset, self.training_num_batches = utils.load_dataset(
+            self.training_data_dirs,
+            self.batch_size.numpy()
+        )
+        self.testing_dataset, self.testing_num_batches = utils.load_dataset(
+            self.testing_data_dirs,
+            self.batch_size.numpy()
+        )
 
     def train(self, num_epochs):
         """ (num) -> float
@@ -145,12 +140,12 @@ class CNN:
         manager_callback = ManagerCallback(self.manager, self.epoch)
 
         history = self.model.fit(
-            self.training_data.repeat(num_epochs),
+            self.training_dataset.repeat(num_epochs),
             initial_epoch=self.epoch.numpy(),
             epochs=self.epoch.numpy() + num_epochs,
-            steps_per_epoch=self.training_num_batches.numpy(),
-            validation_data=self.testing_data,
-            validation_steps=self.testing_num_batches.numpy(),
+            steps_per_epoch=self.training_num_batches,
+            validation_data=self.testing_dataset,
+            validation_steps=self.testing_num_batches,
             verbose=2,
             callbacks=[
                 tensorboard_callback,
