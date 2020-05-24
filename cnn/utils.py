@@ -9,11 +9,11 @@ from cnn.parameters import (
     BUFFER_SIZE,
     IMAGE_DIM,
     NUM_SLICES,
-    ROOT_ENFACE_DIR,
     SLICE_WIDTH,
 )
 
 from enface.enface import gen_single_enface
+from enface.image_io import MULTI_SLICE_SUM, MULTI_SLICE_MAX_NORM
 
 
 def get_bscan_paths(data_dirs):
@@ -98,13 +98,15 @@ def get_slices(bscan_path):
 
 
 def generate_enface(model, data_dir):
-    data_name = basename(data_dir)
+    if data_dir[-1] == '/':
+        data_name = basename(data_dir[0:-1])
+    else:
+        data_name = basename(data_dir)
     enface_dir = join(
-        ROOT_ENFACE_DIR,
-        basename(model.checkpoints_dir),
-        str(model.epoch_num()),
+        model.enface_dir,
         data_name,
     )
+
     num_acquisitions = get_num_acquisitions(data_dir)
     makedirs(enface_dir, exist_ok=True)
 
@@ -127,7 +129,18 @@ def generate_enface(model, data_dir):
 
     gen_single_enface(enface_dir)
 
-    #TODO: log images to tensorboard
+    writer = tf.summary.create_file_writer(model.log_dir)
+    with writer.as_default():
+        img = image.load(join(enface_dir, MULTI_SLICE_MAX_NORM))
+        w, h, c = img.shape
+        img = tf.reshape(img, [1, w, h, c])
+        tf.summary.image('MULTI_SLICE_MAX_NORM', img, step=model.epoch.numpy())
+
+        img = image.load(join(enface_dir, MULTI_SLICE_SUM))
+        w, h, c = img.shape
+        img = tf.reshape(img, [1, w, h, c])
+        tf.summary.image('MULTI_SLICE_SUM', img, step=model.epoch.numpy())
+
 
 
 def get_num_acquisitions(data_dir):

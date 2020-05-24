@@ -1,5 +1,7 @@
+import io
 import tensorflow as tf
 import numpy as np
+from PIL import Image
 
 from cnn.parameters import IMAGE_DIM, NUM_SLICES, PIXEL_DEPTH, SLICE_WIDTH
 
@@ -8,11 +10,10 @@ def load(path):
     """ (str) -> tensorflow.python.framework.ops.EagerTensor
     Decodes a grayscale PNG, returns a 2D tensor.
     """
-    img = tf.io.read_file(path)
-    img = tf.image.decode_png(img, channels=1)
-    img = tf.image.convert_image_dtype(img, tf.float32)
-    return img
-
+    image = Image.open(path)
+    output = io.BytesIO()
+    image.save(output, format='png')
+    return tf.image.decode_png(output.getvalue(), channels=1)
 
 def save(img, path):
     """ (numpy.ndarray, str) -> None

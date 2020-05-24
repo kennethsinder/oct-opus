@@ -13,7 +13,6 @@ from cnn.parameters import (
     DATASET_BLACKLIST,
     SLICE_WIDTH,
     PIXEL_DEPTH,
-    ROOT_ENFACE_DIR,
 )
 
 
@@ -39,6 +38,7 @@ class CNN:
         self.experiment_dir = experiment_dir
         self.checkpoints_dir = join(self.experiment_dir, 'checkpoints')
         self.log_dir = join(self.experiment_dir, 'log')
+        self.enface_dir = join(self.experiment_dir, 'enface')
 
         # build model layers
         input = layers.Input(shape=(IMAGE_DIM, SLICE_WIDTH, 1), name='input')
@@ -132,6 +132,10 @@ class CNN:
                 self.epoch_counter.assign_add(1)
                 self.manager.save()
 
+        # logs loss for every batch and the average loss per epoch
+        # indexing for batch loss starts at 0, while indexing for epoch loss seems to start at 1
+        # also, the epoch_loss indexing is broken: it uses batch num instead of epoch num
+        # ( https://github.com/tensorflow/tensorflow/issues/26873#event-2224617144 )
         tensorboard_callback = callbacks.TensorBoard(
             log_dir=self.log_dir,
             update_freq='batch',
