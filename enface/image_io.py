@@ -1,4 +1,4 @@
-from os import listdir
+import glob
 from os.path import join
 
 import PIL.ImageOps
@@ -31,12 +31,7 @@ class ImageIO:
         return PIL.ImageOps.invert(self.__load_single_image(filename, contrast_factor, sharpness_factor))
 
     def load_single_eye(self, src_dir, contrast_factor=1.0, sharpness_factor=1.0) -> np.ndarray:
-        ls = listdir(src_dir)
-        if MULTI_SLICE_MAX_NORM in ls:
-            ls.remove(MULTI_SLICE_MAX_NORM)
-        if MULTI_SLICE_SUM in ls:
-            ls.remove(MULTI_SLICE_SUM)
-
+        ls = glob.glob(join(src_dir, '[0-9]*.png'))
         num_images = len(ls)
         if num_images == 0:
             raise ValueError('FoundZeroImages')
