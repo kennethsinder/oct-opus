@@ -7,7 +7,7 @@ from enface.slicer import Slicer
 def gen_single_enface(dataset_dir):
     # image constants
     IMAGE_DIM = 512
-    START_ROW = 0
+    START_ROW = 50
     END_ROW = 256
 
     try:
