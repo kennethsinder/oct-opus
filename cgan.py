@@ -19,8 +19,8 @@ tf.get_logger().setLevel('WARNING')
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', choices=['train', 'predict'], help='Specify the mode in which to run the program')
-    parser.add_argument('-s', '--starting-epoch', type=int, help='Specify the initial epoch number', default=1)
-    parser.add_argument('-e', '--ending-epoch', type=int, help='Specify the final epoch number', default=10)
+    parser.add_argument('-e', '--num-epochs', type=int, help='Specify the number of epochs of training to run',
+                        default=3)
     parser.add_argument('-d', '--datadir', help='Specify the root directory to look for data')
     parser.add_argument('-c', '--ckptdir', help='Optionally specify the location of the '
                                                 'checkpoints for prediction or to start off '
@@ -67,7 +67,6 @@ if __name__ == '__main__':
             # `ckptdir` command-line argument is supplied.
             print('Restoring from checkpoint at {}'.format(args.ckptdir))
             model_state.restore_from_checkpoint(args.ckptdir)
-        num_epochs = args.ending_epoch - args.starting_epoch + 1
 
         # go through each of K=5 folds, goes from 0 to 4 inclusive
         for fold_num in range(args.k_folds):
@@ -76,11 +75,11 @@ if __name__ == '__main__':
             model_state.get_datasets(fold_num)
 
             # main epoch loop
-            for epoch_num in range(args.starting_epoch, args.ending_epoch + 1):
+            for epoch_num in range(1, args.num_epochs + 1):
                 print('----- Starting epoch number {} -----'.format(epoch_num))
                 start = time.time()
                 train_epoch(TBD_WRITER, model_state.train_dataset,
-                            model_state, epoch_num + fold_num * num_epochs)
+                            model_state, epoch_num + fold_num * args.num_epochs)
                 model_state.save_checkpoint()
                 print('Time taken for epoch {} is {} sec\n'.format(
                     epoch_num, time.time() - start))
@@ -92,7 +91,7 @@ if __name__ == '__main__':
                                                       model=model_state.generator,
                                                       test_input=inp,
                                                       tar=tar,
-                                                      epoch_num=epoch_num + fold_num * num_epochs)
+                                                      epoch_num=epoch_num + fold_num * args.num_epochs)
 
             if args.k_folds:
                 # Create predicted cross-section and enface images at the end of every fold.
