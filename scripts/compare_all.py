@@ -18,6 +18,7 @@ from compare import main as compare_main
 import os
 import os.path
 import sys
+import csv
 
 
 def score_for_test_results(experiment_dir: str, data_dir: str):
@@ -31,17 +32,12 @@ def score_for_test_results(experiment_dir: str, data_dir: str):
     predictions to.
 
     Returns objective comparison metrics for both sum and max-norm
-    enfaces, of the shape (('multi_slice_sum.png), {'psnr_score': <some float>,
-    ...}), ('multi_slice_max_norm.png', {'psnr_score': <some other float>, ...}).
-    That is, the first element of each 2-tuple in the output will be a string
-    (enface type filename),
-    and the second element will be a dictionary of all scores for that enface type.
-    Scores are calculated by *averaging* scores across each of the eyes under the
-    given `experiment_dir`.
+    enfaces in a 2-tuple of (enface type : str, data : dict), where
+    data is keyed by the dataset name and the corresponding value is another
+    dict with the objective scores (e.g. SSIM) for that specific enface.
     """
     enface_scores = (('multi_slice_sum.png', {}), ('multi_slice_max_norm.png', {}))
     for enface_type in enface_scores:
-        num_datasets = 0
         for dataset_path in [f.path for f in os.scandir(experiment_dir) if f.is_dir()]:
             dataset_name = os.path.basename(os.path.normpath(dataset_path))
             f_1 = os.path.join(data_dir, dataset_name, 'OMAG Bscans', enface_type[0])
@@ -51,14 +47,7 @@ def score_for_test_results(experiment_dir: str, data_dir: str):
             f_2 = os.path.join(dataset_path, enface_type[0])
 
             current_scores = compare_main(f_1, f_2)
-            if not enface_type[1]:
-                enface_type[1].update(current_scores)
-            else:
-                for score_type in current_scores:
-                    enface_type[1][score_type] += current_scores.get(score_type, 0)
-            num_datasets += 1
-        for score_type in enface_type[1]:
-            enface_type[1][score_type] /= float(num_datasets)
+            enface_type[1].update({dataset_name: current_scores})
     return enface_scores
 
 
@@ -81,11 +70,31 @@ def main():
         row.append(sum(row[1:]) / len(row[1:]))  # Add the row average
         rows.append(row)
 
-    import csv
-    with open(os.path.join(experiment_dir, 'comparison.csv'), 'w') as f:
-        writer = csv.writer(f)
-        for row in rows:
-            writer.writerow(row)
+    for enface_type in enface_scores:
+        file_name = 'comparison_{}.csv'.format(enface_type[0].split('.')[0])
+        rows = []
+        sums = {}
+        for dataset_name in enface_type[1]:
+            if not rows:
+                score_types = [score_type for score_type in enface_type[1][dataset_name]]
+                rows.append(['Dataset'] + score_types)
+
+            row = [dataset_name]
+            for score_type in score_types:
+                score_value = enface_type[1][dataset_name][score_type]
+                row.append(score_value)
+                if score_type not in sums:
+                    sums[score_type] = score_value
+                else:
+                    sums[score_type] += score_value
+            rows.append(row)
+        rows.append(['Average'] + [sums[score_type] / len(enface_type[1])
+                                   for score_type in score_types])
+
+        with open(os.path.join(experiment_dir, file_name), 'w') as f:
+            writer = csv.writer(f)
+            for row in rows:
+                writer.writerow(row)
 
 
 if __name__ == '__main__':
