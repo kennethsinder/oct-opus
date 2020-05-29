@@ -57,23 +57,11 @@ def main():
     enface_scores = score_for_test_results(experiment_dir, data_dir)
 
     # CSV Generation Code
-    # First row is the string "Score Types" (since the 1st column will be the score types
-    # for every subsequent row) and then the types of "enfaces" (sum and max norm),
-    # and finally the column heading "Average", since the last column will have averages
-    # for every row so we can get a summary value
-    # for each type of scoring (e.g. SSIM) since each scoring type is one row.
-    rows = [['Score Types'] + [enface_type[0] for enface_type in enface_scores] + ['Average']]
-    for score_type in enface_scores[0][1]:
-        row = [score_type]  # Add a string representing the type of score (e.g. "psnr_score")
-        for enface_type in enface_scores:
-            row.append(enface_type[1][score_type])
-        row.append(sum(row[1:]) / len(row[1:]))  # Add the row average
-        rows.append(row)
-
     for enface_type in enface_scores:
         file_name = 'comparison_{}.csv'.format(enface_type[0].split('.')[0])
         rows = []
         sums = {}
+        score_types = []
         for dataset_name in enface_type[1]:
             if not rows:
                 score_types = [score_type for score_type in enface_type[1][dataset_name]]
