@@ -34,4 +34,10 @@ if __name__ == '__main__':
                 # In this case, the script is probably being used to (re-)generate
                 # en-faces for an `experiment-...` directory, which contains predicted
                 # cross-sections in *immediate* subdirectories for each `dataset_name`.
-                gen_single_enface(join(data_path, dataset_name), normalize=normalize)
+                try:
+                    gen_single_enface(join(data_path, dataset_name), normalize=normalize)
+                except ValueError as e:
+                    # We may be undesirably including folders in the experiment like
+                    # `training_checkpoints` and `logs` which don't contain any image data,
+                    # so instead of crashing, continue so we can generate the rest of the enfaces.
+                    print(e)    # "ValueError: FoundZeroImages"
