@@ -4,7 +4,7 @@ from enface.image_io import ImageIO, MULTI_SLICE_SUM, MULTI_SLICE_MAX_NORM
 from enface.slicer import Slicer
 
 
-def gen_single_enface(dataset_dir):
+def gen_single_enface(dataset_dir, normalize=False):
     # image constants
     IMAGE_DIM = 512
     START_ROW = 50
@@ -18,12 +18,14 @@ def gen_single_enface(dataset_dir):
 
         # max norm
         multi_slice_max_norm = slicer.multi_slice_max_norm(eye=eye, lower=START_ROW, upper=END_ROW)
-        image_io.save_enface_image(enface=multi_slice_max_norm, filepath=dataset_dir, filename=MULTI_SLICE_MAX_NORM)
+        image_io.save_enface_image(enface=multi_slice_max_norm, filepath=dataset_dir,
+                                   filename=MULTI_SLICE_MAX_NORM, normalize=normalize)
         print("Generated", MULTI_SLICE_MAX_NORM)
 
         # sum
         multi_slice_sum = slicer.multi_slice_sum(eye=eye, lower=START_ROW, upper=END_ROW)
-        image_io.save_enface_image(enface=multi_slice_sum, filepath=dataset_dir, filename=MULTI_SLICE_SUM)
+        image_io.save_enface_image(enface=multi_slice_sum, filepath=dataset_dir,
+                                   filename=MULTI_SLICE_SUM, normalize=normalize)
         print("Generated", MULTI_SLICE_SUM)
 
     except FileNotFoundError:
