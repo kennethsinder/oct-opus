@@ -40,4 +40,4 @@ if __name__ == '__main__':
                     # We may be undesirably including folders in the experiment like
                     # `training_checkpoints` and `logs` which don't contain any image data,
                     # so instead of crashing, continue so we can generate the rest of the enfaces.
-                    print(e)    # "ValueError: FoundZeroImages"
+                    print(e)    # "FoundZeroImages"
