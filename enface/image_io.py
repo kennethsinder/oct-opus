@@ -1,3 +1,4 @@
+import cv2
 import glob
 from os.path import join
 
@@ -16,8 +17,13 @@ class ImageIO:
         self.__IMAGE_DIM = IMAGE_DIM
 
     @staticmethod
-    def save_enface_image(enface, filepath, filename):
+    def save_enface_image(enface, filepath, filename, normalize=False):
         imsave(join(filepath, filename), enface, format="png", cmap="gray")
+        if normalize:
+            # Apply histogram equalization if requested
+            img = cv2.imread(join(filepath, filename), 0)
+            equ = cv2.equalizeHist(img)
+            cv2.imwrite(join(filepath, filename), equ)
 
     @staticmethod
     def __load_single_image(filename, contrast_factor=1.0, sharpness_factor=1.0):

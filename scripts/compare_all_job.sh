@@ -16,8 +16,8 @@
 
 cwd=$(pwd)
 cd "$SLURM_TMPDIR"
-unzip "$cwd"/../all_data_flattened.zip
+tar --use-compress-program=pigz -xf "$cwd"/../all_data_reflattened.tar.gz
 
 cd -
 module load cuda/10.0
-python scripts/compare_all.py "$1" "$SLURM_TMPDIR"/all_data_flattened
+python scripts/compare_all.py "$1" "$SLURM_TMPDIR"/all_data_reflattened
