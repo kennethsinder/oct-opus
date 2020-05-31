@@ -26,11 +26,11 @@ if __name__ == '__main__':
     elif mode == "multi":
         ds = Dataset(root_data_path=data_path)
         for dataset_name in ds.get_all_datasets():
-            if isdir(BSCAN_DIRNAME):
+            if isdir(join(data_path, dataset_name, BSCAN_DIRNAME)):
                 gen_single_enface(join(data_path, dataset_name, BSCAN_DIRNAME), normalize=normalize)
-            if isdir(OMAG_DIRNAME):
+            if isdir(join(data_path, dataset_name, OMAG_DIRNAME)):
                 gen_single_enface(join(data_path, dataset_name, OMAG_DIRNAME), normalize=normalize)
-            if not isdir(BSCAN_DIRNAME) and not isdir(OMAG_DIRNAME):
+            elif not isdir(join(data_path, dataset_name, BSCAN_DIRNAME)):
                 # In this case, the script is probably being used to (re-)generate
                 # en-faces for an `experiment-...` directory, which contains predicted
                 # cross-sections in *immediate* subdirectories for each `dataset_name`.
