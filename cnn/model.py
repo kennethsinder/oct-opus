@@ -3,16 +3,19 @@ import random
 from os import makedirs
 from os.path import basename, isfile, join, splitext
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, models, losses, callbacks
 
 import cnn.utils as utils
 import cnn.image as image
+from cnn.callback import EpochEndCallback
 from cnn.parameters import (
     IMAGE_DIM,
     DATASET_BLACKLIST,
     SLICE_WIDTH,
     PIXEL_DEPTH,
+    NUM_SLICES
 )
 
 
@@ -37,8 +40,13 @@ class CNN:
     def __init__(self, root_data_dir, split, batch_size, seed, experiment_dir):
         self.experiment_dir = experiment_dir
         self.checkpoints_dir = join(self.experiment_dir, 'checkpoints')
-        self.log_dir = join(self.experiment_dir, 'log')
-        self.enface_dir = join(self.experiment_dir, 'enface')
+        self.log_dir = join(self.experiment_dir, 'logs')
+        self.cross_sections_dir = join(self.experiment_dir, 'cross_sections')
+        self.enfaces_dir = join(self.experiment_dir, 'enfaces')
+        makedirs(self.cross_sections_dir, exist_ok=True)
+        makedirs(self.enfaces_dir, exist_ok=True)
+
+        self.writer = tf.summary.create_file_writer(self.log_dir)
 
         # build model layers
         input = layers.Input(shape=(IMAGE_DIM, SLICE_WIDTH, 1), name='input')
@@ -102,12 +110,14 @@ class CNN:
         self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
 
         # load the training and testing data
+        self.training_bscan_paths = utils.get_bscan_paths(self.training_data_dirs)
+        self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
         self.training_dataset, self.training_num_batches = utils.load_dataset(
-            self.training_data_dirs,
+            self.training_bscan_paths,
             self.batch_size.numpy()
         )
         self.testing_dataset, self.testing_num_batches = utils.load_dataset(
-            self.testing_data_dirs,
+            self.testing_bscan_paths,
             self.batch_size.numpy()
         )
 
@@ -116,22 +126,6 @@ class CNN:
         Trains the model for the specified number of epochs.
         Return history
         """
-        # TODO: add callbacks to:
-        #   - save checkpoints
-        #   - generate enfaces
-        #   - increment self.epoch
-        # after every epoch
-
-        class ManagerCallback(callbacks.Callback):
-            def __init__(self, manager, epoch_counter):
-                super().__init__()
-                self.manager = manager
-                self.epoch_counter = epoch_counter
-
-            def on_epoch_end(self, epoch, logs=None):
-                self.epoch_counter.assign_add(1)
-                self.manager.save()
-
         # logs loss for every batch and the average loss per epoch
         # indexing for batch loss starts at 0, while indexing for epoch loss seems to start at 1
         # also, the epoch_loss indexing is broken: it uses batch num instead of epoch num
@@ -141,7 +135,7 @@ class CNN:
             update_freq='batch',
             profile_batch=0     # need to disable profile batching: https://github.com/tensorflow/tensorflow/issues/34276
         )
-        manager_callback = ManagerCallback(self.manager, self.epoch)
+        epoch_end_callback = EpochEndCallback(self)
 
         history = self.model.fit(
             self.training_dataset.repeat(num_epochs),
@@ -153,25 +147,22 @@ class CNN:
             verbose=2,
             callbacks=[
                 tensorboard_callback,
-                manager_callback
+                epoch_end_callback
             ]
             #use_multiprocessing=True,
             #workers=16
         )
         return history
 
-    def predict(self, input_path):
-        """ (str, str) -> numpy.ndarray
-        Returns the predicted omag for given bscan located in input_path.
+    def predict(self, input, num_batches):
+        """ (str, tf.data.Dataset, int) -> numpy.ndarray
         """
-        dataset, num_batches = utils.load_dataset([input_path], 1, shuffle=False)
 
-        # get slices
-        predicted_slices = self.model.predict(dataset, steps=num_batches)
+        predicted_slices = self.model.predict(input, steps=num_batches)
         if self.restore_status:
             self.restore_status.expect_partial()
 
-        return image.connect(predicted_slices)
+        return np.concatenate(predicted_slices, axis=1)
 
     def summary(self):
         """ () -> None

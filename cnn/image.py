@@ -13,7 +13,9 @@ def load(path):
     image = Image.open(path)
     output = io.BytesIO()
     image.save(output, format='png')
-    return tf.image.decode_png(output.getvalue(), channels=1)
+    decoded = tf.image.decode_png(output.getvalue(), channels=1)
+
+    return decoded / (PIXEL_DEPTH - 1)
 
 def save(img, path):
     """ (numpy.ndarray, str) -> None
@@ -47,9 +49,3 @@ def slice(img):
     return tf.convert_to_tensor(
         tf.split(img, [SLICE_WIDTH] * NUM_SLICES, 1)
     )
-
-
-def connect(slices):
-    """ (numpy.ndarray) -> numpy.ndarray
-    """
-    return np.concatenate(slices, axis=1)

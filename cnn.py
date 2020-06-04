@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from cnn.model import CNN
 from cnn.parameters import BATCH_SIZE, DATA_SPLIT, GPU, SEED
-from cnn.utils import generate_enface
+from cnn.enface import generate_enface
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -45,7 +45,7 @@ def main():
     else:
         if args.enface_dir is None:
             raise('Enface directory must be specified.')
-        generate_enface(model, args.enface_dir)
+        generate_enface(model, args.enface_dir, verbose=True)
 
 
 if __name__ == '__main__':
