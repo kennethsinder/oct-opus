@@ -1,22 +1,15 @@
 import glob
 import random
 from os import makedirs
-from os.path import basename, isfile, join, splitext
+from os.path import basename, join
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import layers, models, losses, callbacks
+from tensorflow.keras import layers, losses, callbacks
 
 import cnn.utils as utils
-import cnn.image as image
 from cnn.callback import EpochEndCallback
-from cnn.parameters import (
-    IMAGE_DIM,
-    DATASET_BLACKLIST,
-    SLICE_WIDTH,
-    PIXEL_DEPTH,
-    NUM_SLICES
-)
+from cnn.parameters import IMAGE_DIM, DATASET_BLACKLIST, SLICE_WIDTH
 
 
 def downsample(input, filters):

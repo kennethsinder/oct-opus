@@ -1,9 +1,8 @@
 import io
 import tensorflow as tf
-import numpy as np
 from PIL import Image
 
-from cnn.parameters import IMAGE_DIM, NUM_SLICES, PIXEL_DEPTH, SLICE_WIDTH
+from cnn.parameters import NUM_SLICES, PIXEL_DEPTH, SLICE_WIDTH
 
 
 def load(path):

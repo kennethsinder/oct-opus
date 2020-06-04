@@ -1,6 +1,5 @@
 import glob
-from os import makedirs
-from os.path import basename, isfile, join, splitext
+from os.path import join, splitext
 
 import tensorflow as tf
 
@@ -9,7 +8,7 @@ from cnn.parameters import (
     BUFFER_SIZE,
     IMAGE_DIM,
     NUM_SLICES,
-    SLICE_WIDTH,
+    SLICE_WIDTH
 )
 
 
