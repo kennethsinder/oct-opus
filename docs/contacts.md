@@ -1,21 +1,44 @@
 # Contacts
 
-#### Prof. Kostadinka Bizheva
+## Prof. Kostadinka Bizheva
 
-TBD
+**Role:** Physics prof, manages OCT lab equipment and originally proposed the project
 
-#### Zohreh Hosseinaee
+**Email:** kbizheva@uwaterloo.ca
 
-TBD
+## Zohreh Hosseinaee
 
-#### Bingyao Tan
+**Role:** Formerly worked on Dida's lab, provided additional mentorship from the Physics side and shared data
 
-TBD
+**Email:** z5hosseinaee@uwaterloo.ca
 
-#### Prof. Vasudevan “Vengu” Lakshminarayanan
+## Bingyao Tan
 
-TBD
+**Role:** Originally worked on imaging sedated rat OCTA dataset.
 
-#### Sourya Sengupta
+**Email:** tanbingyao@gmail.com
 
-TBD
+## Prof. Vasudevan “Vengu” Lakshminarayanan
+
+**Role:** Technical mentorship, paper help and SPIE technical help.
+Experienced in deep learning research.
+
+**Email:** vengulak@uwaterloo.ca
+
+## Sourya Sengupta
+
+**Role:** Additional deep learning mentorship.
+
+**Email:** souryasengupta11@gmail.com
+
+## Our Team
+
+- Kenneth Sinder (y2sinder@uwaterloo.ca)
+- Pei Lin Li (pl3li@uwaterloo.ca)
+- Céline O'Neil (cloneil@uwaterloo.ca)
+- Kathleen Wang (kathleen.xiaoming.wang@uwaterloo.ca)
+- Samin Saberi (s2saberi@uwaterloo.ca)
+
+## Additional Contacts
+
+- Han Le (han.le@uwaterloo.ca), provided assistance with cross-section flattening script
