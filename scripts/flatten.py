@@ -27,6 +27,8 @@ def flatten_single_image(image_path):
     for x in range(0, dimensions):
         y = a2 * x * x + a1 * x + a0
         flattened[:, x] = np.roll(original[:, x], shift=round(y))
+        for i in range(350, dimensions):
+            flattened[i, x] = 255
     return flattened
 
 
