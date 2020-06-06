@@ -14,11 +14,11 @@ from cgan.parameters import BSCAN_DIRNAME, OMAG_DIRNAME
 DIMENSIONS = 512
 
 
-def flatten_single_image(image_path, coefficients):
+def flatten_single_image(image_path, polynomial):
     # constants, for now
-    a2 = coefficients[0]
-    a1 = coefficients[1]
-    a0 = coefficients[2]
+    a2 = polynomial[0]
+    a1 = polynomial[1]
+    a0 = polynomial[2]
 
     # load images
     original = np.asarray(Image.open(image_path), dtype=int)
@@ -65,12 +65,24 @@ if __name__ == '__main__':
         output_path = sys.argv[2]
         ds = Dataset(root_data_path=input_path)
         for dataset_name in ds.get_all_datasets():
-            for image_type in {BSCAN_DIRNAME, OMAG_DIRNAME}:
-                makedirs(join(output_path, dataset_name, image_type), exist_ok=True)
-                for image_id in range(1, 513):
-                    image = flatten_single_image(join(input_path, dataset_name, image_type, "{}.png".format(image_id)))
-                    imsave(join(output_path, dataset_name, image_type, "{}.png".format(image_id)),
-                           image, format="png", cmap="gray")
+            for image_id in range(1, DIMENSIONS + 1):
+                # Fits a polynomial to the cross section. Note that `BSCAN_DIRNAME` is always used
+                poly = fit_polynomial(join(input_path, dataset_name, BSCAN_DIRNAME, "{}.png".format(image_id)))
+                for image_type in {BSCAN_DIRNAME, OMAG_DIRNAME}:
+                    # Create output directory
+                    makedirs(join(output_path, dataset_name, image_type), exist_ok=True)
+
+                    # Flattened image
+                    image = flatten_single_image(
+                        image_path=join(input_path, dataset_name, image_type, "{}.png".format(image_id)),
+                        polynomial=poly
+                    )
+
+                    # Saves to disk
+                    imsave(
+                        fname=join(output_path, dataset_name, image_type, "{}.png".format(image_id)),
+                        arr=image, format="png", cmap="gray"
+                    )
                 print("Flattened images under {}".format(join(dataset_name, image_type)))
             print("Dataset {} flattened.".format(dataset_name))
     except IndexError:
