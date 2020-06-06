@@ -2,34 +2,61 @@ import sys
 from os import makedirs
 from os.path import join
 
+import cv2
 import numpy as np
 from PIL import Image
 from matplotlib.image import imsave
+from scipy.ndimage import gaussian_filter
 
 from cgan.dataset import Dataset
 from cgan.parameters import BSCAN_DIRNAME, OMAG_DIRNAME
 
+DIMENSIONS = 512
 
-def flatten_single_image(image_path):
+
+def flatten_single_image(image_path, coefficients):
     # constants, for now
-    a2 = 0.0029688
-    a1 = -1.52
-    a0 = 49.564
-
-    # dimensions
-    dimensions = 512
+    a2 = coefficients[0]
+    a1 = coefficients[1]
+    a0 = coefficients[2]
 
     # load images
     original = np.asarray(Image.open(image_path), dtype=int)
-    flattened = np.ndarray(shape=(dimensions, dimensions), dtype=int)
+    flattened = np.ndarray(shape=(DIMENSIONS, DIMENSIONS), dtype=int)
 
     # apply rotation
-    for x in range(0, dimensions):
+    for x in range(0, DIMENSIONS):
         y = a2 * x * x + a1 * x + a0
         flattened[:, x] = np.roll(original[:, x], shift=round(y))
-        for i in range(350, dimensions):
+        for i in range(350, DIMENSIONS):
             flattened[i, x] = 255
     return flattened
+
+
+def fit_polynomial(image_path):
+    img = cv2.imread(image_path, 0)             # 0 == cv2.IMREAD_GRAYSCALE
+    filtered = gaussian_filter(img, sigma=1)    # apply gaussian filter
+    edges = cv2.Canny(filtered, 150, 200)       # use Canny Edge Detection
+
+    y_values = []
+    for row in range(DIMENSIONS):
+        found = False
+        for col in range(DIMENSIONS):
+            if edges[row][col] > 0:
+                y_values.append(col)
+                found = True
+                break
+        if not found:
+            if row > 0:
+                y_values.append(y_values[row-1])
+            else:
+                y_values.append(0)
+
+    assert len(y_values) == DIMENSIONS
+
+    x = np.arange(DIMENSIONS)
+    y = np.array(y_values)
+    return np.polyfit(x, y, 2)
 
 
 if __name__ == '__main__':
