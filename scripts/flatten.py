@@ -73,6 +73,10 @@ if __name__ == '__main__':
             for image_id in range(1, DIMENSIONS + 1):
                 # Fits a polynomial to the cross section. Note that `BSCAN_DIRNAME` is always used
                 poly = fit_polynomial(join(input_path, dataset_name, BSCAN_DIRNAME, "{}.png".format(image_id)))
+
+                # alternatively, use hardcoded polynomial coefficients
+                # poly = np.array([0.0029688, -1.52, 49.564])
+
                 for image_type in {BSCAN_DIRNAME, OMAG_DIRNAME}:
                     # Flattened image
                     image = flatten_single_image(
