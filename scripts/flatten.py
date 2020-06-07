@@ -39,22 +39,23 @@ def fit_polynomial(image_path):
     edges = cv2.Canny(filtered, 150, 200)       # use Canny Edge Detection
 
     y_values = []
-    for row in range(DIMENSIONS):
+    high, low = DIMENSIONS - 50, 50  # disregard first/last 50 columns near edges
+    for col in range(low, high):
         found = False
-        for col in range(DIMENSIONS):
+        for row in range(DIMENSIONS):
             if edges[row][col] > 0:
                 y_values.append(-col)  # note negative value used
                 found = True
                 break
         if not found:
-            if row > 0:
-                y_values.append(y_values[row-1])  # use previous value if needed
+            if len(y_values) > 0:
+                y_values.append(y_values[len(y_values)-1])  # use previous value if needed
             else:
                 y_values.append(0)
 
-    assert len(y_values) == DIMENSIONS
+    assert len(y_values) == high - low
 
-    x = np.arange(DIMENSIONS)
+    x = np.array(list(range(low, high)))
     y = np.array(y_values)
     return np.polyfit(x, y, 2)
 
