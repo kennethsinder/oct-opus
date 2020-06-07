@@ -43,12 +43,12 @@ def fit_polynomial(image_path):
         found = False
         for col in range(DIMENSIONS):
             if edges[row][col] > 0:
-                y_values.append(col)
+                y_values.append(-col)  # note negative value used
                 found = True
                 break
         if not found:
             if row > 0:
-                y_values.append(y_values[row-1])
+                y_values.append(y_values[row-1])  # use previous value if needed
             else:
                 y_values.append(0)
 
