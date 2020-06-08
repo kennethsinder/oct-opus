@@ -70,15 +70,15 @@ if __name__ == '__main__':
             makedirs(join(output_path, dataset_name, OMAG_DIRNAME), exist_ok=True)
             makedirs(join(output_path, dataset_name, BSCAN_DIRNAME), exist_ok=True)
 
+            # Fits a polynomial to the cross section. Note that `OMAG_DIRNAME/256.png` is always used
+            poly = fit_polynomial(join(input_path, dataset_name, OMAG_DIRNAME, "{}.png".format(256)))
+
+            # alternatively, use hardcoded polynomial coefficients
+            # poly = np.array([0.0029688, -1.52, 49.564])
+
             # Loop over individual images
-            for image_id in range(1, DIMENSIONS + 1):
-                # Fits a polynomial to the cross section. Note that `BSCAN_DIRNAME` is always used
-                poly = fit_polynomial(join(input_path, dataset_name, BSCAN_DIRNAME, "{}.png".format(image_id)))
-
-                # alternatively, use hardcoded polynomial coefficients
-                # poly = np.array([0.0029688, -1.52, 49.564])
-
-                for image_type in {BSCAN_DIRNAME, OMAG_DIRNAME}:
+            for image_type in {BSCAN_DIRNAME, OMAG_DIRNAME}:
+                for image_id in range(1, DIMENSIONS + 1):
                     # Flattened image
                     image = flatten_single_image(
                         image_path=join(input_path, dataset_name, image_type, "{}.png".format(image_id)),
@@ -90,6 +90,7 @@ if __name__ == '__main__':
                         fname=join(output_path, dataset_name, image_type, "{}.png".format(image_id)),
                         arr=image, format="png", cmap="gray"
                     )
+                print("Flattened images in {}.".format(join(dataset_name, image_type)))
             print("Dataset {} flattened.".format(dataset_name))
     except IndexError:
         print('Usage: python flatten.py {input_path} {output_path}')
