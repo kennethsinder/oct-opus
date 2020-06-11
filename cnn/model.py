@@ -60,7 +60,7 @@ class CNN:
         output = layers.Conv2D(1, (1,1), activation='linear', padding='same')(upsample_4)
 
         self.model = tf.keras.Model(inputs=input, outputs=output)
-        self.optimizer = tf.keras.optimizers.Adam()
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.00001)
         self.model.compile(
             optimizer=self.optimizer,
             loss=losses.MeanAbsoluteError()

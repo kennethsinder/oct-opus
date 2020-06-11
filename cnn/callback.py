@@ -48,8 +48,7 @@ class EpochEndCallback(callbacks.Callback):
             plt.axis('off')
 
         figure_path = join(
-            self.cnn.experiment_dir,
-            'cross_sections',
+            self.cnn.cross_sections_dir,
             'epoch_{}.png'.format(self.cnn.epoch.numpy())
         )
         plt.savefig(figure_path)
