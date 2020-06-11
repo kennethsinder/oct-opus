@@ -25,7 +25,7 @@ def generate_enface(model, data_dir, verbose=False):
     makedirs(enface_dir, exist_ok=True)
 
     # generate each cross section
-    bscan_paths = glob.glob(join(data_dir, 'xzIntensity', '*.png'))
+    bscan_paths = glob.glob(join(data_dir, 'xzIntensity', '[0-9]*.png'))
     for idx, bscan_path in enumerate(bscan_paths):
         bscan_num = int(splitext(basename(bscan_path))[0])
         if bscan_num % num_acquisitions:

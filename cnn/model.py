@@ -31,6 +31,7 @@ def upsample(input, concat_input, filters):
 
 class CNN:
     def __init__(self, root_data_dir, split, batch_size, seed, experiment_dir):
+        print('Setting up directories')
         self.experiment_dir = experiment_dir
         self.checkpoints_dir = join(self.experiment_dir, 'checkpoints')
         self.log_dir = join(self.experiment_dir, 'logs')
@@ -42,6 +43,7 @@ class CNN:
         self.writer = tf.summary.create_file_writer(self.log_dir)
 
         # build model layers
+        print('Building model layers')
         input = layers.Input(shape=(IMAGE_DIM, SLICE_WIDTH, 1), name='input')
 
         concat_input_1, downsample_1 = downsample(input, 32)
@@ -67,6 +69,7 @@ class CNN:
         )
 
         # set up checkpoints
+        print('Setting up checkpoints')
         self.epoch = tf.Variable(0)
         self.root_data_dir = tf.Variable(root_data_dir)
         self.split = tf.Variable(split)
@@ -94,6 +97,7 @@ class CNN:
             self.restore_status = None
 
         # split data into training and testing sets
+        print('Splitting data into testing and training')
         random.seed(self.seed.numpy())
         data_dirs = []
         for data_dir in glob.glob(join(self.root_data_dir.numpy().decode('utf-8'), '*')):
@@ -103,12 +107,14 @@ class CNN:
         self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
 
         # load the training and testing data
+        print('Loading training data')
         self.training_bscan_paths = utils.get_bscan_paths(self.training_data_dirs)
-        self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
         self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,
             self.batch_size.numpy()
         )
+        print('Loading testing data')
+        self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
         self.testing_dataset, self.testing_num_batches = utils.load_dataset(
             self.testing_bscan_paths,
             self.batch_size.numpy()
