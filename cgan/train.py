@@ -26,24 +26,28 @@ def train_step(model_state, input_image, target):
     return gen_total_loss, gen_gan_loss, gen_l1_loss, disc_loss
 
 
-def train_epoch(tbd_writer, train_dataset, model_state, epoch_num):
+def train_epoch(tbd_writer, train_dataset, model_state, epoch_num, fold_num):
     for input_image, target in train_dataset:
         gen_total_loss, gen_gan_loss, gen_l1_loss, disc_loss = train_step(model_state, input_image, target)
 
         # log info to tensorboard
         with tbd_writer.as_default():
-            tf.summary.scalar('avg_gen_total_loss', gen_total_loss, step=epoch_num)
-            tf.summary.scalar('avg_gen_gan_loss', gen_gan_loss, step=epoch_num)
-            tf.summary.scalar('avg_l1_loss', gen_l1_loss, step=epoch_num)
-            tf.summary.scalar('avg_disc_loss', disc_loss, step=epoch_num)
+            tf.summary.scalar('avg_gen_total_loss_fold_{}'.format(fold_num), gen_total_loss, step=epoch_num)
+            tf.summary.scalar('avg_gen_gan_loss_fold_{}'.format(fold_num), gen_gan_loss, step=epoch_num)
+            tf.summary.scalar('avg_l1_loss_fold_{}'.format(fold_num), gen_l1_loss, step=epoch_num)
+            tf.summary.scalar('avg_disc_loss_fold_{}'.format(fold_num), disc_loss, step=epoch_num)
 
             # While we're experimenting with the best way to leverage Tensorboard,
             # this code logs the 4 losses every 200 training steps, which is
             # more frequent than the above logging, which is just every epoch.
             if not model_state.global_index % 200:
-                tf.summary.scalar('avg_gen_total_loss_granular', gen_total_loss, step=model_state.global_index)
-                tf.summary.scalar('avg_gen_gan_loss_granular', gen_gan_loss, step=model_state.global_index)
-                tf.summary.scalar('avg_l1_loss_granular', gen_l1_loss, step=model_state.global_index)
-                tf.summary.scalar('avg_disc_loss_granular', disc_loss, step=model_state.global_index)
+                tf.summary.scalar('avg_gen_total_loss_granular_fold_{}'.format(fold_num), gen_total_loss,
+                                  step=model_state.global_index)
+                tf.summary.scalar('avg_gen_gan_loss_granular_fold_{}'.format(fold_num), gen_gan_loss,
+                                  step=model_state.global_index)
+                tf.summary.scalar('avg_l1_loss_granular_fold_{}'.format(fold_num), gen_l1_loss,
+                                  step=model_state.global_index)
+                tf.summary.scalar('avg_disc_loss_granular_fold_{}'.format(fold_num), disc_loss,
+                                  step=model_state.global_index)
 
         model_state.global_index += 1
