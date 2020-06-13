@@ -59,6 +59,9 @@ class ModelState:
         # The discriminator seeks to maximize L_cGAN.
         self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
+        # Training index across all epochs and folds
+        self.global_index = 0
+
     def reset_weights(self):
         """
         Reload the weights for the generator and discriminator Keras models
