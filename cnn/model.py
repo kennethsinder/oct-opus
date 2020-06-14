@@ -30,11 +30,11 @@ def upsample(input, concat_input, filters):
 
 
 class CNN:
-    def __init__(self, root_data_dir, split, batch_size, seed, experiment_dir):
+    def __init__(self, root_data_dir, split, batch_size, seed, experiment_dir, timestring):
         print('Setting up directories')
         self.experiment_dir = experiment_dir
         self.checkpoints_dir = join(self.experiment_dir, 'checkpoints')
-        self.log_dir = join(self.experiment_dir, 'logs')
+        self.log_dir = join(self.experiment_dir, 'logs-{}'.format(timestring))
         self.cross_sections_dir = join(self.experiment_dir, 'cross_sections')
         self.enfaces_dir = join(self.experiment_dir, 'enfaces')
         makedirs(self.cross_sections_dir, exist_ok=True)

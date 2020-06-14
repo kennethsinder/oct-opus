@@ -20,9 +20,7 @@ def main():
     parser.add_argument('hardware', choices=['cpu', 'gpu'])
     parser.add_argument('-d', '--data-dir', required=True, metavar='<path>')
     parser.add_argument('-ef', '--enface-dir', metavar='<path>')
-    parser.add_argument('-ex', '--experiment-dir',
-        default=join('./experiment', datetime.now().strftime('%d-%m-%Y_%Hh%Mm%Ss')),
-        metavar='<path>')
+    parser.add_argument('-ex', '--experiment-dir', metavar='<path>')
     parser.add_argument('-s', '--split', type=float, default=DATA_SPLIT, metavar='<float>')
     parser.add_argument('-b', '--batch', type=int, default=BATCH_SIZE, metavar='<int>')
     parser.add_argument('-sd', '--seed', type=int, default=SEED, metavar='<int>')
@@ -35,7 +33,18 @@ def main():
             raise SystemError('GPU device not found')
         print('Found GPU at: {}'.format(device_name))
 
-    model = CNN(args.data_dir, args.split, args.batch, args.seed, args.experiment_dir)
+    timestring = datetime.now().strftime('%d-%m-%Y_%Hh%Mm%Ss')
+    if args.experiment_dir is None:
+        args.experiment_dir = join('./experiment', timestring)
+
+    model = CNN(
+        args.data_dir,
+        args.split,
+        args.batch,
+        args.seed,
+        args.experiment_dir,
+        timestring
+    )
 
     if args.mode == 'train':
         if args.num_epochs < 1:
