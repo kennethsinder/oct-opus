@@ -50,11 +50,12 @@ if __name__ == '__main__':
         # If training with k-folds, save the dataset partitions configuration
         # to a JSON file so we know which predicted eye came from which fold.
         import json
+
         def serialize_sets(obj):
             if isinstance(obj, set):
                 return list(obj)
         fold_config = {i: ds.get_train_and_test_by_fold_id(i) for i in range(args.k_folds)}
-        with open('fold_config.json', 'w') as outfile:
+        with open(os.path.join(EXP_DIR, 'fold_config.json'), 'w') as outfile:
             json.dump(fold_config, outfile, default=serialize_sets)
 
     # TensorBoard
