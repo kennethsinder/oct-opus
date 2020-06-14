@@ -18,7 +18,7 @@ def get_bscan_paths(data_dirs):
     bscan_paths = []
 
     for data_dir in data_dirs:
-        bscan_paths.extend(glob.glob(join(data_dir,  'xzIntensity', '*.png')))
+        bscan_paths.extend(glob.glob(join(data_dir,  'xzIntensity', '[0-9]*.png')))
 
     if not bscan_paths:
         raise Exception('No B-scan images were found.')
@@ -50,14 +50,11 @@ def load_dataset(bscan_paths, batch_size, shuffle=True):
         dataset = dataset.shuffle(BUFFER_SIZE)
 
     # re-batch the images into the appropriate batch size
-    dataset = dataset.batch(batch_size)
+    # set drop_remainder to True to exclude any batches that are
+    # less than batch_size
+    dataset = dataset.batch(batch_size, drop_remainder=True)
 
-    # it's possible the last batch has a size less than batch_size, then it will
-    # need to be removed
-    num_batches = (len(bscan_paths) * NUM_SLICES) // batch_size
-    dataset = dataset.take(num_batches)
-
-    return dataset, num_batches
+    return dataset
 
 
 def get_slices(bscan_path):
@@ -94,8 +91,8 @@ def get_num_acquisitions(data_dir):
     folder identified by `data_dir`. Usually this will return
     the integer 1 or 4 (4 acquisitions is normal for OMAG).
     """
-    bscan_paths = glob.glob(join(data_dir, 'xzIntensity', '*'))
-    omag_paths = glob.glob(join(data_dir, 'OMAG Bscans', '*'))
+    bscan_paths = glob.glob(join(data_dir, 'xzIntensity', '[0-9]*.png'))
+    omag_paths = glob.glob(join(data_dir, 'OMAG Bscans', '[0-9]*.png'))
     return int(round(len(bscan_paths) / float(len(omag_paths))))
 
 

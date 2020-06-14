@@ -14,7 +14,7 @@ class EpochEndCallback(callbacks.Callback):
     def __init__(self, cnn):
         super().__init__()
         self.cnn = cnn
-        self.dataset, self.num_batches = utils.load_dataset(
+        self.dataset = utils.load_dataset(
             [self.cnn.testing_bscan_paths[0]], 1, shuffle=False)
         self.input = []
         self.target = []
@@ -35,7 +35,7 @@ class EpochEndCallback(callbacks.Callback):
     def plot_cross_sections(self):
         print('Logging cross sections')
 
-        prediction = self.cnn.predict(self.dataset, self.num_batches)
+        prediction = self.cnn.predict(self.dataset)
 
         display_list = [self.input, self.target, prediction]
         title = ['Input Image', 'Ground Truth', 'Predicted Image']

@@ -46,8 +46,8 @@ def generate_enface(model, data_dir, verbose=False):
             print('{}/{} - Generating cross section for {}'.format(
                 idx + 1, len(bscan_paths), bscan_path))
 
-        dataset, num_batches = utils.load_dataset([bscan_path], 1, shuffle=False)
-        img = model.predict(dataset, num_batches)
+        dataset = utils.load_dataset([bscan_path], 1, shuffle=False)
+        img = model.predict(dataset)
         image.save(img, join(enface_dir, '{}.png'.format(omag_num)))
 
     # using the cross sections, generate the enfaces
