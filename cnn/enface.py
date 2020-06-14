@@ -59,9 +59,9 @@ def generate_enface(model, data_dir, verbose=False):
         img = image.load(join(enface_dir, MULTI_SLICE_MAX_NORM))
         w, h, c = img.shape
         img = tf.reshape(img, [1, w, h, c])
-        tf.summary.image('MULTI_SLICE_MAX_NORM', img, step=model.epoch.numpy())
+        tf.summary.image('{}_MULTI_SLICE_MAX_NORM'.format(data_name), img, step=model.epoch.numpy())
         # log sum enface
         img = image.load(join(enface_dir, MULTI_SLICE_SUM))
         w, h, c = img.shape
         img = tf.reshape(img, [1, w, h, c])
-        tf.summary.image('MULTI_SLICE_SUM', img, step=model.epoch.numpy())
+        tf.summary.image('{}_MULTI_SLICE_SUM'.format(data_name), img, step=model.epoch.numpy())
