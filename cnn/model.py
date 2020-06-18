@@ -65,25 +65,16 @@ class CNN:
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.00001)
         self.model.compile(
             optimizer=self.optimizer,
-            loss=losses.MeanAbsoluteError()
+            loss=losses.MeanSquaredError()
         )
 
         # set up checkpoints
         print('Setting up checkpoints')
         self.epoch = tf.Variable(0)
-        self.root_data_dir = tf.Variable(root_data_dir)
-        self.split = tf.Variable(split)
-        self.batch_size = tf.Variable(batch_size)
-        self.seed = tf.Variable(seed)
-
         self.checkpoint = tf.train.Checkpoint(
             model=self.model,
             optimizer=self.optimizer,
-            epoch=self.epoch,
-            batch_size=self.batch_size,
-            root_data_dir=self.root_data_dir,
-            split=self.split,
-            seed=self.seed,
+            epoch=self.epoch
         )
         self.manager = tf.train.CheckpointManager(
             self.checkpoint,
@@ -98,12 +89,12 @@ class CNN:
 
         # split data into training and testing sets
         print('Splitting data into testing and training')
-        random.seed(self.seed.numpy())
+        random.seed(seed)
         data_dirs = []
-        for data_dir in glob.glob(join(self.root_data_dir.numpy().decode('utf-8'), '*')):
+        for data_dir in glob.glob(join(root_data_dir, '*')):
             if basename(data_dir) not in DATASET_BLACKLIST:
                 data_dirs.append(data_dir)
-        self.training_data_dirs = random.sample(data_dirs, int(self.split.numpy() * len(data_dirs)))
+        self.training_data_dirs = random.sample(data_dirs, int(split * len(data_dirs)))
         self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
 
         # load the training and testing data
@@ -111,13 +102,13 @@ class CNN:
         self.training_bscan_paths = utils.get_bscan_paths(self.training_data_dirs)
         self.training_dataset = utils.load_dataset(
             self.training_bscan_paths,
-            self.batch_size.numpy()
+            batch_size
         )
         print('Loading testing data')
         self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
         self.testing_dataset = utils.load_dataset(
             self.testing_bscan_paths,
-            self.batch_size.numpy()
+            batch_size
         )
 
     def train(self, num_epochs):
