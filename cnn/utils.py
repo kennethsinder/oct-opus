@@ -28,11 +28,11 @@ def get_bscan_paths(data_dirs):
 def load_dataset(bscan_paths, batch_size, shuffle=True):
     """ (list, int, bool, bool)
             -> tensorflow.python.data.ops.dataset_ops.BatchDataset, int
-    Returns a generator dataset & the number of batches. Number of batches does
-    not include batches with size less than batch_size.
+    Returns a generator dataset & the number of batches. Images are of the form
+    [C,H,W]. Number of batches does not include batches with size less than batch_size.
     """
 
-    output_shape = tf.TensorShape((NUM_SLICES, IMAGE_DIM, SLICE_WIDTH, 1))
+    output_shape = tf.TensorShape((NUM_SLICES, 1, IMAGE_DIM, SLICE_WIDTH))
     dataset = tf.data.Dataset.from_generator(
         lambda: map(get_slices, bscan_paths),
         output_types=(tf.float32, tf.float32),
@@ -78,9 +78,13 @@ def get_slices(bscan_path):
     bscan_img = image.resize(bscan_img, IMAGE_DIM, IMAGE_DIM)
     omag_img = image.resize(omag_img, IMAGE_DIM, IMAGE_DIM)
 
+    # move to channels first
+    bscan_img = tf.transpose(bscan_img, [2,0,1])
+    omag_img = tf.transpose(omag_img, [2,0,1])
+
     # slice images into vertical strips
-    bscan_img_slices = image.slice(bscan_img)
-    omag_img_slices = image.slice(omag_img)
+    bscan_img_slices = tf.convert_to_tensor(tf.split(bscan_img,  NUM_SLICES, 2))
+    omag_img_slices = tf.convert_to_tensor(tf.split(omag_img,  NUM_SLICES, 2))
 
     return bscan_img_slices, omag_img_slices
 

@@ -5,15 +5,25 @@ from os.path import basename, join
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import layers, losses, callbacks, Model
-from tensorflow.keras.layers import Input, Conv2D, MaxPool2D, Dropout, concatenate, UpSampling2D
+from tensorflow.keras import losses, callbacks, Model
+from tensorflow.keras.layers import (
+    Input,
+    Conv2D,
+    MaxPool2D,
+    Dropout,
+    concatenate,
+    UpSampling2D
+)
 
 import cnn.utils as utils
 from cnn.callback import EpochEndCallback
 from cnn.parameters import IMAGE_DIM, DATASET_BLACKLIST, SLICE_WIDTH
 
+"""
+Original u-net code provided by Dr. Aaron Lee. Has been updated to work with
+tensorflow.keras.
+"""
 def get_unet():
-    tf.keras.backend.set_image_data_format('channels_first')
     inputs = Input((1,IMAGE_DIM, SLICE_WIDTH))
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(inputs)
     #conv1 = Dropout(0.1)(conv1)
@@ -61,23 +71,8 @@ def get_unet():
     #conv9 = Dropout(0.1)(conv9)
     conv10 = Conv2D(1, (1, 1), activation='linear')(conv9)
     model = Model(inputs=inputs, outputs=conv10)
-    model.summary()
 
-def downsample(input, filters):
-    conv_1 = layers.Conv2D(filters, (3,3), activation='relu', padding='same')(input)
-    conv_2 = layers.Conv2D(filters, (3,3), activation='relu', padding='same')(conv_1)
-    max_pool = layers.MaxPool2D()(conv_2)
-    return conv_2, max_pool
-
-
-def upsample(input, concat_input, filters):
-    # upsampling = layers.Conv2DTranspose(filters, (2,2), padding='same')(input)
-    upsampling = layers.UpSampling2D((2,2))(input)
-    upconv = layers.Conv2D(filters, (2,2), padding='same')(upsampling)
-    concat = layers.Concatenate()([concat_input, upconv])
-    conv_1 = layers.Conv2D(filters, (3,3), activation='relu', padding='same')(concat)
-    conv_2 = layers.Conv2D(filters, (3,3), activation='relu', padding='same')(conv_1)
-    return conv_2
+    return model
 
 
 class CNN:
@@ -93,26 +88,8 @@ class CNN:
 
         self.writer = tf.summary.create_file_writer(self.log_dir)
 
-        # build model layers
-        print('Building model layers')
-        input = layers.Input(shape=(IMAGE_DIM, SLICE_WIDTH, 1), name='input')
-
-        concat_input_1, downsample_1 = downsample(input, 32)
-        concat_input_2, downsample_2 = downsample(downsample_1, 64)
-        concat_input_3, downsample_3 = downsample(downsample_2, 128)
-        concat_input_4, downsample_4 = downsample(downsample_3, 256)
-
-        conv = layers.Conv2D(512, (3,3), activation='relu', padding='same')(downsample_4)
-        conv_2 = layers.Conv2D(512, (3,3), activation='relu', padding='same')(conv)
-
-        upsample_1 = upsample(conv_2, concat_input_4, 256)
-        upsample_2 = upsample(upsample_1, concat_input_3, 128)
-        upsample_3 = upsample(upsample_2, concat_input_2, 64)
-        upsample_4 = upsample(upsample_3, concat_input_1, 32)
-
-        output = layers.Conv2D(1, (1,1), activation='linear', padding='same')(upsample_4)
-
-        self.model = tf.keras.Model(inputs=input, outputs=output)
+        # build model
+        self.model = get_unet()
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.00001)
         self.model.compile(
             optimizer=self.optimizer,
@@ -195,13 +172,14 @@ class CNN:
 
     def predict(self, input):
         """ (str, tf.data.Dataset) -> numpy.ndarray
+        Returns predicted image. Image has shape [C,H,W].
         """
 
         predicted_slices = self.model.predict(input)
         if self.restore_status:
             self.restore_status.expect_partial()
 
-        return np.concatenate(predicted_slices, axis=1)
+        return np.concatenate(predicted_slices, axis=2)
 
     def summary(self):
         """ () -> None

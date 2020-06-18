@@ -13,6 +13,8 @@ from cnn.enface import generate_enface
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.get_logger().setLevel('WARNING')
 
+# we want the image tensors to have the shape (num_channels, img_height, img_width)
+tf.keras.backend.set_image_data_format('channels_first')
 
 def main():
     parser = argparse.ArgumentParser()

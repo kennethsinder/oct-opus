@@ -47,8 +47,13 @@ def generate_enface(model, data_dir, verbose=False):
                 idx + 1, len(bscan_paths), bscan_path))
 
         dataset = utils.load_dataset([bscan_path], 1, shuffle=False)
+        # predicted image has shape [C,H,W]
         img = model.predict(dataset)
-        image.save(img, join(enface_dir, '{}.png'.format(omag_num)))
+        image.save(
+            img,
+            path=join(enface_dir, '{}.png'.format(omag_num)),
+            data_format='channels_first'
+        )
 
     # using the cross sections, generate the enfaces
     gen_single_enface(enface_dir)

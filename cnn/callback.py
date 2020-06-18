@@ -21,10 +21,8 @@ class EpochEndCallback(callbacks.Callback):
         for inp, tar in self.dataset:
             self.input.append(inp)
             self.target.append(tar)
-        self.input = np.concatenate(
-            np.concatenate(self.input, axis=0), axis=1)
-        self.target = np.concatenate(
-            np.concatenate(self.target, axis=0), axis=1)
+        self.input = np.concatenate(self.input, axis=3)
+        self.target = np.concatenate(self.target, axis=3)
 
     def on_epoch_end(self, epoch, logs=None):
         self.cnn.epoch.assign_add(1)
