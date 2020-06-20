@@ -26,7 +26,7 @@ def get_bscan_paths(data_dirs):
 
 
 def load_dataset(bscan_paths, batch_size, shuffle=True):
-    """ (list, int, bool, bool)
+    """ (list, int, bool)
             -> tensorflow.python.data.ops.dataset_ops.BatchDataset, int
     Returns a generator dataset & the number of batches. Images are of the form
     [C,H,W]. Number of batches does not include batches with size less than batch_size.
@@ -40,7 +40,7 @@ def load_dataset(bscan_paths, batch_size, shuffle=True):
     )
 
     # silently drop data that causes errors (e.g. corresponding OMAG file doesn't exist)
-    dataset = dataset.apply(tf.data.experimental.ignore_errors())
+    # dataset = dataset.apply(tf.data.experimental.ignore_errors())
 
     # need to unbatch so that each image slice is its own input, instead of
     # having 4 slices grouped together as one input
@@ -54,7 +54,9 @@ def load_dataset(bscan_paths, batch_size, shuffle=True):
     # less than batch_size
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
-    return dataset
+    num_batches = len(bscan_paths) // batch_size
+
+    return dataset, num_batches
 
 
 def get_slices(bscan_path):

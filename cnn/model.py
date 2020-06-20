@@ -128,13 +128,13 @@ class CNN:
         # load the training and testing data
         print('Loading training data')
         self.training_bscan_paths = utils.get_bscan_paths(self.training_data_dirs)
-        self.training_dataset = utils.load_dataset(
+        self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,
             batch_size
         )
         print('Loading testing data')
         self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
-        self.testing_dataset = utils.load_dataset(
+        self.testing_dataset, self.testing_num_batches = utils.load_dataset(
             self.testing_bscan_paths,
             batch_size
         )
@@ -156,10 +156,12 @@ class CNN:
         epoch_end_callback = EpochEndCallback(self)
 
         history = self.model.fit(
-            self.training_dataset,
+            self.training_dataset.repeat(num_epochs),
+            steps_per_epoch=self.training_num_batches,
             initial_epoch=self.epoch.numpy(),
             epochs=self.epoch.numpy() + num_epochs,
             validation_data=self.testing_dataset,
+            validation_steps=self.testing_num_batches,
             verbose=2,
             callbacks=[
                 tensorboard_callback,
@@ -170,12 +172,12 @@ class CNN:
         )
         return history
 
-    def predict(self, input):
-        """ (str, tf.data.Dataset) -> numpy.ndarray
+    def predict(self, input, num_batches):
+        """ (str, tf.data.Dataset, int) -> numpy.ndarray
         Returns predicted image. Image has shape [C,H,W].
         """
 
-        predicted_slices = self.model.predict(input)
+        predicted_slices = self.model.predict(input, steps=num_batches)
         if self.restore_status:
             self.restore_status.expect_partial()
 
