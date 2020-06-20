@@ -71,10 +71,10 @@ if __name__ == '__main__':
             makedirs(join(output_path, dataset_name, BSCAN_DIRNAME), exist_ok=True)
 
             # Fits a polynomial to the cross section. Note that `OMAG_DIRNAME/256.png` is always used
-            poly = fit_polynomial(join(input_path, dataset_name, OMAG_DIRNAME, "{}.png".format(256)))
+            # poly = fit_polynomial(join(input_path, dataset_name, OMAG_DIRNAME, "{}.png".format(256)))
 
             # alternatively, use hardcoded polynomial coefficients
-            # poly = np.array([0.0029688, -1.52, 49.564])
+            poly = np.array([0.0029688, -1.52, 49.564])
 
             # Loop over individual images
             for image_type in {BSCAN_DIRNAME, OMAG_DIRNAME}:
