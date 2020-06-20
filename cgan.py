@@ -50,9 +50,13 @@ if __name__ == '__main__':
         # If training with k-folds, save the dataset partitions configuration
         # to a JSON file so we know which predicted eye came from which fold.
         import json
+
+        def serialize_sets(obj):
+            if isinstance(obj, set):
+                return list(obj)
         fold_config = {i: ds.get_train_and_test_by_fold_id(i) for i in range(args.k_folds)}
-        with open('fold_config.json', 'w') as outfile:
-            json.dump(fold_config, outfile)
+        with open(os.path.join(EXP_DIR, 'fold_config.json'), 'w') as outfile:
+            json.dump(fold_config, outfile, default=serialize_sets)
 
     # TensorBoard
     TBD_WRITER = tf.summary.create_file_writer(os.path.join(EXP_DIR, "logs"))
@@ -86,8 +90,7 @@ if __name__ == '__main__':
             for epoch_num in range(1, args.num_epochs + 1):
                 print('----- Starting epoch number {} -----'.format(epoch_num))
                 start = time.time()
-                train_epoch(TBD_WRITER, model_state.train_dataset,
-                            model_state, epoch_num + fold_num * args.num_epochs)
+                train_epoch(TBD_WRITER, model_state.train_dataset, model_state, epoch_num, fold_num)
                 model_state.save_checkpoint()
                 print('Time taken for epoch {} is {} sec\n'.format(
                     epoch_num, time.time() - start))
@@ -105,6 +108,7 @@ if __name__ == '__main__':
                 # Create predicted cross-section and enface images at the end of every fold.
                 generate_inferred_images(EXP_DIR, model_state)
                 print('Generated inferred images for fold {}'.format(fold_num))
+                model_state.global_index = 0    # Reset counter used for Tensorboard scalar logging
             else:
                 # The user can run our program separately in test/predict mode
                 # with their testing eye sets if they wish to see the predicted en-face.
