@@ -94,9 +94,48 @@ more information about these folder structures.
 
 ## Data Set Conventions
 
-TODO
+A typical dataset has the following structure. Note that key parts of
+the code assumes this convention. The `Capillary Red Layer.tiff` are legacy
+images and are not used by the code. The images themselves should be continuous
+starting from `1.png`. Note that both the B-Scan and OMAG cross-section images 
+are have black data on white background whereas the en-faces have white data
+on black background. The inversion is automatically done as part of en-face generation.
 
-## Assumptions
+```
+sample_datasets/
+├── 2015-10-27___512_2048_Horizontal_Images58
+│   ├── Capillary\ Red\ Layer.tiff
+│   ├── OMAG\ Bscans
+|   │   ├── 1.png
+|   │   ├── ...  # more cross-section images
+|   │   ├── 512.png
+│   └── xzIntensity
+|   │   ├── 1.png
+|   │   ├── ...  # more cross-section images
+|   │   ├── 512.png
+├── 2015-10-27___512_2048_Horizontal_Images6
+│   ├── Capillary\ Red\ Layer.tiff
+│   ├── OMAG\ Bscans
+|   │   ├── 1.png
+|   │   ├── ...
+|   │   ├── 512.png
+│   └── xzIntensity
+|   │   ├── 1.png
+|   │   ├── ...  # more cross-section images
+|   │   ├── 512.png
+├── ...  # more dataset directories
+└── 2015-10-27___512_2048_Horizontal_Images73
+    ├── Capillary\ Red\ Layer.tiff
+    ├── OMAG\ Bscans
+    │   ├── 1.png
+    │   ├── ...  # more cross-section images
+    │   ├── 512.png
+    └── xzIntensity
+```
 
-TODO
+For examples of how to work with the `Dataset` class and how to iterate
+through the datasets see `scripts/flatten.py` and/or `enface.py`.
 
+The datasets used for this experiment are located in the `AI OMAG Project`
+directory on OneDrive. Please contact Zohreh Hosseinaee 
+(z5hosseinaee@uwaterloo.ca) or another member to obtain shared access.
