@@ -4,15 +4,22 @@
 
 ### Flattening Script (Pre)
 
-Cross-sections with curvature can be visually flattened
-to produce a consistant final en-face image
-and more standard looking cross-sections. We
-have provided a modified version of
-Han Le's (han.le@uwaterloo.ca) MATLAB script
-which uses a quadratic approximation of the curvature
-to perform the flattening.
+Cross-sections with curvature can be visually flattened to produce a consistent final en-face image
+and more standard looking cross-sections. The original "as-is" MATLAB implementation is located at
+`scripts/flatten_original.m`. Note that it contains hardcoded paths and is only meant to act as
+a reference in the event that it is needed. This script was provided by Han Le (han.le@uwaterloo.ca).
 
-(TODO: Additional info)
+The script has since been replaced by an equivalent Python implementation (see `scripts/flatten.py`).
+The idea is to use edge detection and polynomial interpolation to fit a curve (2nd degree in this case)
+to the retinal layers. Afterwards, each column is rotated according to a value determined by the
+fitted polynomial. A gaussian filter blur is also applied prior to the edge detection to improve the
+accuracy of the edge detection. Lastly, note that rows >= 350 are also set to 255 (i.e. white) to
+avoid noise interference.
+
+An example is shown below. The image on the left is the un-flattened original while the image on
+the right is resulting flattened image.
+
+![alt](unflattened.png) ![alt](flattened.png)
 
 ### Enface Generation (Post)
 
