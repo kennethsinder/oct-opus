@@ -23,11 +23,31 @@ the right is resulting flattened image.
 
 ### Enface Generation (Post)
 
-TODO (talk about `enface.py` and maybe
-link to it - mention it works for both
-the OMAG Bscans/xzIntensity folder structure
-and the flat inferred folder structure of
-an `experiment-<date/time>` directory.)
+An en-face image provides a two-dimensional view of the retina whose field-of-view is along the optical axis.
+Each en-face is assembled from the 512 cross-sections of a retina. To avoid including noise into the images,
+only cross-section layers (rows in the B-scans) from 50 to 256 (inclusive) were used. Before a scan is used,
+each scan’s pixel value is inverted. In this context, a pixel value of 0 (i.e. black) represents background
+or the absence of data. Two types of en-faces computed for clinical diagnostic purposes are used in this
+project; max normalized (i.e. max norm) and sum. A max normalized en-face, as its name suggests, is
+obtained by first normalizing each pixel and then selecting the maximum pixel value along the optic axis
+for a given position in space. In contrast, a sum en-face is obtained by aggregating all pixel values along
+the optical axis. Before being saved, each en-face is normalized to a value between 0 and 255 to adhere to
+grayscale image standards. Examples of both types of en-faces are illustrated below to showcase the concept.
+
+![alt](multi_slice_max_norm.png) ![alt](multi_slice_sum.png)
+
+The image on the left is the `multi_slice_max_norm.png` while the image on the right is the `multi_slice_sum.png`.
+
+To generate an en-face for a single dataset, use a command similar to:
+`python enface.py single ../oct-opus-data/sample_datasets/2015-10-27___512_2048_Horizontal_Images6/OMAG\ Bscans/`
+
+To generate en-faces for multiple datasets together, use a command similar to:
+`python enface.py multi ../oct-opus-data/sample_datasets/`
+
+The en-faces are stored in the same directory as the images used to create them.
+
+In addition, the original MATLAB en-face script provided by Zohreh Hosseinaee (z5hosseinaee@uwaterloo.ca)
+is located at `scripts/enface_original.m` for reference purposes only.
 
 ### Histogram Equalization (Post)
 
