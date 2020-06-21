@@ -5,7 +5,6 @@ from os.path import join
 import cv2
 import numpy as np
 from PIL import Image
-from matplotlib.image import imsave
 from scipy.ndimage import gaussian_filter
 
 from cgan.dataset import Dataset
@@ -80,16 +79,14 @@ if __name__ == '__main__':
             for image_type in {BSCAN_DIRNAME, OMAG_DIRNAME}:
                 for image_id in range(1, DIMENSIONS + 1):
                     # Flattened image
-                    image = flatten_single_image(
+                    np_image = flatten_single_image(
                         image_path=join(input_path, dataset_name, image_type, "{}.png".format(image_id)),
                         polynomial=poly
                     )
 
                     # Saves to disk
-                    imsave(
-                        fname=join(output_path, dataset_name, image_type, "{}.png".format(image_id)),
-                        arr=image, format="png", cmap="gray"
-                    )
+                    img = Image.fromarray(np_image.astype(np.uint8))
+                    img.save(join(output_path, dataset_name, image_type, "{}.png".format(image_id)))
                 print("Flattened images in {}.".format(join(dataset_name, image_type)))
             print("Dataset {} flattened.".format(dataset_name))
     except IndexError:
