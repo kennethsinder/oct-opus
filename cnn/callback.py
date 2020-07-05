@@ -15,7 +15,12 @@ class EpochEndCallback(callbacks.Callback):
         super().__init__()
         self.cnn = cnn
         self.dataset, self.num_batches = utils.load_dataset(
-            [self.cnn.testing_bscan_paths[0]], 1, shuffle=False)
+            [self.cnn.testing_bscan_paths[0]],
+            batch_size=1,
+            mean=cnn.training_mean,
+            standard_deviation=cnn.training_std,
+            shuffle=False
+        )
         self.input = []
         self.target = []
         for inp, tar in self.dataset:
@@ -38,6 +43,8 @@ class EpochEndCallback(callbacks.Callback):
         display_list = [self.input, self.target, prediction]
         title = ['Input Image', 'Ground Truth', 'Predicted Image']
 
+        # TODO: plot the raw input image too?
+        # i.e. the image without subtracting mean and dividing by std
         plt.figure(figsize=(15, 5))
         for i in range(3):
             plt.subplot(1, 3, i + 1)

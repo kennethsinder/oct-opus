@@ -50,12 +50,13 @@ def main():
 
     if args.mode == 'train':
         if args.num_epochs < 1:
-            raise('Number of epochs must be at least one.')
+            raise Exception('Number of epochs must be at least one.')
         print('Saving experiment info in {}'.format(args.experiment_dir))
         model.train(args.num_epochs)
     else:
+        raise Exception('\'enface\' mode is currently disabled.')
         if args.enface_dir is None:
-            raise('Enface directory must be specified.')
+            raise Exception('Enface directory must be specified.')
         generate_enface(model, args.enface_dir, verbose=True)
 
 

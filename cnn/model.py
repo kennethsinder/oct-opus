@@ -17,7 +17,7 @@ from tensorflow.keras.layers import (
 
 import cnn.utils as utils
 from cnn.callback import EpochEndCallback
-from cnn.parameters import IMAGE_DIM, DATASET_BLACKLIST, SLICE_WIDTH
+from cnn.parameters import IMAGE_DIM, SLICE_WIDTH
 
 """
 Original u-net code provided by Dr. Aaron Lee. Has been updated to work with
@@ -120,23 +120,29 @@ class CNN:
         random.seed(seed)
         data_dirs = []
         for data_dir in glob.glob(join(root_data_dir, '*')):
-            if basename(data_dir) not in DATASET_BLACKLIST:
-                data_dirs.append(data_dir)
+            data_dirs.append(data_dir)
         self.training_data_dirs = random.sample(data_dirs, int(split * len(data_dirs)))
         self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
 
         # load the training and testing data
         print('Loading training data')
         self.training_bscan_paths = utils.get_bscan_paths(self.training_data_dirs)
+        self.training_mean = utils.get_mean(self.training_bscan_paths)
+        self.training_std = utils.get_standard_deviation(
+            self.training_bscan_paths, self.training_mean)
         self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,
-            batch_size
+            batch_size,
+            self.training_mean,
+            self.training_std
         )
         print('Loading testing data')
         self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
         self.testing_dataset, self.testing_num_batches = utils.load_dataset(
             self.testing_bscan_paths,
-            batch_size
+            batch_size,
+            self.training_mean,
+            self.training_std
         )
 
     def train(self, num_epochs):

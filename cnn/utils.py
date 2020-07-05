@@ -1,4 +1,6 @@
 import glob
+import math
+from itertools import repeat
 from os.path import join, splitext
 
 import tensorflow as tf
@@ -10,6 +12,31 @@ from cnn.parameters import (
     NUM_SLICES,
     SLICE_WIDTH
 )
+
+def get_mean(bscan_paths):
+    mean = 0
+    count = 0
+    for path in bscan_paths:
+        img = image.load(path)
+        for row in tf.squeeze(img).numpy():
+            for val in row:
+                mean += val
+                count += 1
+    mean /= count
+    return mean
+
+
+def get_standard_deviation(bscan_paths, mean):
+    std = 0
+    count = 0
+    for path in bscan_paths:
+        img = image.load(path)
+        for row in tf.squeeze(img).numpy():
+            for val in row:
+                std += math.pow(val - mean, 2)
+                count += 1
+    std /= count
+    return math.sqrt(std)
 
 
 def get_bscan_paths(data_dirs):
@@ -25,8 +52,8 @@ def get_bscan_paths(data_dirs):
     return bscan_paths
 
 
-def load_dataset(bscan_paths, batch_size, shuffle=True):
-    """ (list, int, bool)
+def load_dataset(bscan_paths, batch_size, mean, standard_deviation, shuffle=True):
+    """ (list, int, float, float, bool)
             -> tensorflow.python.data.ops.dataset_ops.BatchDataset, int
     Returns a generator dataset & the number of batches. Images are of the form
     [C,H,W]. Number of batches does not include batches with size less than batch_size.
@@ -34,7 +61,7 @@ def load_dataset(bscan_paths, batch_size, shuffle=True):
 
     output_shape = tf.TensorShape((NUM_SLICES, 1, IMAGE_DIM, SLICE_WIDTH))
     dataset = tf.data.Dataset.from_generator(
-        lambda: map(get_slices, bscan_paths),
+        lambda: map(get_slices, bscan_paths, repeat(mean), repeat(standard_deviation)),
         output_types=(tf.float32, tf.float32),
         output_shapes=(output_shape, output_shape)
     )
@@ -59,8 +86,8 @@ def load_dataset(bscan_paths, batch_size, shuffle=True):
     return dataset, num_batches
 
 
-def get_slices(bscan_path):
-    """ (str) -> tensorflow.python.framework.ops.EagerTensor,
+def get_slices(bscan_path, mean, standard_deviation):
+    """ (str, float, float) -> tensorflow.python.framework.ops.EagerTensor,
                  tensorflow.python.framework.ops.EagerTensor
     Returns a pair of tensors containing the given B-scan slices and their
     corresponding OMAG slices.
@@ -83,6 +110,10 @@ def get_slices(bscan_path):
     # move to channels first
     bscan_img = tf.transpose(bscan_img, [2,0,1])
     omag_img = tf.transpose(omag_img, [2,0,1])
+
+    # centre the input image only
+    bscan_img = tf.math.subtract(bscan_img, mean)
+    bscan_img = tf.math.divide(bscan_img, standard_deviation)
 
     # slice images into vertical strips
     bscan_img_slices = tf.convert_to_tensor(tf.split(bscan_img,  NUM_SLICES, 2))

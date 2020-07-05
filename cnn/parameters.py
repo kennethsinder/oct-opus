@@ -1,9 +1,5 @@
 GPU = '/device:GPU:0'
 
-DATASET_BLACKLIST = {
-    '2015-10-21___512_2048_Horizontal_Images26',
-    '2015-10-26___512_2048_Horizontal_Images43',
-}
 NUM_DATASETS = 66
 NUM_IMAGES_PER_DATASET = 512
 DATA_SPLIT = 0.8

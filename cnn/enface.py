@@ -46,7 +46,13 @@ def generate_enface(model, data_dir, verbose=False):
             print('{}/{} - Generating cross section for {}'.format(
                 idx + 1, len(bscan_paths), bscan_path))
 
-        dataset, num_batches = utils.load_dataset([bscan_path], 1, shuffle=False)
+        dataset, num_batches = utils.load_dataset(
+            [bscan_path],
+            batch_size=1,
+            mean=model.training_mean,
+            standard_deviation=model.training_std,
+            shuffle=False
+        )
         # predicted image has shape [C,H,W]
         img = model.predict(dataset, num_batches)
         image.save(
