@@ -54,7 +54,7 @@ def load_dataset(bscan_paths, batch_size, shuffle=True):
     # less than batch_size
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
-    num_batches = len(bscan_paths) // batch_size
+    num_batches = (len(bscan_paths) * NUM_SLICES) // batch_size
 
     return dataset, num_batches
 
