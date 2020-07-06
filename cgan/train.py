@@ -12,30 +12,42 @@ def train_step(model_state, input_image, target):
         disc_real_output = model_state.discriminator([input_image, target], training=True)
         disc_generated_output = model_state.discriminator([input_image, gen_output], training=True)
 
-        gen_loss = generator_loss(model_state.loss_object, disc_generated_output, gen_output, target)
+        gen_total_loss, gen_gan_loss, gen_l1_loss = generator_loss(model_state.loss_object, disc_generated_output,
+                                                                   gen_output, target)
         disc_loss = discriminator_loss(model_state.loss_object, disc_real_output, disc_generated_output)
 
-    generator_gradients = gen_tape.gradient(gen_loss, model_state.generator.trainable_variables)
+    generator_gradients = gen_tape.gradient(gen_total_loss, model_state.generator.trainable_variables)
     discriminator_gradients = disc_tape.gradient(disc_loss, model_state.discriminator.trainable_variables)
 
     model_state.generator_optimizer.apply_gradients(zip(generator_gradients, model_state.generator.trainable_variables))
-    model_state.discriminator_optimizer.apply_gradients(zip(discriminator_gradients, model_state.discriminator.trainable_variables))
+    model_state.discriminator_optimizer.apply_gradients(zip(discriminator_gradients,
+                                                            model_state.discriminator.trainable_variables))
 
-    return gen_loss, disc_loss
+    return gen_total_loss, gen_gan_loss, gen_l1_loss, disc_loss
 
 
-def train_epoch(TBD_WRITER, train_dataset, model_state, epoch_num):
-    gen_loss_sum = 0
-    disc_loss_sum = 0
-    index = 0
+def train_epoch(tbd_writer, train_dataset, model_state, epoch_num, fold_num):
     for input_image, target in train_dataset:
-        gen_loss, disc_loss = train_step(model_state, input_image, target)
-        gen_loss_sum += gen_loss
-        disc_loss_sum += disc_loss
-        model_state.current_training_step += 1
-        index += 1
+        gen_total_loss, gen_gan_loss, gen_l1_loss, disc_loss = train_step(model_state, input_image, target)
 
         # log info to tensorboard
-        with TBD_WRITER.as_default():
-            tf.summary.scalar('avg_gen_loss', gen_loss_sum / index, step=epoch_num)
-            tf.summary.scalar('avg_disc_loss', disc_loss_sum / index, step=epoch_num)
+        with tbd_writer.as_default():
+            tf.summary.scalar('gen_total_loss_fold_{}'.format(fold_num), gen_total_loss, step=epoch_num)
+            tf.summary.scalar('gen_gan_loss_fold_{}'.format(fold_num), gen_gan_loss, step=epoch_num)
+            tf.summary.scalar('gen_l1_loss_fold_{}'.format(fold_num), gen_l1_loss, step=epoch_num)
+            tf.summary.scalar('disc_loss_fold_{}'.format(fold_num), disc_loss, step=epoch_num)
+
+            # While we're experimenting with the best way to leverage Tensorboard,
+            # this code logs the 4 losses every 200 training steps, which is
+            # more frequent than the above logging, which is just every epoch.
+            if not model_state.global_index % 200:
+                tf.summary.scalar('gen_total_loss_granular_fold_{}'.format(fold_num), gen_total_loss,
+                                  step=model_state.global_index)
+                tf.summary.scalar('gen_gan_loss_granular_fold_{}'.format(fold_num), gen_gan_loss,
+                                  step=model_state.global_index)
+                tf.summary.scalar('gen_l1_loss_granular_fold_{}'.format(fold_num), gen_l1_loss,
+                                  step=model_state.global_index)
+                tf.summary.scalar('disc_loss_granular_fold_{}'.format(fold_num), disc_loss,
+                                  step=model_state.global_index)
+
+        model_state.global_index += 1

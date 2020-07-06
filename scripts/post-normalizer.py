@@ -6,7 +6,6 @@ as the only additional command line argument:
 """
 
 import cv2
-import numpy as np
 
 
 def histogram(file_path):
@@ -20,7 +19,6 @@ if __name__ == '__main__':
     from os.path import join
     import sys
 
-    for predicted_folder in glob(join(sys.argv[1], 'predicted-*')):
-        for eye_folder in glob(join(predicted_folder, '*')):
-            for image_path in glob(join(eye_folder, '*.png')):
-                histogram(image_path)
+    for eye_folder in glob(join(sys.argv[1], '*')):
+        for image_path in glob(join(eye_folder, '*.png')):
+            histogram(image_path)

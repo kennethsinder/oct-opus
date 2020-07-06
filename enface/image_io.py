@@ -1,4 +1,5 @@
-from os import listdir
+import cv2
+import glob
 from os.path import join
 
 import PIL.ImageOps
@@ -16,8 +17,13 @@ class ImageIO:
         self.__IMAGE_DIM = IMAGE_DIM
 
     @staticmethod
-    def save_enface_image(enface, filepath, filename):
+    def save_enface_image(enface, filepath, filename, normalize=False):
         imsave(join(filepath, filename), enface, format="png", cmap="gray")
+        if normalize:
+            # Apply histogram equalization if requested
+            img = cv2.imread(join(filepath, filename), 0)
+            equ = cv2.equalizeHist(img)
+            cv2.imwrite(join(filepath, filename), equ)
 
     @staticmethod
     def __load_single_image(filename, contrast_factor=1.0, sharpness_factor=1.0):
@@ -31,12 +37,7 @@ class ImageIO:
         return PIL.ImageOps.invert(self.__load_single_image(filename, contrast_factor, sharpness_factor))
 
     def load_single_eye(self, src_dir, contrast_factor=1.0, sharpness_factor=1.0) -> np.ndarray:
-        ls = listdir(src_dir)
-        if MULTI_SLICE_MAX_NORM in ls:
-            ls.remove(MULTI_SLICE_MAX_NORM)
-        if MULTI_SLICE_SUM in ls:
-            ls.remove(MULTI_SLICE_SUM)
-
+        ls = glob.glob(join(src_dir, '[0-9]*.png'))
         num_images = len(ls)
         if num_images == 0:
             raise ValueError('FoundZeroImages')

@@ -11,7 +11,7 @@ from cgan.utils import get_dataset
 
 class ModelState:
 
-    def __init__(self, EXP_DIR: str, CKPT_DIR: str, DATASET: Dataset):
+    def __init__(self, exp_dir: str, ckpt_dir: str, dataset: Dataset):
         # optimizers
         self.discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
@@ -21,10 +21,10 @@ class ModelState:
         self.discriminator = discriminator()
 
         # paths
-        self.CKPT_DIR = CKPT_DIR
+        self.CKPT_DIR = ckpt_dir
 
         # dataset
-        self.DATASET = DATASET
+        self.DATASET = dataset
 
         # datasets
         self.train_dataset = None
@@ -39,13 +39,11 @@ class ModelState:
             discriminator=self.discriminator
         )
 
-        # Save scrambled weights before we do any training temporarily
+        # Save initial, scrambled weights before we do any training
         # so that we can reload them with model_state.reset_weights()
-        # below between folds for k-folds cross-validation.
-        self.generator_weights_file = join(EXP_DIR, 'generator_weights.h5')
-        self.discriminator_weights_file = join(EXP_DIR, 'discriminator_weights.h5')
-        self.generator.save_weights(self.generator_weights_file)
-        self.discriminator.save_weights(self.discriminator_weights_file)
+        # below between folds when doing k-folds cross-validation.
+        self.save_checkpoint()
+        self.initial_checkpoint = tf.train.latest_checkpoint(self.CKPT_DIR)
         self.current_training_step = 0
 
         # The cGAN loss function L_cGAN is maximized when the discriminator correctly
@@ -61,29 +59,16 @@ class ModelState:
         # The discriminator seeks to maximize L_cGAN.
         self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
+        # Training index across all epochs and folds
+        self.global_index = 0
+
     def reset_weights(self):
         """
         Reload the weights for the generator and discriminator Keras models
         that were previously saved before any training started, so this effectively
-        resets the models.
+        resets the models. Also resets the generator & discriminator Adam optimizers.
         """
-        self.generator.load_weights(self.generator_weights_file)
-        self.discriminator.load_weights(self.discriminator_weights_file)
-
-    def cleanup(self):
-        """
-        Perform cleanup of files before terminating the program.
-        """
-        try:
-            os.remove(self.generator_weights_file)
-        except OSError:
-            # Not a big deal if these files fail to be deleted. They'll
-            # get overwritten anyway during the next training run.
-            print("Error while deleting generator weights file.")
-        try:
-            os.remove(self.discriminator_weights_file)
-        except OSError:
-            print("Error while deleting discriminator weights file.")
+        self.checkpoint.restore(self.initial_checkpoint)
 
     def get_datasets(self, fold_num=0):
         """ ([int]) -> None
@@ -102,5 +87,15 @@ class ModelState:
     def save_checkpoint(self):
         self.checkpoint.save(file_prefix=self.checkpoint_prefix)
 
-    def restore_from_checkpoint(self):
-        self.checkpoint.restore(tf.train.latest_checkpoint(self.CKPT_DIR))
+    def restore_from_checkpoint(self, override_checkpoint_dir: str = None):
+        """
+        Restores the model from a checkpoint file. Optionally allows the
+        checkpoints folder path to be specified by passing it in as an
+        argument, otherwise just uses the checkpoint dir supplied in when
+        the `ModelState` was instantiated.
+        """
+        ckpt_dir = self.CKPT_DIR
+        if override_checkpoint_dir is not None:
+            ckpt_dir = override_checkpoint_dir
+
+        self.checkpoint.restore(tf.train.latest_checkpoint(ckpt_dir))
