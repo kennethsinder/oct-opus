@@ -1,5 +1,6 @@
 import glob
 import random
+from datetime import datetime
 from os import makedirs
 from os.path import basename, join
 
@@ -76,11 +77,13 @@ def get_unet():
 
 
 class CNN:
-    def __init__(self, root_data_dir, split, batch_size, seed, experiment_dir, timestring):
-        print('Setting up directories')
+    def __init__(self, root_data_dir, split, batch_size, seed, experiment_dir):
         self.experiment_dir = experiment_dir
         self.checkpoints_dir = join(self.experiment_dir, 'checkpoints')
-        self.log_dir = join(self.experiment_dir, 'logs-{}'.format(timestring))
+        self.log_dir = join(
+            self.experiment_dir,
+            'logs-{}'.format(datetime.now().strftime('%d-%m-%Y_%Hh%Mm%Ss'))
+        )
         self.cross_sections_dir = join(self.experiment_dir, 'cross_sections')
         self.enfaces_dir = join(self.experiment_dir, 'enfaces')
         makedirs(self.cross_sections_dir, exist_ok=True)
@@ -97,7 +100,6 @@ class CNN:
         )
 
         # set up checkpoints
-        print('Setting up checkpoints')
         self.epoch = tf.Variable(0)
         self.checkpoint = tf.train.Checkpoint(
             model=self.model,
@@ -110,13 +112,12 @@ class CNN:
             max_to_keep=None #keep all checkpoints
         )
         if self.manager.latest_checkpoint:
-            print('Loading latest checkpoint: {}'.format(self.manager.latest_checkpoint))
+            utils.log('Loading latest checkpoint {}'.format(self.manager.latest_checkpoint))
             self.restore_status = self.checkpoint.restore(self.manager.latest_checkpoint)
         else:
             self.restore_status = None
 
         # split data into training and testing sets
-        print('Splitting data into testing and training')
         random.seed(seed)
         data_dirs = []
         for data_dir in glob.glob(join(root_data_dir, '*')):
@@ -125,9 +126,10 @@ class CNN:
         self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
 
         # load the training and testing data
-        print('Loading training data')
         self.training_bscan_paths = utils.get_bscan_paths(self.training_data_dirs)
+        utils.log('Calculating training data mean')
         self.training_mean = utils.get_mean(self.training_bscan_paths)
+        utils.log('Calculating training data standard deviation')
         self.training_std = utils.get_standard_deviation(
             self.training_bscan_paths, self.training_mean)
         self.training_dataset, self.training_num_batches = utils.load_dataset(
@@ -136,7 +138,6 @@ class CNN:
             self.training_mean,
             self.training_std
         )
-        print('Loading testing data')
         self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
         self.testing_dataset, self.testing_num_batches = utils.load_dataset(
             self.testing_bscan_paths,

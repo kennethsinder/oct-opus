@@ -5,6 +5,7 @@ from os.path import join
 
 import tensorflow as tf
 
+import cnn.utils as utils
 from cnn.model import CNN
 from cnn.parameters import BATCH_SIZE, DATA_SPLIT, GPU, SEED
 from cnn.enface import generate_enface
@@ -33,25 +34,24 @@ def main():
         device_name = tf.test.gpu_device_name()
         if device_name != GPU:
             raise SystemError('GPU device not found')
-        print('Found GPU at: {}'.format(device_name))
+        utils.log('Found GPU at: {}'.format(device_name))
 
-    timestring = datetime.now().strftime('%d-%m-%Y_%Hh%Mm%Ss')
     if args.experiment_dir is None:
-        args.experiment_dir = join('./experiment', timestring)
+        args.experiment_dir = join(
+            './experiment', datetime.now().strftime('%d-%m-%Y_%Hh%Mm%Ss'))
 
     model = CNN(
         args.data_dir,
         args.split,
         args.batch,
         args.seed,
-        args.experiment_dir,
-        timestring
+        args.experiment_dir
     )
 
     if args.mode == 'train':
         if args.num_epochs < 1:
             raise Exception('Number of epochs must be at least one.')
-        print('Saving experiment info in {}'.format(args.experiment_dir))
+        utils.log('Saving experiment info in {}'.format(args.experiment_dir))
         model.train(args.num_epochs)
     else:
         raise Exception('\'enface\' mode is currently disabled.')

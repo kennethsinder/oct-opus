@@ -29,15 +29,19 @@ class EpochEndCallback(callbacks.Callback):
         self.input = np.concatenate(self.input, axis=3)
         self.target = np.concatenate(self.target, axis=3)
 
+    def on_epoch_begin(self, epoch, logs=None):
+        utils.log('Begin epoch')
+
     def on_epoch_end(self, epoch, logs=None):
+        utils.log('End epoch')
         self.cnn.epoch.assign_add(1)
         self.cnn.manager.save()
+        utils.log('Generating cross sections')
         self.plot_cross_sections()
+        utils.log('Generating enfaces')
         self.generate_enfaces()
 
     def plot_cross_sections(self):
-        print('Logging cross sections')
-
         prediction = self.cnn.predict(self.dataset, self.num_batches)
 
         display_list = [self.input, self.target, prediction]
@@ -69,6 +73,5 @@ class EpochEndCallback(callbacks.Callback):
             )
 
     def generate_enfaces(self):
-        print('Logging enfaces')
         for testing_dir in self.cnn.testing_data_dirs:
             generate_enface(self.cnn, testing_dir)

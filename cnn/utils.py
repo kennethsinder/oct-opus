@@ -1,5 +1,6 @@
 import glob
 import math
+from datetime import datetime
 from itertools import repeat
 from os.path import join, splitext
 
@@ -137,3 +138,9 @@ def bscan_num_to_omag_num(bscan_num, num_acquisitions):
     """ (int, int) -> int
     """
     return ((bscan_num - 1) // num_acquisitions) + 1
+
+def log(message):
+    """ (str) -> None
+    Prints a message to standard output, add the current time to the message.
+    """
+    print('[{}] {}'.format(datetime.now().strftime('%b %d, %Y - %H:%M:%S'), message))
