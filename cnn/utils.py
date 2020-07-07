@@ -40,13 +40,13 @@ def get_standard_deviation(bscan_paths, mean):
     return math.sqrt(std)
 
 
-def get_bscan_paths(data_dirs):
-    """ (list) -> list
+def get_bscan_paths(root_dir, data_names):
+    """ (str, list) -> list
     """
     bscan_paths = []
 
-    for data_dir in data_dirs:
-        bscan_paths.extend(glob.glob(join(data_dir,  'xzIntensity', '[0-9]*.png')))
+    for data_name in data_names:
+        bscan_paths.extend(glob.glob(join(root_dir, data_name,  'xzIntensity', '[0-9]*.png')))
 
     if not bscan_paths:
         raise Exception('No B-scan images were found.')

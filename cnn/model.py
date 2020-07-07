@@ -86,6 +86,7 @@ class CNN:
         )
         self.cross_sections_dir = join(self.experiment_dir, 'cross_sections')
         self.enfaces_dir = join(self.experiment_dir, 'enfaces')
+
         makedirs(self.cross_sections_dir, exist_ok=True)
         makedirs(self.enfaces_dir, exist_ok=True)
 
@@ -111,6 +112,7 @@ class CNN:
             directory=self.checkpoints_dir,
             max_to_keep=None #keep all checkpoints
         )
+
         if self.manager.latest_checkpoint:
             utils.log('Loading latest checkpoint {}'.format(self.manager.latest_checkpoint))
             self.restore_status = self.checkpoint.restore(self.manager.latest_checkpoint)
@@ -118,27 +120,32 @@ class CNN:
             self.restore_status = None
 
         # split data into training and testing sets
-        random.seed(seed)
-        data_dirs = []
+        data_names = []
         for data_dir in glob.glob(join(root_data_dir, '*')):
-            data_dirs.append(data_dir)
-        self.training_data_dirs = random.sample(data_dirs, int(split * len(data_dirs)))
-        self.testing_data_dirs = [d for d in data_dirs if d not in self.training_data_dirs]
+            data_names.append(basename(data_dir))
+        data_names.sort()
+        random.seed(seed)
+        self.training_data_names = random.sample(data_names, int(split * len(data_names)))
+        self.testing_data_names = [d for d in data_names if d not in self.training_data_names]
 
         # load the training and testing data
-        self.training_bscan_paths = utils.get_bscan_paths(self.training_data_dirs)
+        self.training_bscan_paths = utils.get_bscan_paths(root_data_dir, self.training_data_names)
+
         utils.log('Calculating training data mean')
         self.training_mean = utils.get_mean(self.training_bscan_paths)
+
         utils.log('Calculating training data standard deviation')
         self.training_std = utils.get_standard_deviation(
             self.training_bscan_paths, self.training_mean)
+
         self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,
             batch_size,
             self.training_mean,
             self.training_std
         )
-        self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
+
+        self.testing_bscan_paths = utils.get_bscan_paths(root_data_dir, self.testing_data_names)
         self.testing_dataset, self.testing_num_batches = utils.load_dataset(
             self.testing_bscan_paths,
             batch_size,

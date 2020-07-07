@@ -54,7 +54,6 @@ def main():
         utils.log('Saving experiment info in {}'.format(args.experiment_dir))
         model.train(args.num_epochs)
     else:
-        raise Exception('\'enface\' mode is currently disabled.')
         if args.enface_dir is None:
             raise Exception('Enface directory must be specified.')
         generate_enface(model, args.enface_dir, verbose=True)
