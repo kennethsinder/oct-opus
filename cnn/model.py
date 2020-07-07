@@ -133,10 +133,12 @@ class CNN:
 
         utils.log('Calculating training data mean')
         self.training_mean = utils.get_mean(self.training_bscan_paths)
+        utils.log('Done calculating training data mean')
 
         utils.log('Calculating training data standard deviation')
         self.training_std = utils.get_standard_deviation(
             self.training_bscan_paths, self.training_mean)
+        utils.log('Done calculating training data standard deviation')
 
         self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,
