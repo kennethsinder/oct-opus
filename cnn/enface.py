@@ -10,16 +10,14 @@ import cnn.image as image
 from enface.enface import gen_single_enface
 from enface.image_io import MULTI_SLICE_SUM, MULTI_SLICE_MAX_NORM
 
-def generate_enface(model, data_dir, verbose=False):
-    if data_dir[-1] == '/':
-        data_name = basename(data_dir[0:-1])
-    else:
-        data_name = basename(data_dir)
+def generate_enface(model, data_name, verbose=False):
     enface_dir = join(
         model.enfaces_dir,
         'epoch_{}'.format(model.epoch.numpy()),
         data_name,
     )
+
+    data_dir = join(model.root_data_dir, data_name)
 
     num_acquisitions = utils.get_num_acquisitions(data_dir)
     makedirs(enface_dir, exist_ok=True)

@@ -155,6 +155,8 @@ class CNN:
             self.training_std
         )
 
+        self.root_data_dir = root_data_dir
+
     def train(self, num_epochs):
         """ (num) -> float
         Trains the model for the specified number of epochs.
