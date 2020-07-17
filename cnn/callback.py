@@ -11,9 +11,10 @@ from cnn.enface import generate_enface
 
 
 class EpochEndCallback(callbacks.Callback):
-    def __init__(self, cnn):
+    def __init__(self, cnn, last_epoch):
         super().__init__()
         self.cnn = cnn
+        self.last_epoch = last_epoch
         self.dataset, self.num_batches = utils.load_dataset(
             [self.cnn.testing_bscan_paths[0]],
             batch_size=1,
@@ -38,8 +39,9 @@ class EpochEndCallback(callbacks.Callback):
         self.cnn.manager.save()
         utils.log('Generating cross sections')
         self.plot_cross_sections()
-        utils.log('Generating enfaces')
-        self.generate_enfaces()
+        if self.cnn.epoch.numpy() % 5 == 0 or self.cnn.epoch.numpy() == self.last_epoch:
+            utils.log('Generating enfaces')
+            self.generate_enfaces()
 
     def plot_cross_sections(self):
         prediction = self.cnn.predict(self.dataset, self.num_batches)
