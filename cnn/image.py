@@ -2,7 +2,7 @@ import io
 import tensorflow as tf
 from PIL import Image
 
-from cnn.parameters import NUM_SLICES, PIXEL_DEPTH, SLICE_WIDTH
+from cnn.parameters import PIXEL_DEPTH
 
 
 def load(path, data_format='channels_last'):
@@ -24,6 +24,7 @@ def load(path, data_format='channels_last'):
         img = tf.transpose(img, [2,0,1]) # move channels first
 
     return img / (PIXEL_DEPTH - 1)
+
 
 def save(img, path, data_format):
     """ (numpy.ndarray, str, str) -> None
@@ -54,12 +55,3 @@ def resize(image, height, width):
         [height, width],
         method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
     )
-
-def slice(img):
-    """ (tensorflow.python.framework.ops.EagerTensor)
-            -> tensorflow.python.framework.ops.EagerTensor
-    Returns image sliced into NUM_SLICES number of vertical slices.
-    For an input tensor with shape [x, y, z], the returning tensor has shape
-    [NUM_SLICES, x, y, z]
-    """
-    return tf.convert_to_tensor(tf.split(img,  NUM_SLICES, 2))

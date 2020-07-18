@@ -47,6 +47,7 @@ def generate_enface(model, data_name, verbose=False):
         dataset, num_batches = utils.load_dataset(
             [bscan_path],
             batch_size=1,
+            num_slices=model.slices,
             mean=model.training_mean,
             standard_deviation=model.training_std,
             shuffle=False

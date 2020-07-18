@@ -18,6 +18,7 @@ class EpochEndCallback(callbacks.Callback):
         self.dataset, self.num_batches = utils.load_dataset(
             [self.cnn.testing_bscan_paths[0]],
             batch_size=1,
+            num_slices=cnn.slices,
             mean=cnn.training_mean,
             standard_deviation=cnn.training_std,
             shuffle=False

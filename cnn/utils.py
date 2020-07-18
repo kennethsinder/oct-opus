@@ -7,12 +7,7 @@ from os.path import join, splitext
 import tensorflow as tf
 
 import cnn.image as image
-from cnn.parameters import (
-    BUFFER_SIZE,
-    IMAGE_DIM,
-    NUM_SLICES,
-    SLICE_WIDTH
-)
+from cnn.parameters import IMAGE_DIM, NUM_DATASETS, NUM_IMAGES_PER_DATASET
 
 def get_mean(bscan_paths):
     mean = 0
@@ -53,16 +48,16 @@ def get_bscan_paths(root_dir, data_names):
     return bscan_paths
 
 
-def load_dataset(bscan_paths, batch_size, mean, standard_deviation, shuffle=True):
+def load_dataset(bscan_paths, batch_size, num_slices, mean, standard_deviation, shuffle=True):
     """ (list, int, float, float, bool)
             -> tensorflow.python.data.ops.dataset_ops.BatchDataset, int
     Returns a generator dataset & the number of batches. Images are of the form
     [C,H,W]. Number of batches does not include batches with size less than batch_size.
     """
 
-    output_shape = tf.TensorShape((NUM_SLICES, 1, IMAGE_DIM, SLICE_WIDTH))
+    output_shape = tf.TensorShape((num_slices, 1, IMAGE_DIM, IMAGE_DIM // num_slices))
     dataset = tf.data.Dataset.from_generator(
-        lambda: map(get_slices, bscan_paths, repeat(mean), repeat(standard_deviation)),
+        lambda: map(get_slices, bscan_paths, repeat(num_slices), repeat(mean), repeat(standard_deviation)),
         output_types=(tf.float32, tf.float32),
         output_shapes=(output_shape, output_shape)
     )
@@ -75,19 +70,19 @@ def load_dataset(bscan_paths, batch_size, mean, standard_deviation, shuffle=True
     dataset = dataset.unbatch()
 
     if shuffle:
-        dataset = dataset.shuffle(BUFFER_SIZE)
+        dataset = dataset.shuffle(NUM_DATASETS * NUM_IMAGES_PER_DATASET * num_slices)
 
     # re-batch the images into the appropriate batch size
     # set drop_remainder to True to exclude any batches that are
     # less than batch_size
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
-    num_batches = (len(bscan_paths) * NUM_SLICES) // batch_size
+    num_batches = (len(bscan_paths) * num_slices) // batch_size
 
     return dataset, num_batches
 
 
-def get_slices(bscan_path, mean, standard_deviation):
+def get_slices(bscan_path, num_slices, mean, standard_deviation):
     """ (str, float, float) -> tensorflow.python.framework.ops.EagerTensor,
                  tensorflow.python.framework.ops.EagerTensor
     Returns a pair of tensors containing the given B-scan slices and their
@@ -117,8 +112,8 @@ def get_slices(bscan_path, mean, standard_deviation):
     bscan_img = tf.math.divide(bscan_img, standard_deviation)
 
     # slice images into vertical strips
-    bscan_img_slices = tf.convert_to_tensor(tf.split(bscan_img,  NUM_SLICES, 2))
-    omag_img_slices = tf.convert_to_tensor(tf.split(omag_img,  NUM_SLICES, 2))
+    bscan_img_slices = tf.convert_to_tensor(tf.split(bscan_img, num_slices, 2))
+    omag_img_slices = tf.convert_to_tensor(tf.split(omag_img, num_slices, 2))
 
     return bscan_img_slices, omag_img_slices
 
@@ -138,6 +133,7 @@ def bscan_num_to_omag_num(bscan_num, num_acquisitions):
     """ (int, int) -> int
     """
     return ((bscan_num - 1) // num_acquisitions) + 1
+
 
 def log(message):
     """ (str) -> None

@@ -18,14 +18,14 @@ from tensorflow.keras.layers import (
 
 import cnn.utils as utils
 from cnn.callback import EpochEndCallback
-from cnn.parameters import IMAGE_DIM, SLICE_WIDTH
+from cnn.parameters import IMAGE_DIM
 
 """
 Original u-net code provided by Dr. Aaron Lee. Has been updated to work with
 tensorflow.keras.
 """
-def get_unet():
-    inputs = Input((1,IMAGE_DIM, SLICE_WIDTH))
+def get_unet(input_height, input_width):
+    inputs = Input((1, input_height, input_width))
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(inputs)
     #conv1 = Dropout(0.1)(conv1)
     conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(conv1)
@@ -77,7 +77,17 @@ def get_unet():
 
 
 class CNN:
-    def __init__(self, root_data_dir, split, batch_size, seed, experiment_dir):
+    def __init__(self, root_data_dir, split, batch_size, slices, seed, experiment_dir):
+        utils.log(
+            'Creating CNN with parameters:\n' +
+            '\troot_data_dir={},\n'.format(root_data_dir) +
+            '\tsplit={},\n'.format(split) +
+            '\tbatch_size={},\n'.format(batch_size) +
+            '\tslices={},\n'.format(slices) +
+            '\tseed={},\n'.format(seed) +
+            '\texperiment_dir={}'.format(experiment_dir)
+        )
+
         self.experiment_dir = experiment_dir
         self.checkpoints_dir = join(self.experiment_dir, 'checkpoints')
         self.log_dir = join(
@@ -93,7 +103,7 @@ class CNN:
         self.writer = tf.summary.create_file_writer(self.log_dir)
 
         # build model
-        self.model = get_unet()
+        self.model = get_unet(IMAGE_DIM, IMAGE_DIM // slices)
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.00001)
         self.model.compile(
             optimizer=self.optimizer,
@@ -143,6 +153,7 @@ class CNN:
         self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,
             batch_size,
+            slices,
             self.training_mean,
             self.training_std
         )
@@ -151,11 +162,13 @@ class CNN:
         self.testing_dataset, self.testing_num_batches = utils.load_dataset(
             self.testing_bscan_paths,
             batch_size,
+            slices,
             self.training_mean,
             self.training_std
         )
 
         self.root_data_dir = root_data_dir
+        self.slices = slices
 
     def train(self, num_epochs):
         """ (num) -> float
