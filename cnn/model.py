@@ -1,8 +1,7 @@
 import glob
-import random
 from datetime import datetime
 from os import makedirs
-from os.path import basename, join
+from os.path import join
 
 import numpy as np
 import tensorflow as tf
@@ -130,13 +129,7 @@ class CNN:
             self.restore_status = None
 
         # split data into training and testing sets
-        data_names = []
-        for data_dir in glob.glob(join(root_data_dir, '*')):
-            data_names.append(basename(data_dir))
-        data_names.sort()
-        random.seed(seed)
-        self.training_data_names = random.sample(data_names, int(split * len(data_names)))
-        self.testing_data_names = [d for d in data_names if d not in self.training_data_names]
+        self.training_data_names, self.testing_data_names = utils.separate_training_testing(root_data_dir, split, seed)
 
         # load the training and testing data
         self.training_bscan_paths = utils.get_bscan_paths(root_data_dir, self.training_data_names)

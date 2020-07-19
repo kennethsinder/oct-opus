@@ -1,13 +1,15 @@
 import glob
 import math
+import random
 from datetime import datetime
 from itertools import repeat
-from os.path import join, splitext
+from os.path import basename, join, splitext
 
 import tensorflow as tf
 
 import cnn.image as image
 from cnn.parameters import IMAGE_DIM, NUM_DATASETS, NUM_IMAGES_PER_DATASET
+
 
 def get_mean(bscan_paths):
     mean = 0
@@ -33,6 +35,22 @@ def get_standard_deviation(bscan_paths, mean):
                 count += 1
     std /= count
     return math.sqrt(std)
+
+
+def separate_training_testing(root_data_dir, split, seed):
+    """ (str, float, int) -> list, list
+    """
+    data_names = []
+    for data_dir in glob.glob(join(root_data_dir, '*')):
+        data_names.append(basename(data_dir))
+    data_names.sort()
+
+    random.seed(seed)
+
+    training_data_names = random.sample(data_names, int(split * len(data_names)))
+    testing_data_names = [d for d in data_names if d not in training_data_names]
+
+    return training_data_names, testing_data_names
 
 
 def get_bscan_paths(root_dir, data_names):
