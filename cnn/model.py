@@ -1,7 +1,7 @@
 import glob
 from datetime import datetime
 from os import makedirs
-from os.path import join
+from os.path import basename, join
 
 import numpy as np
 import tensorflow as tf
@@ -17,7 +17,7 @@ from tensorflow.keras.layers import (
 
 import cnn.utils as utils
 from cnn.callback import EpochEndCallback
-from cnn.parameters import IMAGE_DIM
+from cnn.parameters import IMAGE_DIM, STATS
 
 """
 Original u-net code provided by Dr. Aaron Lee. Has been updated to work with
@@ -134,14 +134,12 @@ class CNN:
         # load the training and testing data
         self.training_bscan_paths = utils.get_bscan_paths(root_data_dir, self.training_data_names)
 
-        utils.log('Calculating training data mean')
-        self.training_mean = utils.get_mean(self.training_bscan_paths)
-        utils.log('Done calculating training data mean')
-
-        utils.log('Calculating training data standard deviation')
-        self.training_std = utils.get_standard_deviation(
-            self.training_bscan_paths, self.training_mean)
-        utils.log('Done calculating training data standard deviation')
+        if root_data_dir[-1] == '/':
+            self.training_mean = STATS[basename(root_data_dir[:-1])][split][seed]['mean']
+            self.training_std = STATS[basename(root_data_dir[:-1])][split][seed]['std']
+        else:
+            self.training_mean = STATS[basename(root_data_dir)][split][seed]['mean']
+            self.training_std = STATS[basename(root_data_dir)][split][seed]['std']
 
         self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,
