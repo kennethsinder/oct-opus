@@ -1,4 +1,5 @@
 import io
+import numpy as np
 import tensorflow as tf
 from PIL import Image
 
@@ -35,6 +36,9 @@ def save(img, path, data_format):
     """
     if not data_format == 'channels_last' and not data_format == 'channels_first':
         raise Exception('data_format must be either \'channels_first\' or \'channels_last\'')
+
+    # make sure values are in the interval [0, 1]
+    img = np.clip(img, 0, 1)
 
     # format image
     if data_format == 'channels_first':
