@@ -81,5 +81,5 @@ class EpochEndCallback(callbacks.Callback):
             )
 
     def generate_enfaces(self):
-        for name in self.cnn.testing_data_names:
-            generate_enface(self.cnn, name)
+        for dir in self.cnn.testing_data_dirs:
+            generate_enface(self.cnn, dir)

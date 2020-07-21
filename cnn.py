@@ -58,8 +58,8 @@ def main():
         args.experiment_dir
     )
 
-    utils.log('training={}'.format(model.training_data_names))
-    utils.log('testing={}'.format(model.testing_data_names))
+    utils.log('training={}'.format(model.training_data_dirs))
+    utils.log('testing={}'.format(model.testing_data_dirs))
     utils.log('mean={}, std={}'.format(model.training_mean, model.training_std))
 
     if args.mode == 'train':

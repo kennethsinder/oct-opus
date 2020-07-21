@@ -129,10 +129,10 @@ class CNN:
             self.restore_status = None
 
         # split data into training and testing sets
-        self.training_data_names, self.testing_data_names = utils.separate_training_testing(root_data_dir, split, seed)
+        self.training_data_dirs, self.testing_data_dirs = utils.separate_training_testing(root_data_dir, split, seed)
 
         # load the training and testing data
-        self.training_bscan_paths = utils.get_bscan_paths(root_data_dir, self.training_data_names)
+        self.training_bscan_paths = utils.get_bscan_paths(self.training_data_dirs)
 
         if root_data_dir[-1] == '/':
             self.training_mean = STATS[basename(root_data_dir[:-1])][split][seed]['mean']
@@ -149,7 +149,7 @@ class CNN:
             self.training_std
         )
 
-        self.testing_bscan_paths = utils.get_bscan_paths(root_data_dir, self.testing_data_names)
+        self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
         self.testing_dataset, self.testing_num_batches = utils.load_dataset(
             self.testing_bscan_paths,
             batch_size,

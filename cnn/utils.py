@@ -50,16 +50,24 @@ def separate_training_testing(root_data_dir, split, seed):
     training_data_names = random.sample(data_names, int(split * len(data_names)))
     testing_data_names = [d for d in data_names if d not in training_data_names]
 
-    return training_data_names, testing_data_names
+    training_data_dirs = []
+    for name in training_data_names:
+        training_data_dirs.append(join(root_data_dir, name))
+
+    testing_data_dirs = []
+    for name in testing_data_names:
+        testing_data_dirs.append(join(root_data_dir, name))
+
+    return training_data_dirs, testing_data_dirs
 
 
-def get_bscan_paths(root_dir, data_names):
-    """ (str, list) -> list
+def get_bscan_paths(data_dirs):
+    """ (list) -> list
     """
     bscan_paths = []
 
-    for data_name in data_names:
-        bscan_paths.extend(glob.glob(join(root_dir, data_name,  'xzIntensity', '[0-9]*.png')))
+    for dir in data_dirs:
+        bscan_paths.extend(glob.glob(join(dir, 'xzIntensity', '[0-9]*.png')))
 
     if not bscan_paths:
         raise Exception('No B-scan images were found.')
