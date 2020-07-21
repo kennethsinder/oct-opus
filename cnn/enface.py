@@ -51,6 +51,7 @@ def generate_enface(model, data_dir, verbose=False):
             [bscan_path],
             batch_size=1,
             num_slices=model.slices,
+            contrast=model.contrast,
             mean=model.mean,
             standard_deviation=model.std,
             shuffle=False

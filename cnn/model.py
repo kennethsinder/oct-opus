@@ -76,13 +76,14 @@ def get_unet(input_height, input_width):
 
 
 class CNN:
-    def __init__(self, root_data_dir, split, batch_size, slices, seed, experiment_dir):
+    def __init__(self, root_data_dir, split, batch_size, slices, contrast, seed, experiment_dir):
         utils.log(
             'Creating CNN with parameters:\n' +
             '\troot_data_dir={},\n'.format(root_data_dir) +
             '\tsplit={},\n'.format(split) +
             '\tbatch_size={},\n'.format(batch_size) +
             '\tslices={},\n'.format(slices) +
+            '\tcontrast={},\n'.format(contrast) +
             '\tseed={},\n'.format(seed) +
             '\texperiment_dir={}'.format(experiment_dir)
         )
@@ -145,6 +146,7 @@ class CNN:
             self.training_bscan_paths,
             batch_size,
             slices,
+            contrast,
             self.mean,
             self.std
         )
@@ -154,12 +156,14 @@ class CNN:
             self.testing_bscan_paths,
             batch_size,
             slices,
+            contrast,
             self.mean,
             self.std
         )
 
         self.root_data_dir = root_data_dir
         self.slices = slices
+        self.contrast = contrast
 
     def train(self, num_epochs):
         """ (num) -> float

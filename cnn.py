@@ -14,6 +14,7 @@ DEFAULT_DATA_SPLIT = 0.8
 DEFAULT_BATCH_SIZE = 25 #50 #400
 DEFAULT_NUM_SLICES = 2
 DEFAULT_SEED = 42
+DEFAULT_CONTRAST = 1.0
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -31,6 +32,7 @@ def main():
     parser.add_argument('-ex', '--experiment-dir')
     parser.add_argument('-s', '--split', type=float, default=DEFAULT_DATA_SPLIT)
     parser.add_argument('-sl', '--slices', type=int, default=DEFAULT_NUM_SLICES)
+    parser.add_argument('-c', '--contrast', type=float, default=DEFAULT_CONTRAST)
     parser.add_argument('-b', '--batch', type=int, default=DEFAULT_BATCH_SIZE)
     parser.add_argument('-sd', '--seed', type=int, default=DEFAULT_SEED)
     parser.add_argument('-e', '--num-epochs', type=int, default=1)
@@ -54,6 +56,7 @@ def main():
         args.split,
         args.batch,
         args.slices,
+        args.contrast,
         args.seed,
         args.experiment_dir
     )

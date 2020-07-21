@@ -20,6 +20,7 @@ class EpochEndCallback(callbacks.Callback):
             [self.cnn.testing_bscan_paths[0]],
             batch_size=1,
             num_slices=cnn.slices,
+            contrast=cnn.contrast,
             mean=cnn.mean,
             standard_deviation=cnn.std,
             shuffle=False

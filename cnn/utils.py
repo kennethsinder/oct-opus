@@ -74,7 +74,7 @@ def get_bscan_paths(data_dirs):
     return bscan_paths
 
 
-def load_dataset(bscan_paths, batch_size, num_slices, mean, standard_deviation, shuffle=True):
+def load_dataset(bscan_paths, batch_size, num_slices, contrast, mean, standard_deviation, shuffle=True):
     """ (list, int, float, float, bool)
             -> tensorflow.python.data.ops.dataset_ops.BatchDataset, int
     Returns a generator dataset & the number of batches. Images are of the form
@@ -83,7 +83,14 @@ def load_dataset(bscan_paths, batch_size, num_slices, mean, standard_deviation, 
 
     output_shape = tf.TensorShape((num_slices, 1, IMAGE_DIM, IMAGE_DIM // num_slices))
     dataset = tf.data.Dataset.from_generator(
-        lambda: map(get_slices, bscan_paths, repeat(num_slices), repeat(mean), repeat(standard_deviation)),
+        lambda: map(
+            get_slices,
+            bscan_paths,
+            repeat(num_slices),
+            repeat(contrast),
+            repeat(mean),
+            repeat(standard_deviation)
+        ),
         output_types=(tf.float32, tf.float32),
         output_shapes=(output_shape, output_shape)
     )
@@ -108,7 +115,7 @@ def load_dataset(bscan_paths, batch_size, num_slices, mean, standard_deviation, 
     return dataset, num_batches
 
 
-def get_slices(bscan_path, num_slices, mean, standard_deviation):
+def get_slices(bscan_path, num_slices, contrast, mean, standard_deviation):
     """ (str, float, float) -> tensorflow.python.framework.ops.EagerTensor,
                  tensorflow.python.framework.ops.EagerTensor
     Returns a pair of tensors containing the given B-scan slices and their
@@ -117,13 +124,16 @@ def get_slices(bscan_path, num_slices, mean, standard_deviation):
     hould contain 'OMAG Bscans'.
     """
 
-    bscan_img = image.load(bscan_path)
+    bscan_img = image.load(bscan_path, contrast_factor=contrast)
 
     dir_path, bscan_num = splitext(bscan_path)[0].split('xzIntensity/')
     bscan_num = int(bscan_num)
 
     omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
-    omag_img = image.load(join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)))
+    omag_img = image.load(
+        join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)),
+        contrast_factor=contrast
+    )
 
     # resize images
     bscan_img = image.resize(bscan_img, IMAGE_DIM, IMAGE_DIM)
