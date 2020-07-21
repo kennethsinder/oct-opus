@@ -51,8 +51,8 @@ def generate_enface(model, data_dir, verbose=False):
             [bscan_path],
             batch_size=1,
             num_slices=model.slices,
-            mean=model.training_mean,
-            standard_deviation=model.training_std,
+            mean=model.mean,
+            standard_deviation=model.std,
             shuffle=False
         )
         # predicted image has shape [C,H,W]

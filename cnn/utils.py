@@ -50,15 +50,15 @@ def separate_training_testing(root_data_dir, split, seed):
     training_data_names = random.sample(data_names, int(split * len(data_names)))
     testing_data_names = [d for d in data_names if d not in training_data_names]
 
-    training_data_dirs = []
+    training_dirs = []
     for name in training_data_names:
-        training_data_dirs.append(join(root_data_dir, name))
+        training_dirs.append(join(root_data_dir, name))
 
-    testing_data_dirs = []
+    testing_dirs = []
     for name in testing_data_names:
-        testing_data_dirs.append(join(root_data_dir, name))
+        testing_dirs.append(join(root_data_dir, name))
 
-    return training_data_dirs, testing_data_dirs
+    return training_dirs, testing_dirs
 
 
 def get_bscan_paths(data_dirs):

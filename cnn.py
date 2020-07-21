@@ -58,9 +58,9 @@ def main():
         args.experiment_dir
     )
 
-    utils.log('training={}'.format(model.training_data_dirs))
-    utils.log('testing={}'.format(model.testing_data_dirs))
-    utils.log('mean={}, std={}'.format(model.training_mean, model.training_std))
+    utils.log('training={}'.format(model.training_dirs))
+    utils.log('testing={}'.format(model.testing_dirs))
+    utils.log('mean={}, std={}'.format(model.mean, model.std))
 
     if args.mode == 'train':
         if args.num_epochs < 1:

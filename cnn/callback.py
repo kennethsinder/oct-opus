@@ -20,8 +20,8 @@ class EpochEndCallback(callbacks.Callback):
             [self.cnn.testing_bscan_paths[0]],
             batch_size=1,
             num_slices=cnn.slices,
-            mean=cnn.training_mean,
-            standard_deviation=cnn.training_std,
+            mean=cnn.mean,
+            standard_deviation=cnn.std,
             shuffle=False
         )
         self.input = []
@@ -81,5 +81,5 @@ class EpochEndCallback(callbacks.Callback):
             )
 
     def generate_enfaces(self):
-        for dir in self.cnn.testing_data_dirs:
+        for dir in self.cnn.testing_dirs:
             generate_enface(self.cnn, dir)

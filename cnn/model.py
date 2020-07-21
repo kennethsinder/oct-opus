@@ -129,33 +129,33 @@ class CNN:
             self.restore_status = None
 
         # split data into training and testing sets
-        self.training_data_dirs, self.testing_data_dirs = utils.separate_training_testing(root_data_dir, split, seed)
+        self.training_dirs, self.testing_dirs = utils.separate_training_testing(root_data_dir, split, seed)
 
         # load the training and testing data
-        self.training_bscan_paths = utils.get_bscan_paths(self.training_data_dirs)
+        self.training_bscan_paths = utils.get_bscan_paths(self.training_dirs)
 
         if root_data_dir[-1] == '/':
-            self.training_mean = STATS[basename(root_data_dir[:-1])][split][seed]['mean']
-            self.training_std = STATS[basename(root_data_dir[:-1])][split][seed]['std']
+            self.mean = STATS[basename(root_data_dir[:-1])][split][seed]['mean']
+            self.std = STATS[basename(root_data_dir[:-1])][split][seed]['std']
         else:
-            self.training_mean = STATS[basename(root_data_dir)][split][seed]['mean']
-            self.training_std = STATS[basename(root_data_dir)][split][seed]['std']
+            self.mean = STATS[basename(root_data_dir)][split][seed]['mean']
+            self.std = STATS[basename(root_data_dir)][split][seed]['std']
 
         self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,
             batch_size,
             slices,
-            self.training_mean,
-            self.training_std
+            self.mean,
+            self.std
         )
 
-        self.testing_bscan_paths = utils.get_bscan_paths(self.testing_data_dirs)
+        self.testing_bscan_paths = utils.get_bscan_paths(self.testing_dirs)
         self.testing_dataset, self.testing_num_batches = utils.load_dataset(
             self.testing_bscan_paths,
             batch_size,
             slices,
-            self.training_mean,
-            self.training_std
+            self.mean,
+            self.std
         )
 
         self.root_data_dir = root_data_dir
