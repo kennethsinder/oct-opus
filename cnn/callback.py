@@ -1,4 +1,5 @@
 from os.path import join
+from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,11 +32,15 @@ class EpochEndCallback(callbacks.Callback):
         self.input = np.concatenate(self.input, axis=3)
         self.target = np.concatenate(self.target, axis=3)
 
+        plt.figure(figsize=(15, 5))
+
     def on_epoch_begin(self, epoch, logs=None):
+        self.start = time()
         utils.log('Begin epoch')
 
     def on_epoch_end(self, epoch, logs=None):
-        utils.log('End epoch')
+        end = time()
+        utils.log('End epoch - took {}s'.format(end - self.start))
         self.cnn.epoch.assign_add(1)
         self.cnn.manager.save()
         utils.log('Generating cross sections')
@@ -52,7 +57,7 @@ class EpochEndCallback(callbacks.Callback):
 
         # TODO: plot the raw input image too?
         # i.e. the image without subtracting mean and dividing by std
-        plt.figure(figsize=(15, 5))
+        plt.clf()
         for i in range(3):
             plt.subplot(1, 3, i + 1)
             plt.title(title[i])
