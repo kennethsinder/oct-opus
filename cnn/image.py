@@ -29,6 +29,8 @@ def load(path, contrast_factor=1.0, data_format='channels_last'):
     if data_format == 'channels_first':
         img = tf.transpose(img, [2,0,1]) # move channels first
 
+    img = tf.cast(img, tf.float32)
+
     return img / (PIXEL_DEPTH - 1)
 
 
