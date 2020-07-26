@@ -1,3 +1,4 @@
+import traceback
 from os.path import join
 from time import time
 
@@ -83,4 +84,13 @@ class EpochEndCallback(callbacks.Callback):
 
     def generate_enfaces(self):
         for dir in self.cnn.testing_dirs:
-            generate_enface(self.cnn, dir)
+            try:
+                generate_enface(self.cnn, dir)
+            except Exception:
+                utils.log('Could not generate enfaces for {}, got the following exception:\n{}\nSkipping enfaces for {}'.format(
+                    dir,
+                    traceback.format_exc(),
+                    dir
+                ))
+                with open(join(self.cnn.enfaces_dir, 'skipped.csv'), 'a') as file:
+                    file.write('{}, {}\n'.format(self.cnn.epoch.numpy(), dir))
