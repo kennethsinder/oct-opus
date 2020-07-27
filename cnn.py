@@ -10,7 +10,8 @@ from cnn.model import CNN
 from cnn.parameters import IMAGE_DIM, GPU
 from cnn.enface import generate_enface
 
-DEFAULT_DATA_SPLIT = 0.8
+DEFAULT_K_FOLDS = 5
+DEFAULT_SELECTED_FOLD = 0
 DEFAULT_BATCH_SIZE = 25 #50 #400
 DEFAULT_NUM_SLICES = 2
 DEFAULT_SEED = 42
@@ -30,7 +31,8 @@ def main():
     parser.add_argument('-d', '--data-dir', required=True)
     parser.add_argument('-ef', '--enface-dir')
     parser.add_argument('-ex', '--experiment-dir')
-    parser.add_argument('-s', '--split', type=float, default=DEFAULT_DATA_SPLIT)
+    parser.add_argument('-k', '--k-folds', type=int, default=DEFAULT_K_FOLDS)
+    parser.add_argument('-s', '--selected-fold', type=int, default=DEFAULT_SELECTED_FOLD)
     parser.add_argument('-sl', '--slices', type=int, default=DEFAULT_NUM_SLICES)
     parser.add_argument('-c', '--contrast', type=float, default=DEFAULT_CONTRAST)
     parser.add_argument('-b', '--batch', type=int, default=DEFAULT_BATCH_SIZE)
@@ -53,7 +55,8 @@ def main():
 
     model = CNN(
         args.data_dir,
-        args.split,
+        args.k_folds,
+        args.selected_fold,
         args.batch,
         args.slices,
         args.contrast,

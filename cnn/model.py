@@ -18,6 +18,7 @@ from tensorflow.keras.layers import (
 import cnn.utils as utils
 from cnn.callback import EpochEndCallback
 from cnn.parameters import IMAGE_DIM, STATS
+from cnn.dataset import Dataset
 
 """
 Original u-net code provided by Dr. Aaron Lee. Has been updated to work with
@@ -76,11 +77,16 @@ def get_unet(input_height, input_width):
 
 
 class CNN:
-    def __init__(self, root_data_dir, split, batch_size, slices, contrast, seed, experiment_dir):
+    def __init__(self, root_data_dir, k_folds, selected_fold, batch_size, slices, contrast, seed, experiment_dir):
+        if root_data_dir[-1] == '/':
+            utils.log('Removing extra \'/\' from root_data_dir')
+            root_data_dir = root_data_dir[:-1]
+
         utils.log(
             'Creating CNN with parameters:\n' +
             '\troot_data_dir={},\n'.format(root_data_dir) +
-            '\tsplit={},\n'.format(split) +
+            '\tk_folds={},\n'.format(k_folds) +
+            '\tselected_fold={},\n'.format(selected_fold) +
             '\tbatch_size={},\n'.format(batch_size) +
             '\tslices={},\n'.format(slices) +
             '\tcontrast={},\n'.format(contrast) +
@@ -130,17 +136,17 @@ class CNN:
             self.restore_status = None
 
         # split data into training and testing sets
-        self.training_dirs, self.testing_dirs = utils.separate_training_testing(root_data_dir, split, seed)
+        dataset = Dataset(root_data_dir, k_folds, seed)
+        training, testing = dataset.get_train_and_test_by_fold_id(selected_fold)
+
+        self.training_dirs = [join(root_data_dir, t) for t in training]
+        self.testing_dirs = [join(root_data_dir, t) for t in testing]
+
+        self.mean = STATS[basename(root_data_dir)][seed][k_folds][selected_fold]['mean']
+        self.std = STATS[basename(root_data_dir)][seed][k_folds][selected_fold]['std']
 
         # load the training and testing data
         self.training_bscan_paths = utils.get_bscan_paths(self.training_dirs)
-
-        if root_data_dir[-1] == '/':
-            self.mean = STATS[basename(root_data_dir[:-1])][split][seed]['mean']
-            self.std = STATS[basename(root_data_dir[:-1])][split][seed]['std']
-        else:
-            self.mean = STATS[basename(root_data_dir)][split][seed]['mean']
-            self.std = STATS[basename(root_data_dir)][split][seed]['std']
 
         self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,

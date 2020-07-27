@@ -35,7 +35,7 @@ class Dataset:
 
     def get_train_and_test_by_fold_id(self, fold_id) -> Tuple[List[str], List[str]]:
         if self.num_folds == 1:
-            return self.__all_datasets, set()
+            return self.__all_datasets, []
 
         test_sets = self.__folds[fold_id]
         train_sets = [d for d in self.__all_datasets if d not in test_sets]
