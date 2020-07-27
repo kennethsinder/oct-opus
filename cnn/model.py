@@ -135,24 +135,36 @@ class CNN:
         else:
             self.restore_status = None
 
-        # split data into training and testing sets
-        dataset = Dataset(root_data_dir, k_folds, seed)
-        training, testing = dataset.get_train_and_test_by_fold_id(selected_fold)
-
-        self.training_dirs = [join(root_data_dir, t) for t in training]
-        self.testing_dirs = [join(root_data_dir, t) for t in testing]
-
         self.mean = STATS[basename(root_data_dir)][seed][k_folds][selected_fold]['mean']
         self.std = STATS[basename(root_data_dir)][seed][k_folds][selected_fold]['std']
 
+        self.data_loaded = False
+
+        self.root_data_dir = root_data_dir
+        self.k_folds = k_folds
+        self.selected_fold = selected_fold
+        self.batch_size = batch_size
+        self.slices = slices
+        self.contrast = contrast
+        self.seed = seed
+
+    def load_data(self):
+        utils.log('Loading data from {}'.format(self.root_data_dir))
+
+        # split data into training and testing sets
+        dataset = Dataset(self.root_data_dir, self.k_folds, self.seed)
+        training, testing = dataset.get_train_and_test_by_fold_id(self.selected_fold)
+
+        self.training_dirs = [join(self.root_data_dir, t) for t in training]
+        self.testing_dirs = [join(self.root_data_dir, t) for t in testing]
+
         # load the training and testing data
         self.training_bscan_paths = utils.get_bscan_paths(self.training_dirs)
-
         self.training_dataset, self.training_num_batches = utils.load_dataset(
             self.training_bscan_paths,
-            batch_size,
-            slices,
-            contrast,
+            self.batch_size,
+            self.slices,
+            self.contrast,
             self.mean,
             self.std
         )
@@ -160,22 +172,24 @@ class CNN:
         self.testing_bscan_paths = utils.get_bscan_paths(self.testing_dirs)
         self.testing_dataset, self.testing_num_batches = utils.load_dataset(
             self.testing_bscan_paths,
-            batch_size,
-            slices,
-            contrast,
+            self.batch_size,
+            self.slices,
+            self.contrast,
             self.mean,
             self.std
         )
 
-        self.root_data_dir = root_data_dir
-        self.slices = slices
-        self.contrast = contrast
+        self.data_loaded = True
 
     def train(self, num_epochs):
         """ (num) -> float
         Trains the model for the specified number of epochs.
         Return history
         """
+
+        if not self.data_loaded:
+            raise Exception('Must load data before training model')
+
         # logs loss for every batch and the average loss per epoch
         # indexing for batch loss starts at 0, while indexing for epoch loss seems to start at 1
         # also, the epoch_loss indexing is broken: it uses batch num instead of epoch num

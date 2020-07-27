@@ -65,14 +65,16 @@ def main():
         args.experiment_dir
     )
 
-    utils.log('training={}'.format(model.training_dirs))
-    utils.log('testing={}'.format(model.testing_dirs))
     utils.log('mean={}, std={}'.format(model.mean, model.std))
 
     if args.mode == 'train':
         if args.num_epochs < 1:
             raise Exception('Number of epochs must be at least one.')
-        utils.log('Saving experiment info in {}'.format(args.experiment_dir))
+
+        model.load_data()
+        utils.log('training={}'.format(model.training_dirs))
+        utils.log('testing={}'.format(model.testing_dirs))
+
         model.train(args.num_epochs)
         utils.log('Generating enfaces')
         for dir in model.testing_dirs:
