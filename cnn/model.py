@@ -185,7 +185,7 @@ class CNN:
             update_freq='batch',
             profile_batch=0     # need to disable profile batching: https://github.com/tensorflow/tensorflow/issues/34276
         )
-        epoch_end_callback = EpochEndCallback(self, self.epoch.numpy() + num_epochs)
+        epoch_end_callback = EpochEndCallback(self)
 
         history = self.model.fit(
             self.training_dataset.repeat(num_epochs),

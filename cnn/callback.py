@@ -13,10 +13,9 @@ from cnn.enface import generate_enface
 
 
 class EpochEndCallback(callbacks.Callback):
-    def __init__(self, cnn, last_epoch):
+    def __init__(self, cnn):
         super().__init__()
         self.cnn = cnn
-        self.last_epoch = last_epoch
         self.dataset, self.num_batches = utils.load_dataset(
             [self.cnn.testing_bscan_paths[0]],
             batch_size=1,
@@ -47,9 +46,6 @@ class EpochEndCallback(callbacks.Callback):
         self.cnn.manager.save()
         utils.log('Generating cross sections')
         self.plot_cross_sections()
-        if self.cnn.epoch.numpy() % 5 == 0 or self.cnn.epoch.numpy() == self.last_epoch:
-            utils.log('Generating enfaces')
-            self.generate_enfaces()
 
     def plot_cross_sections(self):
         prediction = self.cnn.predict(self.dataset, self.num_batches)
@@ -81,16 +77,3 @@ class EpochEndCallback(callbacks.Callback):
                 reshaped_img,
                 step=self.cnn.epoch.numpy()
             )
-
-    def generate_enfaces(self):
-        for dir in self.cnn.testing_dirs:
-            try:
-                generate_enface(self.cnn, dir)
-            except Exception:
-                utils.log('Could not generate enfaces for {}, got the following exception:\n{}\nSkipping enfaces for {}'.format(
-                    dir,
-                    traceback.format_exc(),
-                    dir
-                ))
-                with open(join(self.cnn.enfaces_dir, 'skipped.csv'), 'a') as file:
-                    file.write('{}, {}\n'.format(self.cnn.epoch.numpy(), dir))

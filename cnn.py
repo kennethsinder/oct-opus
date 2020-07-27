@@ -1,5 +1,6 @@
 import argparse
 import os
+import traceback
 from datetime import datetime
 from os.path import join
 
@@ -73,6 +74,18 @@ def main():
             raise Exception('Number of epochs must be at least one.')
         utils.log('Saving experiment info in {}'.format(args.experiment_dir))
         model.train(args.num_epochs)
+        utils.log('Generating enfaces')
+        for dir in model.testing_dirs:
+            try:
+                generate_enface(model, dir)
+            except Exception:
+                utils.log('Could not generate enfaces for {}, got the following exception:\n{}\nSkipping enfaces for {}'.format(
+                    dir,
+                    traceback.format_exc(),
+                    dir
+                ))
+                with open(join(model.enfaces_dir, 'skipped.csv'), 'a') as file:
+                    file.write('{}, {}\n'.format(model.epoch.numpy(), dir))
     else:
         if args.enface_dir is None:
             raise Exception('Enface directory must be specified.')
