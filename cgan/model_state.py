@@ -11,7 +11,9 @@ from cgan.utils import get_dataset
 
 class ModelState:
 
-    def __init__(self, exp_dir: str, ckpt_dir: str, dataset: Dataset):
+    def __init__(self, is_training_mode: bool, ckpt_dir: str, dataset: Dataset):
+        self.is_training_mode = is_training_mode
+
         # optimizers
         self.discriminator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
         self.generator_optimizer = tf.keras.optimizers.Adam(5e-4, beta_1=0.5)
@@ -39,12 +41,13 @@ class ModelState:
             discriminator=self.discriminator
         )
 
-        # Save initial, scrambled weights before we do any training
-        # so that we can reload them with model_state.reset_weights()
-        # below between folds when doing k-folds cross-validation.
-        self.save_checkpoint()
-        self.initial_checkpoint = tf.train.latest_checkpoint(self.CKPT_DIR)
-        self.current_training_step = 0
+        if self.is_training_mode:
+            # Save initial, scrambled weights before we do any training
+            # so that we can reload them with model_state.reset_weights()
+            # below between folds when doing k-folds cross-validation.
+            self.save_checkpoint()
+            self.initial_checkpoint = tf.train.latest_checkpoint(self.CKPT_DIR)
+            self.current_training_step = 0
 
         # The cGAN loss function L_cGAN is maximized when the discriminator correctly
         # predicts D(x,y) = 1 and D(x,G(x,z)) = 0.
