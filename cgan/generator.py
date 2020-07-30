@@ -3,30 +3,39 @@ import tensorflow as tf
 from cgan.parameters import IMAGE_DIM, LAMBDA, LAYER_BATCH
 from cgan.sampling import downsample, upsample
 
-# Generator expect inputs with dimensions
-# [batch size, IMAGE_DIM, IMAGE_DIM, LAYER_BATCH]
+
 def generator():
+    """
+    Generator expects a single input with dimensions
+    [batch size, IMAGE_DIM, IMAGE_DIM, LAYER_BATCH], and is built for a
+    batch size of 1. (Replace InstanceNormalization with
+    BatchNormalization if you intend on extending this model to handle
+    batched data.)
+    """
+
     inputs = tf.keras.layers.Input(shape=[IMAGE_DIM, IMAGE_DIM, LAYER_BATCH])
 
     down_stack = [
-        downsample(64, 4, apply_batchnorm=False),
-        downsample(128, 4),
-        downsample(256, 4),
-        downsample(512, 4),
-        downsample(512, 4),
-        downsample(512, 4),
-        downsample(512, 4),
-        downsample(512, 4),
+        downsample(64, 4, apply_norm=False),  # (bs, 256, 256, 64)
+        downsample(128, 4),  # (bs, 128, 128, 128)
+        downsample(256, 4),  # (bs, 64, 64, 256)
+        downsample(512, 4),  # (bs, 32, 32, 512)
+        downsample(512, 4),  # (bs, 16, 16, 512)
+        downsample(512, 4),  # (bs, 8, 8, 512)
+        downsample(512, 4),  # (bs, 4, 4, 512)
+        downsample(512, 4),  # (bs, 2, 2, 512)
+        downsample(512, 4),  # (bs, 1, 1, 512)
     ]
 
     up_stack = [
-        upsample(512, 4, apply_dropout=True),
-        upsample(512, 4, apply_dropout=True),
-        upsample(512, 4, apply_dropout=True),
-        upsample(512, 4),
-        upsample(256, 4),
-        upsample(128, 4),
-        upsample(64, 4),
+        upsample(512, 4, apply_dropout=True),  # (bs, 2, 2, 1024)
+        upsample(512, 4, apply_dropout=True),  # (bs, 4, 4, 1024)
+        upsample(512, 4, apply_dropout=True),  # (bs, 8, 8, 1024)
+        upsample(512, 4),  # (bs, 16, 16, 1024)
+        upsample(512, 4),  # (bs, 32, 32, 1024)
+        upsample(256, 4),  # (bs, 64, 64, 512)
+        upsample(128, 4),  # (bs, 128, 128, 256)
+        upsample(64, 4),   # (bs, 256, 256, 128)
     ]
 
     initializer = tf.random_normal_initializer(0., 0.02)
@@ -34,13 +43,11 @@ def generator():
                                            strides=2,
                                            padding='same',
                                            kernel_initializer=initializer,
-                                           activation='tanh')
-
-    concat = tf.keras.layers.Concatenate()
+                                           activation='tanh')  # (bs, 512, 512, LAYER_BATCH)
 
     x = inputs
 
-    # Downsampling through the model
+    # Downsampling
     skips = []
     for down in down_stack:
         x = down(x)
@@ -51,7 +58,7 @@ def generator():
     # Upsampling and establishing the skip connections
     for up, skip in zip(up_stack, skips):
         x = up(x)
-        x = concat([x, skip])
+        x = tf.keras.layers.Concatenate()([x, skip])
 
     x = last(x)
 
