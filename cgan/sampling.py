@@ -29,11 +29,15 @@ def upsample(filters, size, apply_dropout=False):
     initializer = tf.random_normal_initializer(0., 0.02)
 
     result = tf.keras.Sequential()
-    result.add(tf.keras.layers.Conv2DTranspose(filters, size,
-                                               strides=2,
-                                               padding='same',
-                                               kernel_initializer=initializer,
-                                               use_bias=False))
+
+    # https://distill.pub/2016/deconv-checkerboard/
+    # https://www.machinecurve.com/index.php/2019/12/11/upsampling2d-how-to-use-upsampling-with-keras/
+    result.add(tf.keras.layers.UpSampling2D(size, interpolation='bilinear'))
+    result.add(
+        tf.keras.layers.Conv2D(filters, size, strides=2,
+                               padding='same',
+                               kernel_initializer=initializer,
+                               use_bias=False))
 
     result.add(tfa.layers.InstanceNormalization())
 
