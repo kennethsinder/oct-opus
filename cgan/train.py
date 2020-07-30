@@ -16,9 +16,9 @@ def train_step(model_state, input_image, target):
         disc_real_output = model_state.discriminator([central_input_image, target], training=True)
         disc_generated_output = model_state.discriminator([central_input_image, central_gen_output], training=True)
 
-        gen_total_loss, gen_gan_loss, gen_l1_loss = generator_loss(model_state.loss_object, disc_generated_output,
+        gen_total_loss, gen_gan_loss, gen_l1_loss = generator_loss(model_state.gen_loss_object, disc_generated_output,
                                                                    gen_output, target)
-        disc_loss = discriminator_loss(model_state.loss_object, disc_real_output, disc_generated_output)
+        disc_loss = discriminator_loss(model_state.disc_loss_object, disc_real_output, disc_generated_output)
 
     generator_gradients = gen_tape.gradient(gen_total_loss, model_state.generator.trainable_variables)
     discriminator_gradients = disc_tape.gradient(disc_loss, model_state.discriminator.trainable_variables)

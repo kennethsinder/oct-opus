@@ -57,7 +57,9 @@ class ModelState:
         # z: random noise
 
         # The discriminator seeks to maximize L_cGAN.
-        self.loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.gen_loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+        self.disc_loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True,
+                                                                   label_smoothing=0.1)
 
         # Training index across all epochs and folds
         self.global_index = 0
