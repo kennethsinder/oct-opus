@@ -1,7 +1,8 @@
 import tensorflow as tf
+import tensorflow_addons as tfa
 
 
-def downsample(filters, size, apply_batchnorm=True):
+def downsample(filters, size, apply_norm=True):
     """
     From Conv2D documentation
     filters: Integer, the dimensionality of the output space (i.e. the number of output filters in the convolution).
@@ -16,8 +17,8 @@ def downsample(filters, size, apply_batchnorm=True):
                                       kernel_initializer=initializer,
                                       use_bias=False))
 
-    if apply_batchnorm:
-        result.add(tf.keras.layers.BatchNormalization())
+    if apply_norm:
+        result.add(tfa.layers.InstanceNormalization())
 
     result.add(tf.keras.layers.LeakyReLU())
 
@@ -34,7 +35,7 @@ def upsample(filters, size, apply_dropout=False):
                                                kernel_initializer=initializer,
                                                use_bias=False))
 
-    result.add(tf.keras.layers.BatchNormalization())
+    result.add(tfa.layers.InstanceNormalization())
 
     if apply_dropout:
         result.add(tf.keras.layers.Dropout(0.5))
