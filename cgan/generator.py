@@ -24,11 +24,12 @@ def generator():
         downsample(512, 4),  # (bs, 8, 8, 512)
         downsample(512, 4),  # (bs, 4, 4, 512)
         downsample(512, 4),  # (bs, 2, 2, 512)
-        downsample(512, 4),  # (bs, 1, 1, 512)
+        downsample(512, 4, padding_mode='SYMMETRIC'),  # (bs, 1, 1, 512)
     ]
 
     up_stack = [
-        upsample(512, 4, apply_dropout=True),  # (bs, 2, 2, 1024)
+        upsample(512, 4, apply_dropout=True,
+                 padding_mode='SYMMETRIC'),  # (bs, 2, 2, 1024)
         upsample(512, 4, apply_dropout=True),  # (bs, 4, 4, 1024)
         upsample(512, 4, apply_dropout=True),  # (bs, 8, 8, 1024)
         upsample(512, 4),  # (bs, 16, 16, 1024)
@@ -39,11 +40,19 @@ def generator():
     ]
 
     initializer = tf.random_normal_initializer(0., 0.02)
-    last = tf.keras.layers.Conv2DTranspose(LAYER_BATCH, 4,
-                                           strides=2,
-                                           padding='same',
-                                           kernel_initializer=initializer,
-                                           activation='tanh')  # (bs, 512, 512, LAYER_BATCH)
+    last = tf.keras.Sequential()
+    last.add(tf.keras.layers.UpSampling2D(2, interpolation='nearest'))
+    last.add(tf.keras.layers.Lambda(
+        lambda input: tf.pad(input, [[0, 0], [2, 1], [2, 1], [0, 0]],
+                             mode='REFLECT')
+    ))
+    last.add(tf.keras.layers.Conv2D(
+        LAYER_BATCH, 4,
+        strides=1,
+        padding='valid',
+        kernel_initializer=initializer,
+        activation='tanh')
+    )  # (bs, 512, 512, LAYER_BATCH)
 
     x = inputs
 
