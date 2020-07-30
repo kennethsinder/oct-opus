@@ -50,7 +50,10 @@ def discriminator():
 def discriminator_loss(loss_object, disc_real_output, disc_generated_output):
     # "true values" part of the binary cross-entropy loss
     # -log(D(x,y))
-    real_loss = loss_object(tf.ones_like(disc_real_output), disc_real_output)
+
+    # 0.9 label is to implement one-sided label smoothing, see
+    # Goodfellow https://arxiv.org/pdf/1701.00160.pdf (citing Salimans et. al)
+    real_loss = loss_object(tf.ones_like(disc_real_output) * 0.9, disc_real_output)
 
     # "false values" part of the binary cross-entropy loss
     # -log(1-D(x,G(x,z)))
