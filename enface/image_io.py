@@ -6,6 +6,7 @@ import PIL.ImageOps
 import numpy as np
 from PIL import Image, ImageEnhance
 from matplotlib.image import imsave
+from typing import List
 
 # filename constants
 MULTI_SLICE_MAX_NORM = "multi_slice_max_norm.png"
@@ -54,4 +55,17 @@ class ImageIO:
                 eye[:, :, i] = np.asarray(img)
             except FileNotFoundError:
                 i -= 1
+        return eye
+
+    def load_single_eye_from_mem(self,
+                                 cross_sections: List[Image.Image]) -> np.ndarray:
+        num_images = len(cross_sections)
+        eye = np.ndarray(
+            shape=(self.__IMAGE_DIM, self.__IMAGE_DIM, num_images),
+            dtype=float
+        )
+        for i, img in enumerate(cross_sections):
+            eye[:, :, i] = np.asarray(PIL.ImageOps.invert(
+                img
+            ))
         return eye

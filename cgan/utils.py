@@ -1,12 +1,14 @@
 import glob
 import io
+import os
 import re
-from os import makedirs
+import tempfile
+import shutil
+
 from os.path import join
 from random import randint
-from typing import Set
+from typing import Iterable
 
-import matplotlib.pyplot as plt
 import tensorflow as tf
 from PIL import Image, ImageEnhance
 
@@ -15,17 +17,29 @@ from cgan.random import resize, random_jitter, random_noise
 from enface.enface import gen_single_enface
 
 
-def get_dataset(root_data_path: str, dataset_iterable: Set):
+def get_dataset(root_data_path: str,
+                dataset_iterable: Iterable) -> tf.data.Dataset:
     image_files = []
+    dataset_names = []
     for dataset_name in dataset_iterable:
-        image_files.extend(glob.glob(join(root_data_path, dataset_name, BSCAN_DIRNAME, '[0-9]*.png')))
+        matching_files = glob.glob(
+            join(root_data_path, dataset_name, BSCAN_DIRNAME, '[0-9]*.png')
+        )
+        image_files.extend(matching_files)
+        dataset_names.extend([dataset_name for _ in matching_files])
 
-    dataset = tf.data.Dataset.from_generator(
+    dataset_names = tf.data.Dataset.from_tensor_slices(dataset_names)
+    images = tf.data.Dataset.from_generator(
         lambda: map(get_images, image_files),
         output_types=(tf.float32, tf.float32),
     )
-    # silently drop data that causes errors (e.g. corresponding OMAG file doesn't exist)
-    return dataset.apply(tf.data.experimental.ignore_errors()).shuffle(BUFFER_SIZE).batch(1)
+
+    # silently drop data that causes errors
+    # (e.g. corresponding OMAG file doesn't exist)
+    images = images.apply(tf.data.experimental.ignore_errors())
+
+    dataset = tf.data.Dataset.zip((dataset_names, images))
+    return dataset.shuffle(BUFFER_SIZE).batch(1)
 
 
 def load_image(file_name, contrast_factor=1.0, sharpness_factor=1.0):
@@ -113,7 +127,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     def omag_num_to_bscan(n):
         """ Return a random one of the num_acquisitions BScans
         corresponding to the nth OMAG """
-        bn = (n - 1) # convet to 0-index
+        bn = (n - 1)  # convert to 0-index
         bn = bn * num_acquisitions  # convert to 0-indexed bscan num
         bn = bn + 1  # convert to 1-index
 
@@ -133,14 +147,14 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
 
         curr_bscan_path = join(dir_path, 'xzIntensity', f'{curr_bscan}.png')
 
-
         try:
             bscans.append(load_image(
                 curr_bscan_path, contrast_factor=1.85)[:,:,0])
         except FileNotFoundError:
-            # We allow missing adjacent BScans; default value is instead all zeros.
+            # We allow missing adjacent BScans; default value is instead all
+            # zeros.
             if offset == 0:
-                throw
+                raise
             bscans.append(tf.zeros((IMAGE_DIM, IMAGE_DIM), dtype=float))
 
     bscans = [tf.cast(b, tf.float32) for b in bscans]
@@ -169,93 +183,52 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     return bscan_img, omag_img
 
 
-def generate_inferred_images(EXP_DIR, model_state):
+def generate_inferred_enface(dataset_dir: str,
+                             output_dir: str,
+                             generator: tf.keras.Model) -> None:
     """
-    Generate predicted images for all datasets listed under the `model_state.all_data_path` path
-    in test/predict mode, or for all *testing* datasets only when we're
-    in training mode.
-    Also generates the corresponding enface for each of the sets of predicted cross-sections
-    that are generated.
-    Images are saved under the `EXP_DIR`/<dataset_name> directory.
+    Generate predicted enfaces for the single dataset in dataset_dir.
     """
 
-    # determine which datasets we consider "testing" based on program mode
-    if model_state.is_training_mode:
-        dataset_names = model_state.test_folder_names
-    else:
-        dataset_names = model_state.DATASET.get_all_datasets()
+    """ Stage 1: Generate sequence of inferred OMAG-like images. """
+    num_acquisitions = get_num_acquisitions(dataset_dir)
+    dataset_name = os.path.basename(dataset_dir)
+    bscans_list = glob.glob(join(dataset_dir, BSCAN_DIRNAME, '[0-9]*.png'))
+    print(f"Found {len(bscans_list)} scans in {dataset_name}")
 
-    # loop over datasets
-    for dataset_name in dataset_names:
-        """ Stage 1: Generate sequence of inferred OMAG-like cross-section images. """
+    tmpdir = tempfile.mkdtemp()
 
-        dataset_path = join(model_state.DATASET.root_data_path, dataset_name)
-        num_acquisitions = get_num_acquisitions(dataset_path)
-        bscans_list = glob.glob(join(dataset_path, BSCAN_DIRNAME, '[0-9]*.png'))
-        print("Found {} scans belonging to {} dataset".format(len(bscans_list), dataset_name))
-        makedirs(join(EXP_DIR, dataset_name), exist_ok=True)
+    # loop over each scan and generate corresponding predicted image
+    for bscan_file_path in bscans_list:
+        # Get number before '.png'
+        bscan_id = int(re.search(r'(\d+)\.png', bscan_file_path).group(1))
 
-        # loop over each scan and generate corresponding predicted image
-        for bscan_file_path in bscans_list:
-            # Get number before '.png'
-            bscan_id = int(re.search(r'(\d+)\.png', bscan_file_path).group(1))
-            if bscan_id % num_acquisitions:
-                # We only want 1 out of every group of `num_acquisitions` B-scans to gather
-                # a prediction from. In other words, if we have the OMAG ground truth folder,
-                # we'll want the number of predicted OMAG-like images to be the same as the
-                # number of real OMAGs.
-                continue
+        # We only want 1 out of every group of `num_acquisitions` B-scans to
+        # gather a prediction from. In other words, if we have the OMAG ground
+        # truth folder, we'll want the number of predicted OMAG-like images to
+        # be the same as the number of real OMAGs.
+        if bscan_id % num_acquisitions != 0:
+            continue
 
-            # Obtain a prediction of the image identified by filename `fn`.
-            bscan_img, _ = get_images(bscan_file_path, use_random_jitter=False, use_random_noise=False)
-            gen_output = model_state.generator(bscan_img[tf.newaxis, ...], training=True)
-            prediction = gen_output[:,:,:,LAYER_BATCH//2, tf.newaxis]  # (1, IMAGE_DIM, IMAGE_DIM, 1)
-            assert len(prediction) == 1  # assert first dimension is 1
+        # Obtain a prediction of the image identified by filename `fn`.
+        bscan_img, _ = get_images(bscan_file_path,
+                                  use_random_jitter=False,
+                                  use_random_noise=False)
+        gen_output = generator(bscan_img[tf.newaxis, ...], training=False)
+        predicted_img = gen_output[0, :, :, LAYER_BATCH//2, tf.newaxis]
 
-            # Encode the prediction as PNG image data.
-            predicted_img = prediction[0]
-            img_to_save = tf.image.encode_png(tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1), tf.uint8))
+        img_to_save = tf.image.encode_png(
+            tf.dtypes.cast((predicted_img * 0.5 + 0.5) * (PIXEL_DEPTH - 1),
+                           tf.uint8))
 
-            # Save the prediction to disk under a sub-directory.
-            omag_id = bscan_num_to_omag_num(bscan_id, num_acquisitions)
-            tf.io.write_file('./{}/{}/{}.png'.format(EXP_DIR, dataset_name, omag_id), img_to_save)
+        # Save the prediction to disk under a sub-directory.
+        omag_id = bscan_num_to_omag_num(bscan_id, num_acquisitions)
+        tf.io.write_file(os.path.join(tmpdir, f"{omag_id}.png"),
+                         img_to_save)
 
-        """ Stage 2: Collect those predicted OMAGs to make an en-face vascular map. """
-        path_to_predicted = join(EXP_DIR, dataset_name)
-        gen_single_enface(dataset_dir=path_to_predicted)
+    """ Stage 2: Collect predicted OMAGs to make an en-face vascular map. """
+    gen_single_enface(dataset_dir=tmpdir,
+                      output_dir=output_dir,
+                      output_prefix=dataset_name)
 
-
-def generate_cross_section_comparison(EXP_DIR, TBD_WRITER, model, test_input, tar, epoch_num):
-    # the `training=True` is intentional here since
-    # we want the batch statistics while running the model
-    # on the test dataset. If we use training=False, we will get
-    # the accumulated statistics learned from the training dataset
-    # (which we don't want)
-    prediction = model(test_input, training=True)  # (1, IMAGE_DIM, IMAGE_DIM, LAYER_BATCH)
-    test_input = test_input[:,:,:,LAYER_BATCH//2, tf.newaxis]  # (1, IMAGE_DIM, IMAGE_DIM, 1)
-    prediction = prediction[:,:,:,LAYER_BATCH//2, tf.newaxis]  # (1, IMAGE_DIM, IMAGE_DIM, 1)
-
-    plt.figure(figsize=(15, 15))
-
-    assert len(test_input) == 1 and len(tar) == 1 and len(prediction) == 1
-    display_list = [test_input[0], tar[0], prediction[0]]
-    title = ['Input Image', 'Ground Truth', 'Predicted Image']
-
-    for i in range(3):
-        plt.subplot(1, 3, i + 1)
-        plt.title(title[i])
-        # getting the pixel values between [0, 1] to plot it.
-        plt.imshow(tf.squeeze(display_list[i]) * 0.5 + 0.5, cmap='gray')
-        plt.axis('off')
-
-    # write images to tensorboard
-    # note: needed to expand dimensions due to API, see https://www.tensorflow.org/api_docs/python/tf/summary/image
-    with TBD_WRITER.as_default():
-        tf.summary.image("Input Image", data=test_input, step=epoch_num)
-        tf.summary.image("Ground Truth", data=tar, step=epoch_num)
-        tf.summary.image("Predicted Image", data=prediction, step=epoch_num)
-
-    # also save side by side image in experiment directory
-    figure_path = join(EXP_DIR, 'comparison_epoch_{}.png'.format(epoch_num))
-    plt.savefig(figure_path)
-    plt.clf()
+    shutil.rmtree(tmpdir)

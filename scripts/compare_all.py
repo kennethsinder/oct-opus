@@ -38,13 +38,18 @@ def score_for_test_results(experiment_dir: str, data_dir: str):
     """
     enface_scores = (('multi_slice_sum.png', {}), ('multi_slice_max_norm.png', {}))
     for enface_type in enface_scores:
-        for dataset_path in [f.path for f in os.scandir(experiment_dir) if f.is_dir()]:
-            dataset_name = os.path.basename(os.path.normpath(dataset_path))
+        for enface_path in os.listdir(experiment_dir):
+            if enface_path.endswith(enface_type[0]):
+                # <dataset_name>_<enface_type>
+                dataset_name = enface_path[:-(len(enface_type[0])+1)]
+            else:
+                continue
+
             f_1 = os.path.join(data_dir, dataset_name, 'OMAG Bscans', enface_type[0])
             if not os.path.isfile(f_1):
                 # Eye doesn't have a corresponding ground truth, nothing we can do.
                 continue
-            f_2 = os.path.join(dataset_path, enface_type[0])
+            f_2 = os.path.join(experiment_dir, enface_path)
 
             current_scores = compare_main(f_1, f_2)
             enface_type[1].update({dataset_name: current_scores})
