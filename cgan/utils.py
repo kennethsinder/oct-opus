@@ -28,11 +28,11 @@ def get_dataset(root_data_path: str, dataset_iterable: Set):
     return dataset.apply(tf.data.experimental.ignore_errors()).shuffle(BUFFER_SIZE).batch(1)
 
 
-def load_image(file_name, angle=0, contrast_factor=1.0, sharpness_factor=1.0):
+def load_image(file_name, contrast_factor=1.0, sharpness_factor=1.0):
     """
     Decodes a grayscale PNG, returns a 2D tensor.
     """
-    original_image = Image.open(file_name).rotate(angle)
+    original_image = Image.open(file_name)
 
     # contrast
     contrast_enhancer = ImageEnhance.Contrast(original_image)
@@ -88,11 +88,6 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     (OMAG Bscans/1.png corresponds to xzIntensity/{1,2,3,4}.png.)
 
     """
-    # random jitter angle
-    angle = 0
-    if use_random_jitter and tf.random.uniform(()) > 0.8:
-        angle = randint(0, 45)
-
     path_components = re.search(r'^(.*)xzIntensity/(\d+)\.png$', bscan_path)
 
     dir_path = path_components.group(1)
@@ -141,7 +136,7 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
 
         try:
             bscans.append(load_image(
-                curr_bscan_path, angle, contrast_factor=1.85)[:,:,0])
+                curr_bscan_path, contrast_factor=1.85)[:,:,0])
         except FileNotFoundError:
             # We allow missing adjacent BScans; default value is instead all zeros.
             if offset == 0:
@@ -153,7 +148,10 @@ def get_images(bscan_path, use_random_jitter=True, use_random_noise=False):
     bscan_img = tf.cast(bscan_img, tf.float32)
     bscan_img = (bscan_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
 
-    omag_img = load_image(join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle, contrast_factor=1.85)
+    omag_img = load_image(
+        join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)),
+        contrast_factor=1.85
+    )
     omag_img = tf.cast(omag_img, tf.float32)
     omag_img = (omag_img / ((PIXEL_DEPTH - 1) / 2.0)) - 1
 
