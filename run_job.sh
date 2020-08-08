@@ -12,8 +12,8 @@
 # to the `cgan.py` script.
 
 cd $SLURM_TMPDIR
-tar --use-compress-program=pigz -xf ~/projects/def-vengu/s2saberi/all_data_reflattened.tar.gz
+tar --use-compress-program=pigz -xf ~/projects/def-vengu/s2saberi/single_poly_flattened_normalized.tar.gz
 
 cd -
 module load cuda/10.0
-./run.sh --num-epochs "$1" --datadir "$SLURM_TMPDIR"/all_data_reflattened "${@:2}" train
+./run.sh --num-epochs "$1" --datadir "$SLURM_TMPDIR"/single_poly_flattened_normalized "${@:2}" train
