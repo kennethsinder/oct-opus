@@ -69,10 +69,9 @@ if __name__ == '__main__':
         print('Found GPU at: {}'.format(device_name))
 
         ckpt_dir = os.path.join(EXP_DIR, 'training_checkpoints')
-        model_state = ModelState(exp_dir=EXP_DIR,
+        model_state = ModelState(is_training_mode=True,
                                  ckpt_dir=ckpt_dir,
                                  dataset=ds)
-        model_state.is_training_mode = True
         if args.ckptdir is not None:
             # Allow training to start off from an existing checkpoint,
             # say, from a different experiment or elsewhere if the
@@ -120,8 +119,7 @@ if __name__ == '__main__':
         # load from latest checkpoint and load data for just 1 of 5 folds
         assert args.ckptdir is not None
         model_state = ModelState(
-            exp_dir=EXP_DIR, ckpt_dir=args.ckptdir, dataset=ds)
-        model_state.is_training_mode = False
+            is_training_mode=False, ckpt_dir=args.ckptdir, dataset=ds)
         print('Restoring from checkpoint at {}'.format(args.ckptdir))
         model_state.restore_from_checkpoint()
 
