@@ -47,15 +47,24 @@ def generate_enface(model, data_dir, normalize=False, verbose=False):
             print('{}/{} - Generating cross section for {}'.format(
                 idx + 1, len(bscan_paths), bscan_path))
 
-        dataset, num_batches = utils.load_dataset(
-            [bscan_path],
-            batch_size=1,
-            num_slices=model.slices,
-            contrast=model.contrast,
-            mean=model.mean,
-            standard_deviation=model.std,
-            shuffle=False
-        )
+        if model.augment:
+            dataset, num_batches = utils.load_augmented_dataset(
+                [bscan_path],
+                batch_size=1,
+                num_slices=model.slices,
+                use_random_jitter=False,
+                use_random_noise=False,
+                shuffle=False
+            )
+        else:
+            dataset, num_batches = utils.load_dataset(
+                [bscan_path],
+                batch_size=1,
+                num_slices=model.slices,
+                mean=model.mean,
+                standard_deviation=model.std,
+                shuffle=False
+            )
         # predicted image has shape [C,H,W]
         img = model.predict(dataset, num_batches)
         image.save(

@@ -16,7 +16,6 @@ DEFAULT_SELECTED_FOLD = 0
 DEFAULT_BATCH_SIZE = 25 #50 #400
 DEFAULT_NUM_SLICES = 2
 DEFAULT_SEED = 42
-DEFAULT_CONTRAST = 1.0
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -35,8 +34,8 @@ def main():
     parser.add_argument('-k', '--k-folds', type=int, default=DEFAULT_K_FOLDS)
     parser.add_argument('-s', '--selected-fold', type=int, default=DEFAULT_SELECTED_FOLD)
     parser.add_argument('-sl', '--slices', type=int, default=DEFAULT_NUM_SLICES)
-    parser.add_argument('-c', '--contrast', type=float, default=DEFAULT_CONTRAST)
     parser.add_argument('-b', '--batch', type=int, default=DEFAULT_BATCH_SIZE)
+    parser.add_argument('-a', '--augment-data', action='store_true')
     parser.add_argument('-sd', '--seed', type=int, default=DEFAULT_SEED)
     parser.add_argument('-e', '--num-epochs', type=int, default=1)
     parser.add_argument('-n', '--normalize', action='store_true')
@@ -61,12 +60,10 @@ def main():
         args.selected_fold,
         args.batch,
         args.slices,
-        args.contrast,
+        args.augment_data,
         args.seed,
         args.experiment_dir
     )
-
-    utils.log('mean={}, std={}'.format(model.mean, model.std))
 
     if args.mode == 'train':
         if args.num_epochs < 1:

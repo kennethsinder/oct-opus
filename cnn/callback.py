@@ -16,15 +16,24 @@ class EpochEndCallback(callbacks.Callback):
     def __init__(self, cnn):
         super().__init__()
         self.cnn = cnn
-        self.dataset, self.num_batches = utils.load_dataset(
-            [self.cnn.testing_bscan_paths[0]],
-            batch_size=1,
-            num_slices=cnn.slices,
-            contrast=cnn.contrast,
-            mean=cnn.mean,
-            standard_deviation=cnn.std,
-            shuffle=False
-        )
+        if cnn.augment:
+            self.dataset, self.num_batches = utils.load_augmented_dataset(
+                [self.cnn.testing_bscan_paths[0]],
+                batch_size=1,
+                num_slices=cnn.slices,
+                use_random_jitter=True,
+                use_random_noise=False,
+                shuffle=False
+            )
+        else:
+            self.dataset, self.num_batches = utils.load_dataset(
+                [self.cnn.testing_bscan_paths[0]],
+                batch_size=1,
+                num_slices=cnn.slices,
+                mean=cnn.mean,
+                standard_deviation=cnn.std,
+                shuffle=False
+            )
         self.input = []
         self.target = []
         for inp, tar in self.dataset:

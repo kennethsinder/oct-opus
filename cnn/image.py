@@ -6,8 +6,8 @@ from PIL import Image, ImageEnhance
 from cnn.parameters import PIXEL_DEPTH
 
 
-def load(path, contrast_factor=1.0, data_format='channels_last'):
-    """ (str, str) -> tensorflow.python.framework.ops.EagerTensor
+def load(path, angle=0, contrast_factor=1.0, sharpness_factor=1.0, data_format='channels_last'):
+    """ (str, float, float, float str) -> tensorflow.python.framework.ops.EagerTensor
     Decodes a grayscale PNG, returns a tensor containing the image.
     Shape of tensor depends on data_format:
         - 'channels_last' returns [H,W,C]
@@ -16,14 +16,18 @@ def load(path, contrast_factor=1.0, data_format='channels_last'):
     if not data_format == 'channels_last' and not data_format == 'channels_first':
         raise Exception('data_format must be either \'channels_first\' or \'channels_last\'')
 
-    image = Image.open(path)
+    image = Image.open(path).rotate(angle)
 
     # contrast
     contrast_enhancer = ImageEnhance.Contrast(image)
     contrast_image = contrast_enhancer.enhance(contrast_factor)
 
+    # sharpness
+    sharpness_enhancer = ImageEnhance.Sharpness(contrast_image)
+    sharpened_image = sharpness_enhancer.enhance(sharpness_factor)
+
     output = io.BytesIO()
-    contrast_image.save(output, format='png')
+    sharpened_image.save(output, format='png')
     img = tf.image.decode_png(output.getvalue(), channels=1)
 
     if data_format == 'channels_first':
