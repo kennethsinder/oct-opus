@@ -6,6 +6,7 @@ import tensorflow as tf
 
 import cnn.utils as utils
 import cnn.image as image
+from cnn.parameters import AUGMENT_NORMALIZE
 
 from enface.enface import gen_single_enface
 from enface.image_io import MULTI_SLICE_SUM, MULTI_SLICE_MAX_NORM
@@ -47,16 +48,7 @@ def generate_enface(model, data_dir, normalize=False, verbose=False):
             print('{}/{} - Generating cross section for {}'.format(
                 idx + 1, len(bscan_paths), bscan_path))
 
-        if model.augment:
-            dataset, num_batches = utils.load_augmented_dataset(
-                [bscan_path],
-                batch_size=1,
-                num_slices=model.slices,
-                use_random_jitter=False,
-                use_random_noise=False,
-                shuffle=False
-            )
-        else:
+        if model.augment_level == AUGMENT_NORMALIZE:
             dataset, num_batches = utils.load_dataset(
                 [bscan_path],
                 batch_size=1,
@@ -65,6 +57,16 @@ def generate_enface(model, data_dir, normalize=False, verbose=False):
                 standard_deviation=model.std,
                 shuffle=False
             )
+        else:
+            dataset, num_batches = utils.load_augmented_dataset(
+                [bscan_path],
+                batch_size=1,
+                num_slices=model.slices,
+                use_random_jitter=False,
+                use_random_noise=False,
+                shuffle=False
+            )
+
         # predicted image has shape [C,H,W]
         img = model.predict(dataset, num_batches)
         image.save(

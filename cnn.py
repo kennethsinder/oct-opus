@@ -8,7 +8,13 @@ import tensorflow as tf
 
 import cnn.utils as utils
 from cnn.model import CNN
-from cnn.parameters import IMAGE_DIM, GPU
+from cnn.parameters import (
+    AUGMENT_NORMALIZE,
+    AUGMENT_CONTRAST,
+    AUGMENT_FULL,
+    IMAGE_DIM,
+    GPU
+)
 from cnn.enface import generate_enface
 
 DEFAULT_K_FOLDS = 5
@@ -28,6 +34,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', choices=['train', 'enface'])
     parser.add_argument('hardware', choices=['cpu', 'gpu'])
+    parser.add_argument('augment_level', choices=[AUGMENT_NORMALIZE, AUGMENT_CONTRAST, AUGMENT_FULL])
     parser.add_argument('-d', '--data-dir', required=True)
     parser.add_argument('-ef', '--enface-dir')
     parser.add_argument('-ex', '--experiment-dir')
@@ -35,7 +42,6 @@ def main():
     parser.add_argument('-s', '--selected-fold', type=int, default=DEFAULT_SELECTED_FOLD)
     parser.add_argument('-sl', '--slices', type=int, default=DEFAULT_NUM_SLICES)
     parser.add_argument('-b', '--batch', type=int, default=DEFAULT_BATCH_SIZE)
-    parser.add_argument('-a', '--augment-data', action='store_true')
     parser.add_argument('-sd', '--seed', type=int, default=DEFAULT_SEED)
     parser.add_argument('-e', '--num-epochs', type=int, default=1)
     parser.add_argument('-n', '--normalize', action='store_true')
@@ -58,9 +64,9 @@ def main():
         args.data_dir,
         args.k_folds,
         args.selected_fold,
+        args.augment_level,
         args.batch,
         args.slices,
-        args.augment_data,
         args.seed,
         args.experiment_dir
     )

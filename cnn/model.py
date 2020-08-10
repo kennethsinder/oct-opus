@@ -17,7 +17,7 @@ from tensorflow.keras.layers import (
 
 import cnn.utils as utils
 from cnn.callback import EpochEndCallback
-from cnn.parameters import IMAGE_DIM, STATS
+from cnn.parameters import AUGMENT_NORMALIZE, AUGMENT_FULL, IMAGE_DIM, STATS
 from cnn.dataset import Dataset
 
 """
@@ -77,7 +77,7 @@ def get_unet(input_height, input_width):
 
 
 class CNN:
-    def __init__(self, root_data_dir, k_folds, selected_fold, batch_size, slices, augment, seed, experiment_dir):
+    def __init__(self, root_data_dir, k_folds, selected_fold, augment_level, batch_size, slices, seed, experiment_dir):
         if root_data_dir[-1] == '/':
             utils.log('Removing extra \'/\' from root_data_dir')
             root_data_dir = root_data_dir[:-1]
@@ -87,9 +87,9 @@ class CNN:
             '\troot_data_dir={},\n'.format(root_data_dir) +
             '\tk_folds={},\n'.format(k_folds) +
             '\tselected_fold={},\n'.format(selected_fold) +
+            '\taugment_level={},\n'.format(augment_level) +
             '\tbatch_size={},\n'.format(batch_size) +
             '\tslices={},\n'.format(slices) +
-            '\taugment={},\n'.format(augment) +
             '\tseed={},\n'.format(seed) +
             '\texperiment_dir={}'.format(experiment_dir)
         )
@@ -135,23 +135,23 @@ class CNN:
         else:
             self.restore_status = None
 
-        if augment:
-            utils.log('Using augmented data, not fetching mean/std')
-            self.mean = None
-            self.std = None
-        else:
+        if augment_level == AUGMENT_NORMALIZE:
             self.mean = STATS[basename(root_data_dir)][seed][k_folds][selected_fold]['mean']
             self.std = STATS[basename(root_data_dir)][seed][k_folds][selected_fold]['std']
             utils.log('mean={}, std={}'.format(self.mean, self.std))
+        else:
+            self.use_random_jitter = (augment_level == AUGMENT_FULL)
+            utils.log('Using augmented data, not fetching mean/std')
+            utils.log('use_random_jitter={}'.format(self.use_random_jitter))
 
         self.data_loaded = False
 
         self.root_data_dir = root_data_dir
         self.k_folds = k_folds
         self.selected_fold = selected_fold
+        self.augment_level = augment_level
         self.batch_size = batch_size
         self.slices = slices
-        self.augment = augment
         self.seed = seed
 
     def load_data(self):
@@ -168,24 +168,7 @@ class CNN:
         self.training_bscan_paths = utils.get_bscan_paths(self.training_dirs)
         self.testing_bscan_paths = utils.get_bscan_paths(self.testing_dirs)
 
-        if self.augment:
-            self.training_dataset, self.training_num_batches = utils.load_augmented_dataset(
-                self.training_bscan_paths,
-                self.batch_size,
-                self.slices,
-                use_random_jitter=True,
-                use_random_noise=False,
-                shuffle=True
-            )
-            self.testing_dataset, self.testing_num_batches = utils.load_augmented_dataset(
-                self.testing_bscan_paths,
-                self.batch_size,
-                self.slices,
-                use_random_jitter=True,
-                use_random_noise=False,
-                shuffle=True
-            )
-        else:
+        if self.augment_level == AUGMENT_NORMALIZE:
             self.training_dataset, self.training_num_batches = utils.load_dataset(
                 self.training_bscan_paths,
                 self.batch_size,
@@ -200,6 +183,23 @@ class CNN:
                 self.slices,
                 self.mean,
                 self.std,
+                shuffle=True
+            )
+        else:
+            self.training_dataset, self.training_num_batches = utils.load_augmented_dataset(
+                self.training_bscan_paths,
+                self.batch_size,
+                self.slices,
+                use_random_jitter=self.use_random_jitter,
+                use_random_noise=False,
+                shuffle=True
+            )
+            self.testing_dataset, self.testing_num_batches = utils.load_augmented_dataset(
+                self.testing_bscan_paths,
+                self.batch_size,
+                self.slices,
+                use_random_jitter=self.use_random_jitter,
+                use_random_noise=False,
                 shuffle=True
             )
 

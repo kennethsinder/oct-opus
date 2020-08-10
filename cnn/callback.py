@@ -10,28 +10,29 @@ from tensorflow.keras import callbacks
 import cnn.utils as utils
 import cnn.image as image
 from cnn.enface import generate_enface
+from cnn.parameters import AUGMENT_NORMALIZE
 
 
 class EpochEndCallback(callbacks.Callback):
     def __init__(self, cnn):
         super().__init__()
         self.cnn = cnn
-        if cnn.augment:
-            self.dataset, self.num_batches = utils.load_augmented_dataset(
-                [self.cnn.testing_bscan_paths[0]],
-                batch_size=1,
-                num_slices=cnn.slices,
-                use_random_jitter=True,
-                use_random_noise=False,
-                shuffle=False
-            )
-        else:
+        if cnn.augment_level == AUGMENT_NORMALIZE:
             self.dataset, self.num_batches = utils.load_dataset(
                 [self.cnn.testing_bscan_paths[0]],
                 batch_size=1,
                 num_slices=cnn.slices,
                 mean=cnn.mean,
                 standard_deviation=cnn.std,
+                shuffle=False
+            )
+        else:
+            self.dataset, self.num_batches = utils.load_augmented_dataset(
+                [self.cnn.testing_bscan_paths[0]],
+                batch_size=1,
+                num_slices=cnn.slices,
+                use_random_jitter=cnn.use_random_jitter,
+                use_random_noise=False,
                 shuffle=False
             )
         self.input = []

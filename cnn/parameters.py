@@ -6,6 +6,10 @@ NUM_IMAGES_PER_DATASET = 512
 IMAGE_DIM = 512
 PIXEL_DEPTH = 256
 
+AUGMENT_NORMALIZE = 'normalize'
+AUGMENT_CONTRAST = 'contrast'
+AUGMENT_FULL = 'full_augment'
+
 # format is <data-dir-name> -> <seed> -> <k-folds> -> <selected-fold> -> {mean, std}
 STATS = {
     'single_poly_flattened' : {
