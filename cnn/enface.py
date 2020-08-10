@@ -10,7 +10,7 @@ import cnn.image as image
 from enface.enface import gen_single_enface
 from enface.image_io import MULTI_SLICE_SUM, MULTI_SLICE_MAX_NORM
 
-def generate_enface(model, data_dir, verbose=False):
+def generate_enface(model, data_dir, normalize=False, verbose=False):
     if data_dir[-1] == '/':
         data_name = basename(data_dir[:-1])
     else:
@@ -65,7 +65,7 @@ def generate_enface(model, data_dir, verbose=False):
         )
 
     # using the cross sections, generate the enfaces
-    gen_single_enface(enface_dir)
+    gen_single_enface(enface_dir, normalize=normalize)
 
     # log enfaces to tensorboard
     with model.writer.as_default():

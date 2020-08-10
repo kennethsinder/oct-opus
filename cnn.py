@@ -39,6 +39,7 @@ def main():
     parser.add_argument('-b', '--batch', type=int, default=DEFAULT_BATCH_SIZE)
     parser.add_argument('-sd', '--seed', type=int, default=DEFAULT_SEED)
     parser.add_argument('-e', '--num-epochs', type=int, default=1)
+    parser.add_argument('-n', '--normalize', action='store_true')
     args = parser.parse_args()
 
     if args.hardware == 'gpu':
@@ -79,7 +80,7 @@ def main():
         utils.log('Generating enfaces')
         for dir in model.testing_dirs:
             try:
-                generate_enface(model, dir)
+                generate_enface(model, dir, normalize=args.normalize)
             except Exception:
                 utils.log('Could not generate enfaces for {}, got the following exception:\n{}\nSkipping enfaces for {}'.format(
                     dir,
@@ -91,7 +92,7 @@ def main():
     else:
         if args.enface_dir is None:
             raise Exception('Enface directory must be specified.')
-        generate_enface(model, args.enface_dir, verbose=True)
+        generate_enface(model, args.enface_dir, normalize=args.normalize, verbose=True)
 
 
 if __name__ == '__main__':
