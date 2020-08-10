@@ -207,13 +207,13 @@ def get_augmented_slices(bscan_path, num_slices, use_random_jitter, use_random_n
     if use_random_jitter and tf.random.uniform(()) > 0.8:
         angle = random.randint(0, 45)
 
-    bscan_img = image.load(bscan_path, contrast_factor=1.85)
+    bscan_img = image.load(bscan_path, angle=angle, contrast_factor=1.85)
 
     dir_path, bscan_num = splitext(bscan_path)[0].split('xzIntensity/')
     bscan_num = int(bscan_num)
 
     omag_num = bscan_num_to_omag_num(bscan_num, get_num_acquisitions(dir_path))
-    omag_img = image.load(join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), contrast_factor=1.85)
+    omag_img = image.load(join(dir_path, 'OMAG Bscans', '{}.png'.format(omag_num)), angle=angle, contrast_factor=1.85)
 
     # random jitter
     if use_random_jitter:
