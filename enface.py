@@ -1,3 +1,7 @@
+# This code, and a lot of supporting code in the `enface.enface` package,
+# are largely a MATLAB -> Python code port and refactor of existing code and ideas
+# from Zohreh (University of Waterloo) and Prof. Bizheva's lab.
+
 import sys
 from os.path import isdir, join
 
