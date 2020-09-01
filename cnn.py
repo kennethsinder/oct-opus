@@ -32,19 +32,45 @@ tf.keras.backend.set_image_data_format('channels_first')
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('mode', choices=['train', 'enface'])
+    parser.add_argument('mode', choices=['train', 'enface'], help='Program mode.')
     parser.add_argument('hardware', choices=['cpu', 'gpu'])
-    parser.add_argument('augment_level', choices=[AUGMENT_NORMALIZE, AUGMENT_CONTRAST, AUGMENT_FULL])
-    parser.add_argument('-d', '--data-dir', required=True)
-    parser.add_argument('-ef', '--enface-dir')
-    parser.add_argument('-ex', '--experiment-dir')
-    parser.add_argument('-k', '--k-folds', type=int, default=DEFAULT_K_FOLDS)
-    parser.add_argument('-s', '--selected-fold', type=int, default=DEFAULT_SELECTED_FOLD)
-    parser.add_argument('-sl', '--slices', type=int, default=DEFAULT_NUM_SLICES)
-    parser.add_argument('-b', '--batch', type=int, default=DEFAULT_BATCH_SIZE)
-    parser.add_argument('-sd', '--seed', type=int, default=DEFAULT_SEED)
-    parser.add_argument('-e', '--num-epochs', type=int, default=1)
-    parser.add_argument('-n', '--normalize', action='store_true')
+    parser.add_argument(
+        'augment_level',
+        choices=[AUGMENT_NORMALIZE, AUGMENT_CONTRAST, AUGMENT_FULL],
+        help='Which level of data augmentation to use. '
+             f'{AUGMENT_NORMALIZE}=normalize bscans using mean and std. '
+             f'{AUGMENT_CONTRAST}=increase constrast of bscans and omags. '
+             f'{AUGMENT_FULL}=perform same augmentations as the cGAN.'
+    )
+    parser.add_argument('-d', '--data-dir',
+        required=True, help='Top level data directory.')
+    parser.add_argument('-ef', '--enface-dir',
+        help='For enface mode, the directory containing the input eye data.')
+    parser.add_argument('-ex', '--experiment-dir',
+        help='Directory in which the experiment data (e.g. checkpoints, enfaces) is saved.')
+    parser.add_argument('-k', '--k-folds',
+        type=int, default=DEFAULT_K_FOLDS, help='Number of folds to use when training.')
+    parser.add_argument('-s', '--selected-fold',
+        type=int, default=DEFAULT_SELECTED_FOLD, help='Which fold to train on. Index starts at 0.')
+    parser.add_argument(
+        '-sl', '--slices',
+        type=int,
+        default=DEFAULT_NUM_SLICES,
+        help='Number of slices to cut the data into. '
+             'Image width must be divisble by this number.'
+    )
+    parser.add_argument('-b', '--batch',
+        type=int, default=DEFAULT_BATCH_SIZE, help='Training/testing batch size.')
+    parser.add_argument('-sd', '--seed',
+        type=int,
+        default=DEFAULT_SEED,
+        help='Seed used for Python\'s pseudo-random number generator. '
+             'Affects how datasets are partitioned for the k-folds validation.'
+    )
+    parser.add_argument('-e', '--num-epochs',
+        type=int, default=1, help='Number of epochs to train for.')
+    parser.add_argument('-n', '--normalize', action='store_true',
+        help='Set this flag to generated normalized enfaces.')
     args = parser.parse_args()
 
     if args.hardware == 'gpu':
