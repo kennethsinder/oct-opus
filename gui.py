@@ -18,7 +18,7 @@ from cgan.utils import generate_inferred_images
 os.environ['TK_SILENCE_DEPRECATION'] = '1'
  
 window = tkinter.Tk()
-window.title('Retinal Capiliary ML Testing Tool')
+window.title('Retinal Capillary ML Testing Tool')
 window.grid_columnconfigure(0, pad=30)
 window.grid_columnconfigure(1, pad=30)
 window.grid_rowconfigure(0, pad=30)
@@ -41,7 +41,6 @@ def choose_input_directory(event):
     global image_file_path
     image_file_path = askdirectory(
         initialdir=".", title="Select input directory")
-        # filetypes=(("png files", "*.png"), ("all files", "*.*")))
     print(image_file_path if image_file_path else 'No input directory chosen')
 
 def choose_checkpoint(event):
