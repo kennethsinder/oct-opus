@@ -121,7 +121,7 @@ def main():
     else:
         if args.enface_dir is None:
             raise Exception('Enface directory must be specified.')
-        generate_enface(model, args.enface_dir, normalize=args.normalize, verbose=True)
+        generate_enface(model, args.enface_dir, normalize=args.normalize)
 
 
 if __name__ == '__main__':

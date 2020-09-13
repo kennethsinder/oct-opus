@@ -8,12 +8,13 @@ HEADER = ['Dataset', 'psnr_score', 'mse_score', 'nrmse_score', 'ssim_score', 'ma
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--root-dir', required=True)
+    parser.add_argument('-e', '--epoch', required=True)
     args = parser.parse_args()
 
     def aggregate(csv_file):
         aggregated = []
         for k in range(5):
-            enface_dir = join(args.root_dir, str(k), 'enfaces/epoch_15')
+            enface_dir = join(args.root_dir, str(k), 'enfaces/epoch_{}'.format(args.epoch))
             with open(join(enface_dir, csv_file), 'r') as file:
                 reader = csv.reader(file)
                 next(reader) # skip header row
