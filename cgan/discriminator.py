@@ -1,3 +1,19 @@
+# August 2020 - cgan/discriminator.py
+#
+# This code is an adaptation of the approach from the 2017 pix2pix paper with some of our own additional small
+# tweaks to the generator and discriminator model to suit our application.
+#
+#     Isola, P., Zhu, J., Zhou, T., Efros, A. A.,
+#     "Image-to-Image Translation with Conditional Adversarial Networks,"
+#     IEEE Conference on Computer Vision and Pattern Recognition (CVPR), Honolulu, HI, 2017, 5967-5976 (2017).
+#
+# Significant additional credit also goes to TensorFlow's pix2pix tutorial page:
+#
+#     https://www.tensorflow.org/tutorials/generative/pix2pix
+#
+# We adapted a lot of code snippets from that tutorial, making changes as necessary to support our folder structure
+# and use cases, as well as small model changes and refactoring the code over multiple files for maintainability.
+
 import tensorflow as tf
 from cgan.sampling import downsample
 

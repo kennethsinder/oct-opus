@@ -1,3 +1,16 @@
+# September 2020 - cnn/parameters.py
+#
+# This code is an implemention of the convolutional neural network (CNN) approach
+# of Dr. Aaron Y. Lee and their University of Washington team:
+#
+#     Lee, C.S., Tyring, A.J., Wu, Y., et al.
+#     “Generating Retinal Flow Maps from Structural Optical Coherence Tomography with Artificial Intelligence,”
+#     Scientific Reports 9, 5694 (2019).
+#
+# The paper can be found at: https://doi.org/10.1038/s41598-019-42042-y
+# Credit goes to them, and we also thank them for helping us implement the model from their paper
+# and particularly for their patience helping us reproduce the smaller details of their architecture.
+
 GPU = '/device:GPU:0'
 
 NUM_DATASETS = 66
