@@ -18,6 +18,7 @@ import tensorflow as tf
 
 from cgan.discriminator import discriminator_loss
 from cgan.generator import generator_loss
+from cgan.parameters import LAYER_BATCH
 
 
 @tf.function
@@ -25,8 +26,11 @@ def train_step(model_state, input_image, target):
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
         gen_output = model_state.generator(input_image, training=True)
 
-        disc_real_output = model_state.discriminator([input_image, target], training=True)
-        disc_generated_output = model_state.discriminator([input_image, gen_output], training=True)
+        central_input_image = input_image[:,:,:,LAYER_BATCH//2, tf.newaxis]
+        central_gen_output = gen_output[:,:,:,LAYER_BATCH//2, tf.newaxis]
+
+        disc_real_output = model_state.discriminator([central_input_image, target], training=True)
+        disc_generated_output = model_state.discriminator([central_input_image, central_gen_output], training=True)
 
         gen_total_loss, gen_gan_loss, gen_l1_loss = generator_loss(model_state.loss_object, disc_generated_output,
                                                                    gen_output, target)
